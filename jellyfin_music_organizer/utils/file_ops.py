@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, Callable, List, Optional, TypeVar
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
-from .error_handler import handle_errors
 from .exceptions import FileOperationError
 
 logger = getLogger(__name__)

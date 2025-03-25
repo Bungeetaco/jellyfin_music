@@ -6,7 +6,7 @@ from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import QDialog, QWidget
 
-from ..utils.qt_types import QtConstants, WidgetAttribute, WindowFlags, WindowType
+from ..utils.qt_types import QtConstants, WindowFlags, WindowType
 from ..utils.window_state import WindowStateManager
 
 logger = getLogger(__name__)
