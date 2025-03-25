@@ -1,6 +1,8 @@
 import json
 from logging import getLogger
 from typing import Dict
+from pathlib import Path
+import os
 
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -248,45 +250,111 @@ class SettingsWindow(QWidget):
         y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
 
-    def select_music_folder(self):
-        music_folder_path = QFileDialog.getExistingDirectory(self, "Select Music Folder")
-        if music_folder_path:
+    def select_music_folder(self) -> None:
+        """Handle music folder selection with validation."""
+        try:
+            music_folder_path = QFileDialog.getExistingDirectory(
+                self,
+                "Select Music Folder",
+                "",
+                QFileDialog.ShowDirsOnly
+            )
+            if not music_folder_path:
+                logger.debug("Music folder selection cancelled")
+                return
+
+            if not self._validate_folder_path(music_folder_path):
+                logger.warning(f"Invalid music folder path: {music_folder_path}")
+                return
+
             self.music_folder_path = music_folder_path
             self.music_folder_label.setText(self.music_folder_path)
+            self._save_settings()
+        except Exception as e:
+            logger.error(f"Failed to select music folder: {e}")
 
-    def clear_music_folder(self):
-        self.music_folder_path = ""
-        self.music_folder_label.setText("")
+    def _validate_folder_path(self, path: str) -> bool:
+        """Validate folder path exists and is accessible.
+        
+        Args:
+            path: Folder path to validate
+            
+        Returns:
+            bool: True if valid, False otherwise
+        """
+        try:
+            folder = Path(path)
+            return folder.exists() and folder.is_dir() and os.access(folder, os.R_OK)
+        except Exception as e:
+            logger.error(f"Folder validation error: {e}")
+            return False
 
-    def select_destination_folder(self):
-        destination_folder_path = QFileDialog.getExistingDirectory(
-            self, "Select Destination Folder"
-        )
-        if destination_folder_path:
+    def clear_music_folder(self) -> None:
+        """Clear music folder path with proper cleanup."""
+        try:
+            self.music_folder_path = ""
+            self.music_folder_label.setText("")
+            self._save_settings()
+        except Exception as e:
+            logger.error(f"Failed to clear music folder: {e}")
+
+    def select_destination_folder(self) -> None:
+        """Handle destination folder selection with validation."""
+        try:
+            destination_folder_path = QFileDialog.getExistingDirectory(
+                self, 
+                "Select Destination Folder",
+                "",
+                QFileDialog.ShowDirsOnly
+            )
+            
+            if not destination_folder_path:
+                logger.debug("Destination folder selection cancelled")
+                return
+            
+            if not self._validate_folder_path(destination_folder_path):
+                logger.warning(f"Invalid destination folder path: {destination_folder_path}")
+                return
+            
             self.destination_folder_path = destination_folder_path
             self.destination_folder_label.setText(self.destination_folder_path)
+            self._save_settings()
+        except Exception as e:
+            logger.error(f"Failed to select destination folder: {e}")
 
-    def clear_destination_folder(self):
-        self.destination_folder_path = ""
-        self.destination_folder_label.setText("")
-
-    def load_settings(self):
+    def clear_destination_folder(self) -> None:
+        """Clear destination folder path with proper cleanup."""
         try:
-            with open("settings_jmo.json", "r") as f:
-                self.settings = json.load(f)
-                self.music_folder_path = self.settings.get("music_folder_path", "")
-                self.destination_folder_path = self.settings.get("destination_folder_path", "")
-                self.sound_checkbox.setChecked(self.settings.get("mute_sound", False))
-                self.illegal_chars_checkbox.setChecked(
-                    self.settings.get("remove_illegal_chars", True)
-                )
+            self.destination_folder_path = ""
+            self.destination_folder_label.setText("")
+            self._save_settings()
+        except Exception as e:
+            logger.error(f"Failed to clear destination folder: {e}")
 
-                # Update the labels with the loaded values
-                self.music_folder_label.setText(self.music_folder_path)
-                self.destination_folder_label.setText(self.destination_folder_path)
-        except FileNotFoundError:
-            # Initialize self.settings dictionary
-            self.settings = {}
+    def load_settings(self) -> None:
+        """Load settings from file and update UI."""
+        try:
+            if not Path("settings_jmo.json").exists():
+                logger.debug("No settings file found")
+                return
+
+            with open("settings_jmo.json", "r", encoding="utf-8") as f:
+                settings = json.load(f)
+
+            # Update UI with loaded settings
+            self.music_folder_path = settings.get("music_folder_path", "")
+            self.destination_folder_path = settings.get("destination_folder_path", "")
+            self.music_folder_label.setText(self.music_folder_path)
+            self.destination_folder_label.setText(self.destination_folder_path)
+            self.sound_checkbox.setChecked(settings.get("mute_sound", False))
+            self.illegal_chars_checkbox.setChecked(
+                settings.get("remove_illegal_chars", True)
+            )
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid settings file format: {e}")
+        except Exception as e:
+            logger.error(f"Failed to load settings: {e}")
 
     def save_settings(self):
         # Create settings dictionary
@@ -358,3 +426,22 @@ class SettingsWindow(QWidget):
     def resetResetButton(self):
         self.reset_button.setText("Reset && Save All Settings")
         self.reset_button.setStyleSheet("")
+
+    def _save_settings(self) -> None:
+        """Save current settings to file."""
+        try:
+            settings = {
+                "music_folder_path": self.music_folder_path,
+                "destination_folder_path": self.destination_folder_path,
+                "mute_sound": self.sound_checkbox.isChecked(),
+                "remove_illegal_chars": self.illegal_chars_checkbox.isChecked(),
+                "version": self.version
+            }
+            
+            with open("settings_jmo.json", "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=4)
+            
+            logger.debug("Settings saved successfully")
+        except Exception as e:
+            logger.error(f"Failed to save settings: {e}")
+            raise RuntimeError("Failed to save settings") from e

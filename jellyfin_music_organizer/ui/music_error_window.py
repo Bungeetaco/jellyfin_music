@@ -1,10 +1,10 @@
 import csv
 import json
 from logging import getLogger
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, TypeAlias, Union
 
 import openpyxl
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QSettings
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -22,33 +22,76 @@ from PyQt5.QtWidgets import (
 
 logger = getLogger(__name__)
 
+# Type definitions
+ErrorDict: TypeAlias = Dict[str, Union[str, List[str], Dict[str, str]]]
 
 class MusicErrorWindow(QWidget):
     """Widget for displaying and managing music file errors."""
 
+    windowOpened = pyqtSignal(bool)
+    windowClosed = pyqtSignal(bool)
+    custom_dialog_signal = pyqtSignal(str)
+
     def __init__(self, error_files: List[Dict[str, Any]]) -> None:
-        """Initialize the error window."""
+        """Initialize the error window.
+        
+        Args:
+            error_files: List of dictionaries containing error information.
+        """
         super().__init__()
 
-        # Version Control
-        self.version = "3.06"
-
+        # Initialize instance variables
+        self.version: str = "3.06"
         self.error_files: List[Dict[str, Any]] = error_files
         self.current_error_index: int = 0
+        self.draggable: bool = False
+        self.offset = None
+        
+        # UI elements will be initialized in setup_ui
+        self.title_bar = None
+        self.icon_label = None
+        self.title_label = None
+        self.close_button = None
+        self.file_list_widget = None
+        self.details_display = None
+        self.copy_button = None
+        self.txt_button = None
+        self.csv_button = None
+        self.excel_button = None
+        self.json_button = None
+        self.bottom_right_grip = None
 
         # Setup and show user interface
-        self.setup_ui()
+        try:
+            self.setup_ui()
+        except Exception as e:
+            logger.error(f"Failed to initialize window: {e}")
+            raise RuntimeError("Failed to initialize window") from e
 
-    def showEvent(self, event):
+    def showEvent(self, event: Any) -> None:
+        """Handle window show event."""
         self.windowOpened.emit(False)
         super().showEvent(event)
         self.center_window()
 
-    def closeEvent(self, event):
-        self.windowClosed.emit(True)
-        super().closeEvent(event)
+    def closeEvent(self, event: Any) -> None:
+        """Handle window close event."""
+        try:
+            # Stop all timers
+            for attr in dir(self):
+                if attr.endswith('_timer'):
+                    timer = getattr(self, attr)
+                    if isinstance(timer, QTimer):
+                        timer.stop()
 
-    def setup_titlebar(self):
+            self.windowClosed.emit(True)
+            super().closeEvent(event)
+        except Exception as e:
+            logger.error(f"Error during window close: {e}")
+            event.accept()  # Ensure window closes even if there's an error
+
+    def setup_titlebar(self) -> None:
+        """Set up the custom titlebar."""
         # Hides the default titlebar
         self.setWindowFlag(Qt.FramelessWindowHint)
 
@@ -83,503 +126,487 @@ class MusicErrorWindow(QWidget):
         hbox_title_layout.setAlignment(Qt.AlignRight)
 
     # Mouse events allow the title bar to be dragged around
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: Any) -> None:
+        """Handle mouse press event for window dragging."""
         if event.button() == Qt.LeftButton and event.y() <= self.title_bar.height():
             self.draggable = True
             self.offset = event.globalPos() - self.pos()
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: Any) -> None:
+        """Handle mouse move event for window dragging."""
         if hasattr(self, "draggable") and self.draggable:
             if event.buttons() & Qt.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: Any) -> None:
+        """Handle mouse release event for window dragging."""
         if event.button() == Qt.LeftButton:
             self.draggable = False
 
-    def setup_ui(self):
-        # Window title, icon, and size
-        self.setWindowTitle(f"Music Error Window v{self.version}")
-        self.setWindowIcon(QIcon(":/Octopus.ico"))
+    def setup_ui(self) -> None:
+        """Set up the user interface."""
+        try:
+            # Window title, icon, and size
+            self.setWindowTitle(f"Music Error Window v{self.version}")
+            self.setWindowIcon(QIcon(":/Octopus.ico"))
 
-        # Main layout
-        main_layout = QVBoxLayout(self)
+            # Main layout
+            main_layout = QVBoxLayout(self)
+            main_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins for better appearance
 
-        # Custom title bar
-        self.setup_titlebar()
-        main_layout.addWidget(self.title_bar)
+            # Custom title bar
+            self.setup_titlebar()
+            main_layout.addWidget(self.title_bar)
 
-        # Central widget
-        self.central_widget = QWidget(self)
-        main_layout.addWidget(self.central_widget)
+            # Central widget
+            self.central_widget = QWidget(self)
+            main_layout.addWidget(self.central_widget)
 
-        # QVBoxLayout for central widget
-        vbox_main_layout = QVBoxLayout(self.central_widget)
+            # QVBoxLayout for central widget
+            vbox_main_layout = QVBoxLayout(self.central_widget)
 
-        # QHBoxLayout setup for file list and test box
-        hbox_list_text_layout = QHBoxLayout()
-        vbox_main_layout.addLayout(hbox_list_text_layout)
+            # QHBoxLayout setup for file list and test box
+            hbox_list_text_layout = QHBoxLayout()
+            vbox_main_layout.addLayout(hbox_list_text_layout)
 
-        # Create the file list widget on the top
-        self.file_list_widget = QListWidget(self)
-        hbox_list_text_layout.addWidget(self.file_list_widget)
-        self.file_list_widget.currentItemChanged.connect(self.displayDetails)
+            # Create the file list widget on the top
+            self.file_list_widget = QListWidget(self)
+            hbox_list_text_layout.addWidget(self.file_list_widget)
+            self.file_list_widget.currentItemChanged.connect(self.displayDetails)
 
-        # QLabel for text details
-        text_label = QLabel(self)
-        text_label.setText(
-            "Files that don't have any metadata are unreadable by mutagen\n\n"
-            "These are the known audio file keys that are being looked for:\n"
-            "(capitalization doesn't matter)\n"
-            "artist_values = ['©art', 'artist', 'author', 'tpe1']\n"
-            "album_values = ['©alb', 'album', 'talb', 'wm/albumtitle']\n\n"
-            "These audio files have missing artist and/or album keys\n"
-            "Either:\n"
-            "- Your files don't have an artist/album name\n"
-            "- New keys need to be added to the program\n"
-            "- Your file is corrupt/tampered with"
-        )
-        hbox_list_text_layout.addWidget(text_label)
+            # QLabel for text details
+            text_label = QLabel(self)
+            text_label.setText(
+                "Files that don't have any metadata are unreadable by mutagen\n\n"
+                "These are the known audio file keys that are being looked for:\n"
+                "(capitalization doesn't matter)\n"
+                "artist_values = ['©art', 'artist', 'author', 'tpe1']\n"
+                "album_values = ['©alb', 'album', 'talb', 'wm/albumtitle']\n\n"
+                "These audio files have missing artist and/or album keys\n"
+                "Either:\n"
+                "- Your files don't have an artist/album name\n"
+                "- New keys need to be added to the program\n"
+                "- Your file is corrupt/tampered with"
+            )
+            hbox_list_text_layout.addWidget(text_label)
 
-        # Create the details display widget on the bottom
-        self.details_display = QTextEdit(self)
-        self.details_display.setReadOnly(True)
-        self.details_display.setLineWrapMode(QTextEdit.NoWrap)
-        vbox_main_layout.addWidget(self.details_display)
+            # Create the details display widget on the bottom
+            self.details_display = QTextEdit(self)
+            self.details_display.setReadOnly(True)
+            self.details_display.setLineWrapMode(QTextEdit.NoWrap)
+            vbox_main_layout.addWidget(self.details_display)
 
-        # QHBoxLayout setup for buttons and grip
-        hbox_buttons_grip_layout = QHBoxLayout()
-        vbox_main_layout.addLayout(hbox_buttons_grip_layout)
+            # QHBoxLayout setup for buttons and grip
+            hbox_buttons_grip_layout = QHBoxLayout()
+            vbox_main_layout.addLayout(hbox_buttons_grip_layout)
 
-        # Create the copy button
-        self.copy_button = QPushButton("Copy Bottom")
-        self.copy_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        hbox_buttons_grip_layout.addWidget(self.copy_button)
-        self.copy_button.clicked.connect(self.copyDetails)
+            # Create the copy button
+            self.copy_button = QPushButton("Copy Bottom")
+            self.copy_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            hbox_buttons_grip_layout.addWidget(self.copy_button)
+            self.copy_button.clicked.connect(self.copyDetails)
 
-        # Create the CSV button
-        self.txt_button = QPushButton("Generate TXT File")
-        self.txt_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        hbox_buttons_grip_layout.addWidget(self.txt_button)
-        self.txt_button.clicked.connect(self.generateTXT)
+            # Create the CSV button
+            self.txt_button = QPushButton("Generate TXT File")
+            self.txt_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            hbox_buttons_grip_layout.addWidget(self.txt_button)
+            self.txt_button.clicked.connect(self.generateTXT)
 
-        # Create the CSV button
-        self.csv_button = QPushButton("Generate CSV File")
-        self.csv_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        hbox_buttons_grip_layout.addWidget(self.csv_button)
-        self.csv_button.clicked.connect(self.generateCSV)
+            # Create the CSV button
+            self.csv_button = QPushButton("Generate CSV File")
+            self.csv_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            hbox_buttons_grip_layout.addWidget(self.csv_button)
+            self.csv_button.clicked.connect(self.generateCSV)
 
-        # Create the Excel button
-        self.excel_button = QPushButton("Generate Excel File")
-        self.excel_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        hbox_buttons_grip_layout.addWidget(self.excel_button)
-        self.excel_button.clicked.connect(self.generateExcel)
+            # Create the Excel button
+            self.excel_button = QPushButton("Generate Excel File")
+            self.excel_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            hbox_buttons_grip_layout.addWidget(self.excel_button)
+            self.excel_button.clicked.connect(self.generateExcel)
 
-        # Create the JSON button
-        self.json_button = QPushButton("Generate JSON File")
-        self.json_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        hbox_buttons_grip_layout.addWidget(self.json_button)
-        self.json_button.clicked.connect(self.generateJSON)
+            # Create the JSON button
+            self.json_button = QPushButton("Generate JSON File")
+            self.json_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            hbox_buttons_grip_layout.addWidget(self.json_button)
+            self.json_button.clicked.connect(self.generateJSON)
 
-        # Add resizing handles
-        self.bottom_right_grip = QSizeGrip(self)
-        self.bottom_right_grip.setToolTip("Resize window")
-        hbox_buttons_grip_layout.addWidget(
-            self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
-        )
+            # Add resizing handles
+            self.bottom_right_grip = QSizeGrip(self)
+            self.bottom_right_grip.setToolTip("Resize window")
+            hbox_buttons_grip_layout.addWidget(
+                self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+            )
 
-        # Populate QListWidget
-        self.populate_list_widget()
+            # Populate QListWidget
+            self.populate_list_widget()
 
-    def center_window(self):
-        screen = QApplication.desktop().screenGeometry()
-        window_size = self.geometry()
-        x = (screen.width() - window_size.width()) // 2
-        y = (screen.height() - window_size.height()) // 2
-        self.move(x, y)
+        except Exception as e:
+            logger.error(f"Failed to set up UI: {e}")
+            raise RuntimeError("Failed to initialize user interface")
 
-    def populate_list_widget(self):
-        # Populate the file list
-        for info in self.error_files:
-            file_name = info["file_name"]
-            self.file_list_widget.addItem(file_name)
+    def center_window(self) -> None:
+        """Center the window on the screen."""
+        try:
+            screen = QApplication.desktop().screenGeometry()
+            window_size = self.geometry()
+            x = (screen.width() - window_size.width()) // 2
+            y = (screen.height() - window_size.height()) // 2
+            self.move(x, y)
+        except Exception as e:
+            logger.error(f"Failed to center window: {e}")
 
-        # Set the first item as the current row
-        self.file_list_widget.setCurrentRow(0)
+    def populate_list_widget(self) -> None:
+        """Populate the list widget with error files."""
+        try:
+            if not self.error_files:
+                logger.warning("No error files to populate list widget")
+                return
 
-    def displayDetails(self, current_item):
-        if current_item is None:
-            return
+            self.file_list_widget.clear()
+            for info in self.error_files:
+                try:
+                    file_name = info.get("file_name")
+                    if not file_name:
+                        logger.warning("Found error info without file name")
+                        continue
+                    self.file_list_widget.addItem(str(file_name))
+                except Exception as e:
+                    logger.error(f"Failed to add item to list widget: {e}")
+                    continue
 
-        # Get the selected file name
-        selected_file = current_item.text()
-
-        # Find the corresponding error_info
-        selected_info = next(
-            (info for info in self.error_files if info["file_name"] == selected_file), None
-        )
-
-        # Update the details display with file name, error, artist_found, album_found, and metadata information
-        if selected_info:
-            file_name = selected_info["file_name"]
-            error = selected_info["error"]
-            artist_found = selected_info["artist_found"]
-            album_found = selected_info["album_found"]
-            metadata_dict = selected_info["metadata_dict"]
-
-            details_text = f"File Name: {file_name}\n"
-            details_text += f"Error: {error}\n"
-            if artist_found:
-                details_text += f"Artist Found: {artist_found[0]}\n"
+            if self.file_list_widget.count() > 0:
+                self.file_list_widget.setCurrentRow(0)
             else:
-                details_text += f"Artist Found: False\n"
-            if album_found:
-                details_text += f"Album Found: {album_found[0]}\n\n"
-            else:
-                details_text += f"Album Found: False\n\n"
-            details_text += "Metadata:\n"
-            if metadata_dict:
-                for key, value in metadata_dict.items():
-                    details_text += f"{key}: {value}\n"
-            else:
-                details_text += "No metadata available\n"
+                logger.warning("No valid items added to list widget")
 
+        except Exception as e:
+            logger.error(f"Failed to populate list widget: {e}")
+            self.custom_dialog_signal.emit("Failed to populate file list")
+
+    def displayDetails(self, current_item: Any) -> None:
+        """Display details for the selected item.
+        
+        Args:
+            current_item: The currently selected item in the list widget.
+        """
+        try:
+            if current_item is None:
+                logger.debug("No item selected")
+                return
+
+            selected_file = current_item.text()
+            if not selected_file:
+                logger.warning("Selected item has no text")
+                return
+
+            selected_info = next(
+                (info for info in self.error_files if info["file_name"] == selected_file),
+                None
+            )
+
+            if not selected_info:
+                logger.warning(f"No error info found for file: {selected_file}")
+                return
+
+            details_text = self._format_details_text(selected_info)
             self.details_display.setPlainText(details_text)
 
-    def copyDetails(self):
-        clipboard = QApplication.clipboard()
-        clipboard.setText(self.details_display.toPlainText())
+        except Exception as e:
+            logger.error(f"Failed to display details: {e}")
+            self.custom_dialog_signal.emit("Failed to display file details")
 
-        # Update the button text and color temporarily
-        self.copy_button.setText("Success")
-        self.copy_button.setStyleSheet(
-            """
-            background-color: rgba(255, 152, 152, 1);
-            color: black;
+    def _format_details_text(self, info: Dict[str, Any]) -> str:
+        """Format the details text for display.
+        
+        Args:
+            info: Dictionary containing file error information.
+        
+        Returns:
+            Formatted text string for display.
         """
-        )
+        try:
+            details = []
+            details.append(f"File Name: {info['file_name']}")
+            details.append(f"Error: {info['error']}")
+            
+            artist_found = info["artist_found"]
+            album_found = info["album_found"]
+            
+            details.append(
+                f"Artist Found: {artist_found[0] if artist_found else 'False'}"
+            )
+            details.append(
+                f"Album Found: {album_found[0] if album_found else 'False'}\n"
+            )
+            
+            details.append("Metadata:")
+            metadata_dict = info["metadata_dict"]
+            if metadata_dict:
+                for key, value in metadata_dict.items():
+                    details.append(f"{key}: {value}")
+            else:
+                details.append("No metadata available")
+            
+            return "\n".join(details)
 
-        # Stop any existing copy timers before creating a new one
-        if hasattr(self, "reset_copy_timer"):
-            self.reset_copy_timer.stop()
+        except Exception as e:
+            logger.error(f"Failed to format details text: {e}")
+            return "Error: Failed to format details"
 
-        # Create a new copy timer to reset the button text and color after 1 seconds
-        self.reset_copy_timer = QTimer(self)
-        self.reset_copy_timer.timeout.connect(self.resetCopyButton)
-        self.reset_copy_timer.start(1000)
+    def copyDetails(self) -> None:
+        """Copy the details to clipboard."""
+        try:
+            clipboard = QApplication.clipboard()
+            text = self.details_display.toPlainText()
+            if not text:
+                logger.warning("No text to copy to clipboard")
+                return
 
-    def resetCopyButton(self):
+            clipboard.setText(text)
+            self.copy_button.setText("Success")
+            self.copy_button.setStyleSheet(
+                """
+                background-color: rgba(255, 152, 152, 1);
+                color: black;
+            """
+            )
+
+            if hasattr(self, "reset_copy_timer"):
+                self.reset_copy_timer.stop()
+
+            self.reset_copy_timer = QTimer(self)
+            self.reset_copy_timer.timeout.connect(self.resetCopyButton)
+            self.reset_copy_timer.start(1000)
+
+        except Exception as e:
+            logger.error(f"Failed to copy to clipboard: {e}")
+            self.custom_dialog_signal.emit("Failed to copy text to clipboard")
+
+    def resetCopyButton(self) -> None:
+        """Reset the copy button text and style."""
         self.copy_button.setText("Copy Bottom")
         self.copy_button.setStyleSheet("")
 
-    def generateTXT(self):
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save TXT", "", "Text Files (*.txt)")
-        if file_name:
+    def generateTXT(self) -> None:
+        """Generate a text file with error details."""
+        self._save_file_with_dialog(
+            "Save TXT",
+            "Text Files (*.txt)",
+            self._generate_txt_content,
+            "An error occurred while generating the TXT file.",
+            self.txt_button
+        )
+
+    def generateCSV(self) -> None:
+        """Generate a CSV file with error details."""
+        self._save_file_with_dialog(
+            "Save CSV",
+            "CSV Files (*.csv)",
+            self._generate_csv_content,
+            "An error occurred while generating the CSV file.",
+            self.csv_button
+        )
+
+    def generateJSON(self) -> None:
+        """Generate a JSON file with error details."""
+        self._save_file_with_dialog(
+            "Save JSON",
+            "JSON Files (*.json)",
+            self._generate_json_content,
+            "An error occurred while generating the JSON file.",
+            self.json_button
+        )
+
+    def _save_file_with_dialog(
+        self,
+        title: str,
+        file_filter: str,
+        save_function: callable,
+        error_message: str,
+        success_button: QPushButton
+    ) -> None:
+        """Handle file saving with dialog and error handling.
+        
+        Args:
+            title: Dialog title
+            file_filter: File type filter
+            save_function: Function to save the file
+            error_message: Error message to display on failure
+            success_button: Button to update on success
+        """
+        try:
+            file_name, _ = QFileDialog.getSaveFileName(
+                self,
+                title,
+                "",
+                file_filter,
+                options=QFileDialog.DontUseNativeDialog
+            )
+            if not file_name:
+                logger.debug(f"No file name provided for {title}")
+                return
+
+            # Ensure proper file extension
+            if not any(file_name.endswith(ext) for ext in file_filter.split('*')[1:]):
+                file_name += file_filter.split('*')[1].split(')')[0]
+
+            self._save_file(file_name, save_function, error_message, success_button)
+
+        except Exception as e:
+            logger.error(f"Failed to handle file save dialog: {e}")
+            self.custom_dialog_signal.emit(f"Failed to save file: {str(e)}")
+
+    def _generate_txt_content(self, file_name: str) -> None:
+        """Generate text file content.
+        
+        Args:
+            file_name: Path to save the text file.
+        """
+        with open(file_name, "w", encoding="utf-8") as file:
+            for info in self.error_files:
+                file.write(self._format_details_text(info))
+                file.write("\n\n")
+
+    def _generate_csv_content(self, file_name: str) -> None:
+        """Generate CSV file content.
+        
+        Args:
+            file_name: Path to save the CSV file.
+        """
+        rows = []
+        max_metadata_fields = max(
+            len(info["metadata_dict"]) for info in self.error_files
+        )
+
+        # Generate rows
+        for info in self.error_files:
             try:
-                with open(file_name, "w", encoding="utf-8") as file:
-                    for info in self.error_files:
-                        file.write(f"File Name: {info['file_name']}\n")
-                        file.write(f"Error: {info['error']}\n")
-                        if info["artist_found"]:
-                            file.write(f"Artist Found: {info['artist_found'][0]}\n")
-                        else:
-                            file.write("Artist Found: False\n")
-                        if info["album_found"]:
-                            file.write(f"Album Found: {info['album_found'][0]}\n\n")
-                        else:
-                            file.write("Album Found: False\n\n")
-                        file.write("Metadata:\n")
-                        metadata_dict = info["metadata_dict"]
-                        if metadata_dict:
-                            for key, value in metadata_dict.items():
-                                file.write(f"{key}: {value}\n")
-                        else:
-                            file.write("No metadata available\n")
-                        file.write("\n")
+                row = self._process_csv_row(info)
+                rows.append(row)
+            except Exception as e:
+                logger.error(f"Failed to process CSV row: {e}")
+                continue
 
-                    # Update the button text and color temporarily
-                    self.txt_button.setText("Success")
-                    self.txt_button.setStyleSheet(
-                        """
-                        background-color: rgba(255, 152, 152, 1);
-                        color: black;
-                    """
-                    )
+        # Write to CSV file
+        with open(file_name, mode="w", encoding="utf-8-sig", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(self._generate_csv_header(max_metadata_fields))
+            writer.writerows(rows)
 
-                    # Stop any existing txt timers before creating a new one
-                    if hasattr(self, "reset_txt_timer"):
-                        self.reset_txt_timer.stop()
-
-                    # Create a new txt timer to reset the button text and color after 1 seconds
-                    self.reset_txt_timer = QTimer(self)
-                    self.reset_txt_timer.timeout.connect(self.resetTXTButton)
-                    self.reset_txt_timer.start(1000)
-
-            except Exception:
-                self.custom_dialog_signal.emit("An error occurred while generating the TXT file.")
-        else:
-            self.custom_dialog_signal.emit("Please provide a valid file name for the TXT file.")
-
-    def resetTXTButton(self):
-        self.txt_button.setText("Generate TXT File")
-        self.txt_button.setStyleSheet("")
-
-    def generateCSV(self):
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save CSV", "", "CSV Files (*.csv)")
-        if file_name:
+    def _generate_json_content(self, file_name: str) -> None:
+        """Generate JSON file content.
+        
+        Args:
+            file_name: Path to save the JSON file.
+        """
+        data = []
+        for info in self.error_files:
             try:
-                # Create a list to store all rows
-                rows = []
+                row_data = self._process_json_data(info)
+                data.append(row_data)
+            except Exception as e:
+                logger.error(f"Failed to process JSON data: {e}")
+                continue
 
-                # Determine the maximum number of metadata fields
-                max_metadata_fields = max(len(info["metadata_dict"]) for info in self.error_files)
+        with open(file_name, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
 
-                # Generate rows
-                for info in self.error_files:
-                    metadata_dict = {
-                        str(key): str(value) for key, value in info["metadata_dict"].items()
-                    }
+    def _process_csv_row(self, info: Dict[str, Any]) -> List[str]:
+        """Process a single row for CSV output.
+        
+        Args:
+            info: Dictionary containing file information.
+        
+        Returns:
+            List of values for the CSV row.
+        """
+        metadata_dict = self._format_metadata(info["metadata_dict"])
+        
+        artist_found = info["artist_found"][0] if info["artist_found"] else "None"
+        album_found = info["album_found"][0] if info["album_found"] else "None"
 
-                    # Get the first value from the list if available
-                    artist_found = info["artist_found"][0] if info["artist_found"] else "None"
-                    album_found = info["album_found"][0] if info["album_found"] else "None"
+        row = [info["file_name"], info["error"], artist_found, album_found]
 
-                    # Create an empty row
-                    row = [info["file_name"], info["error"], artist_found, album_found]
+        # Add metadata
+        for key, value in metadata_dict.items():
+            row.extend([key, value])
+        
+        return row
 
-                    # Generate metadata keys and values for the current row
-                    metadata_keys = list(metadata_dict.keys())
-                    metadata_values = list(metadata_dict.values())
+    def _process_json_data(self, info: Dict[str, Any]) -> Dict[str, Any]:
+        """Process data for JSON output.
+        
+        Args:
+            info: Dictionary containing file information.
+        
+        Returns:
+            Processed dictionary for JSON output.
+        """
+        metadata_dict = self._format_metadata(info["metadata_dict"])
+        
+        artist_found = info["artist_found"][0] if info["artist_found"] else "False"
+        album_found = info["album_found"][0] if info["album_found"] else "False"
+        
+        return {
+            "filename": info["file_name"],
+            "error": info["error"],
+            "artist_found": artist_found,
+            "album_found": album_found,
+            "metadata_dict": metadata_dict,
+        }
 
-                    # Fill in missing metadata fields with 'None'
-                    metadata_keys.extend(["None"] * (max_metadata_fields - len(metadata_keys)))
-                    metadata_values.extend(["None"] * (max_metadata_fields - len(metadata_values)))
+    def _format_metadata(self, metadata_dict: Dict[str, Any]) -> Dict[str, str]:
+        """Format metadata dictionary values to strings.
+        
+        Args:
+            metadata_dict: Raw metadata dictionary
+            
+        Returns:
+            Dictionary with string values
+        """
+        try:
+            if not self._validate_metadata_dict(metadata_dict):
+                logger.warning("Invalid metadata dictionary")
+                return {}
+            
+            return {
+                str(key): str(value)
+                for key, value in metadata_dict.items()
+                if value is not None
+            }
+        except Exception as e:
+            logger.error(f"Failed to format metadata: {e}")
+            return {}
 
-                    # Add the metadata keys and values to the row
-                    for key, value in zip(metadata_keys, metadata_values):
-                        row.append(key)
-                        row.append(value)
-
-                    # Add the row to the list
-                    rows.append(row)
-
-                # Determine the maximum number of columns for the header
-                max_columns = max(len(row) for row in rows)
-
-                # Fill in missing values in each row with 'None' to ensure equal length
-                for row in rows:
-                    row.extend(["None"] * (max_columns - len(row)))
-
-                # Determine the column headers based on the maximum row length
-                header = ["File Name", "Error", "Artist Found", "Album Found"]
-                header.extend(
-                    [
-                        f"Key {i//2 + 1}" if i % 2 == 0 else f"Value {i//2 + 1}"
-                        for i in range(max_metadata_fields * 2)
-                    ]
-                )
-
-                # Write to the CSV file with UTF-8 encoding
-                with open(file_name, mode="w", encoding="utf-8-sig", newline="") as file:
-                    writer = csv.writer(file)
-                    writer.writerow(header)
-                    writer.writerows(rows)
-
-                # Update the button text and color temporarily
-                self.csv_button.setText("Success")
-                self.csv_button.setStyleSheet(
-                    """
-                    background-color: rgba(255, 152, 152, 1);
-                    color: black;
-                """
-                )
-
-                # Stop any existing csv timers before creating a new one
-                if hasattr(self, "reset_csv_timer"):
-                    self.reset_csv_timer.stop()
-
-                # Create a new csv timer to reset the button text and color after 1 seconds
-                self.reset_csv_timer = QTimer(self)
-                self.reset_csv_timer.timeout.connect(self.resetCSVButton)
-                self.reset_csv_timer.start(1000)
-
-            except Exception:
-                self.custom_dialog_signal.emit("An error occurred while generating the CSV file.")
-        else:
-            self.custom_dialog_signal.emit("Please provide a valid file name for the CSV.")
-
-    def resetCSVButton(self):
-        self.csv_button.setText("Generate CSV File")
-        self.csv_button.setStyleSheet("")
-
-    def generateExcel(self):
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Excel", "", "Excel Files (*.xlsx)")
-        if file_name:
-            try:
-                # Create a new workbook
-                wb = openpyxl.Workbook()
-                ws = wb.active
-
-                # Generate rows
-                rows = []
-                max_metadata_columns = 0
-                for info in self.error_files:
-                    metadata_dict = {
-                        str(key): str(value) for key, value in info["metadata_dict"].items()
-                    }
-
-                    # Extract values from the list if available
-                    artist_found = info["artist_found"][0] if info["artist_found"] else "None"
-                    album_found = info["album_found"][0] if info["album_found"] else "None"
-
-                    row = [info["file_name"], info["error"], artist_found, album_found]
-
-                    # Generate metadata keys and values for the current row
-                    metadata_keys = list(metadata_dict.keys())
-                    metadata_values = list(metadata_dict.values())
-
-                    # Convert problematic values to strings before appending to the row
-                    row = [str(cell) if isinstance(cell, list) else cell for cell in row]
-                    metadata_values = [
-                        str(value) if isinstance(value, list) else value
-                        for value in metadata_values
-                    ]
-
-                    # Add the metadata keys and values to the row
-                    for key, value in zip(metadata_keys, metadata_values):
-                        row.append(key)
-                        row.append(value)
-
-                    # Add the row to the list
-                    rows.append(row)
-
-                    # Update the maximum number of metadata columns
-                    max_metadata_columns = max(max_metadata_columns, len(metadata_dict) * 2)
-
-                # Determine the maximum number of columns for the header
-                max_columns = 4 + max_metadata_columns
-
-                # Fill in missing values in each row with 'None' to ensure equal length
-                for row in rows:
-                    row.extend(["None"] * (max_columns - len(row)))
-
-                # Determine the column headers based on the maximum row length
-                header = ["File Name", "Error", "Artist Found", "Album Found"]
-                header.extend(
-                    [
-                        f"Key {i//2 + 1}" if i % 2 == 0 else f"Value {i//2 + 1}"
-                        for i in range(0, max_columns - 4)
-                    ]
-                )
-
-                # Write the header row
-                ws.append(header)
-
-                # Write the data rows
-                for row in rows:
-                    ws.append(row)
-
-                # Auto-size columns for better visibility
-                for column in ws.columns:
-                    max_length = 0
-                    column = [cell for cell in column]
-                    for cell in column:
-                        try:
-                            if len(str(cell.value)) > max_length:
-                                max_length = len(cell.value)
-                        except Exception:
-                            # Log the error and continue
-                            logger.warning("Failed to process cell value")
-                    adjusted_width = max_length + 2
-                    ws.column_dimensions[column[0].column_letter].width = adjusted_width
-
-                # Save the Excel file
-                wb.save(file_name)
-
-                # Update the button text and color temporarily
-                self.excel_button.setText("Success")
-                self.excel_button.setStyleSheet(
-                    """
-                    background-color: rgba(255, 152, 152, 1);
-                    color: black;
-                """
-                )
-
-                # Stop any existing excel timers before creating a new one
-                if hasattr(self, "reset_excel_timer"):
-                    self.reset_excel_timer.stop()
-
-                # Create a new excel timer to reset the button text and color after 1 seconds
-                self.reset_excel_timer = QTimer(self)
-                self.reset_excel_timer.timeout.connect(self.resetExcelButton)
-                self.reset_excel_timer.start(1000)
-
-            except Exception:
-                self.custom_dialog_signal.emit("An error occurred while generating the Excel file.")
-        else:
-            self.custom_dialog_signal.emit("Please provide a valid file name for the Excel file.")
-
-    def resetExcelButton(self):
-        self.excel_button.setText("Generate Excel File")
-        self.excel_button.setStyleSheet("")
-
-    def generateJSON(self):
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save JSON", "", "JSON Files (*.json)")
-        if file_name:
-            try:
-                data = []
-                for info in self.error_files:
-                    metadata_dict = {
-                        str(key): str(value) for key, value in info["metadata_dict"].items()
-                    }
-
-                    artist_found = info["artist_found"][0] if info["artist_found"] else "False"
-                    album_found = info["album_found"][0] if info["album_found"] else "False"
-
-                    row_data = {
-                        "filename": info["file_name"],
-                        "error": info["error"],
-                        "artist_found": artist_found,
-                        "album_found": album_found,
-                        "metadata_dict": metadata_dict,
-                    }
-                    data.append(row_data)
-
-                with open(file_name, "w") as file:
-                    json.dump(data, file, indent=4)
-
-                # Update the button text and color temporarily
-                self.json_button.setText("Success")
-                self.json_button.setStyleSheet(
-                    """
-                    background-color: rgba(255, 152, 152, 1);
-                    color: black;
-                """
-                )
-
-                # Stop any existing json timers before creating a new one
-                if hasattr(self, "reset_json_timer"):
-                    self.reset_json_timer.stop()
-
-                # Create a new json timer to reset the button text and color after 1 seconds
-                self.reset_json_timer = QTimer(self)
-                self.reset_json_timer.timeout.connect(self.resetJSONButton)
-                self.reset_json_timer.start(1000)
-
-            except Exception:
-                self.custom_dialog_signal.emit("An error occurred while generating the JSON file.")
-        else:
-            self.custom_dialog_signal.emit("Please provide a valid file name for the JSON file.")
-
-    def resetJSONButton(self):
-        self.json_button.setText("Generate JSON File")
-        self.json_button.setStyleSheet("")
+    def _validate_metadata_dict(self, metadata_dict: Dict[str, Any]) -> bool:
+        """Validate metadata dictionary structure.
+        
+        Args:
+            metadata_dict: Dictionary containing metadata.
+        
+        Returns:
+            True if valid, False otherwise.
+        """
+        try:
+            if not isinstance(metadata_dict, dict):
+                return False
+            
+            # Check all values can be converted to strings
+            for value in metadata_dict.values():
+                try:
+                    str(value)
+                except Exception:
+                    return False
+                
+            return True
+        
+        except Exception as e:
+            logger.error(f"Metadata validation error: {e}")
+            return False
 
     def update_error_list(
         self,
-        error_list: List[
-            Dict[str, Union[str, List[str], Dict[str, str]]]
-        ]
+        error_list: List[ErrorDict]
     ) -> None:
         """Update the error list widget with new errors."""
         self.error_list = error_list
@@ -613,3 +640,294 @@ class MusicErrorWindow(QWidget):
             self.error_details.setText("")
         except Exception as e:
             logger.error(f"Failed to clear error text: {e}")
+
+    def resetExcelButton(self) -> None:
+        """Reset the Excel button text and style."""
+        self.excel_button.setText("Generate Excel File")
+        self.excel_button.setStyleSheet("")
+
+    def generateExcel(self) -> None:
+        """Generate Excel file with error details and proper error handling."""
+        try:
+            file_name = self._get_save_filename("Excel Files (*.xlsx)")
+            if not file_name:
+                return
+
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            
+            headers = self._generate_excel_headers()
+            ws.append(headers)
+            
+            for row_data in self._generate_excel_rows():
+                ws.append(row_data)
+            
+            self._save_excel_file(wb, file_name)
+            self._update_button_status(self.excel_button, "Excel File Generated!")
+            
+        except Exception as e:
+            logger.error(f"Failed to generate Excel file: {e}")
+            self.custom_dialog_signal.emit("Failed to generate Excel file")
+            self._update_button_status(self.excel_button, "Excel Generation Failed!")
+
+    def _generate_excel_headers(self) -> List[str]:
+        """Generate Excel headers with metadata columns."""
+        base_headers = ["Filename", "Error", "Artist Found", "Album Found"]
+        metadata_headers = self._get_unique_metadata_keys()
+        return base_headers + metadata_headers
+
+    def _generate_excel_rows(self) -> List[List[str]]:
+        """Generate Excel rows with proper formatting."""
+        rows = []
+        for info in self.error_files:
+            try:
+                row = self._format_excel_row(info)
+                rows.append(row)
+            except Exception as e:
+                logger.error(f"Failed to format row for {info.get('file_name', 'unknown')}: {e}")
+                continue
+        return rows
+
+    def _get_save_filename(self, file_filter: str) -> str:
+        """Get a valid save filename from the user."""
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Excel", "", file_filter)
+        return file_name
+
+    def _save_excel_file(self, wb: openpyxl.Workbook, file_name: str) -> None:
+        """Save the Excel workbook to a file."""
+        try:
+            wb.save(file_name)
+        except Exception as e:
+            logger.error(f"Failed to save Excel file: {e}")
+            self.custom_dialog_signal.emit("Failed to save Excel file")
+
+    def _update_button_status(self, button: QPushButton, status: str) -> None:
+        """Update the button text and style to reflect the status."""
+        button.setText(status)
+        button.setStyleSheet(
+            """
+            background-color: rgba(255, 152, 152, 1);
+            color: black;
+        """
+        )
+
+    def _get_unique_metadata_keys(self) -> List[str]:
+        """Get a list of unique metadata keys from all error files."""
+        keys = set()
+        for info in self.error_files:
+            keys.update(info["metadata_dict"].keys())
+        return sorted(list(keys))
+
+    def _format_excel_row(self, info: Dict[str, Any]) -> List[str]:
+        """Format a single row for Excel output."""
+        row = [
+            info["file_name"],
+            info["error"],
+            info["artist_found"][0] if info["artist_found"] else "None",
+            info["album_found"][0] if info["album_found"] else "None"
+        ]
+        metadata_dict = self._format_metadata(info["metadata_dict"])
+        for key, value in metadata_dict.items():
+            row.append(str(value))
+        return row
+
+    def saveWindowState(self) -> None:
+        """Save the current window state."""
+        try:
+            settings = QSettings()
+            settings.setValue("MusicErrorWindow/geometry", self.saveGeometry())
+            settings.setValue("MusicErrorWindow/windowState", self.saveState())
+        except Exception as e:
+            logger.error(f"Failed to save window state: {e}")
+
+    def restoreWindowState(self) -> None:
+        """Restore the previous window state and geometry."""
+        try:
+            settings = QSettings()
+            geometry = settings.value("MusicErrorWindow/geometry")
+            state = settings.value("MusicErrorWindow/windowState")
+            
+            if geometry:
+                self.restoreGeometry(geometry)
+            if state:
+                self.restoreState(state)
+        except Exception as e:
+            logger.error(f"Failed to restore window state: {e}")
+            self.center_window()  # Fallback to centered position
+
+    def _validate_error_files(self, error_files: List[Dict[str, Any]]) -> bool:
+        """Validate the error files data structure.
+        
+        Args:
+            error_files: List of dictionaries containing error information.
+        
+        Returns:
+            bool: True if valid, False otherwise.
+        """
+        try:
+            if not isinstance(error_files, list):
+                logger.error("Error files must be a list")
+                return False
+
+            required_keys = {"file_name", "error", "artist_found", "album_found", "metadata_dict"}
+            
+            for error_file in error_files:
+                if not isinstance(error_file, dict):
+                    logger.error("Each error file must be a dictionary")
+                    return False
+                    
+                if not all(key in error_file for key in required_keys):
+                    logger.error(f"Missing required keys in error file: {required_keys - error_file.keys()}")
+                    return False
+                    
+                if not isinstance(error_file["metadata_dict"], dict):
+                    logger.error("metadata_dict must be a dictionary")
+                    return False
+
+            return True
+        
+        except Exception as e:
+            logger.error(f"Error validating error files: {e}")
+            return False
+
+    def _configure_button(
+        self,
+        button: QPushButton,
+        text: str,
+        tooltip: str = "",
+        size_policy: tuple = (QSizePolicy.Expanding, QSizePolicy.Fixed)
+    ) -> None:
+        """Configure a button with standard settings.
+        
+        Args:
+            button: The button to configure.
+            text: Button text.
+            tooltip: Button tooltip text.
+            size_policy: Tuple of horizontal and vertical size policies.
+        """
+        try:
+            button.setText(text)
+            if tooltip:
+                button.setToolTip(tooltip)
+            button.setSizePolicy(*size_policy)
+            button.setObjectName(text.replace(" ", ""))
+            
+            # Set standard style
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: transparent;
+                    border: 1px solid black;
+                    padding: 5px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 152, 152, 0.3);
+                }
+            """)
+        except Exception as e:
+            logger.error(f"Failed to setup button {text}: {e}")
+            raise
+
+    def _save_file(
+        self,
+        file_name: str,
+        save_function: callable,
+        error_message: str,
+        success_button: QPushButton
+    ) -> None:
+        """Handle file saving operations with consistent error handling.
+        
+        Args:
+            file_name: Path to save the file.
+            save_function: Function that performs the actual save operation.
+            error_message: Message to display if save fails.
+            success_button: Button to update on successful save.
+        """
+        try:
+            save_function(file_name)
+            self._update_button_success(success_button)
+        except PermissionError:
+            logger.error(f"Permission denied while saving to {file_name}")
+            self.custom_dialog_signal.emit(
+                f"Cannot save file. Please check if the file is open in another program."
+            )
+        except Exception as e:
+            logger.error(f"Failed to save file {file_name}: {e}")
+            self.custom_dialog_signal.emit(error_message)
+
+    def _update_button_success(self, button: QPushButton) -> None:
+        """Update button appearance to show success state.
+        
+        Args:
+            button: The button to update.
+        """
+        try:
+            button.setText("Success")
+            button.setStyleSheet(
+                """
+                background-color: rgba(255, 152, 152, 1);
+                color: black;
+            """
+            )
+
+            # Create timer attribute name based on button name
+            timer_attr = f"reset_{button.objectName().lower()}_timer"
+
+            # Stop existing timer if it exists
+            if hasattr(self, timer_attr):
+                getattr(self, timer_attr).stop()
+
+            # Create new timer
+            timer = QTimer(self)
+            setattr(self, timer_attr, timer)
+            
+            # Connect to appropriate reset method
+            reset_method = getattr(self, f"reset{button.objectName()}Button")
+            timer.timeout.connect(reset_method)
+            timer.start(1000)
+
+        except Exception as e:
+            logger.error(f"Failed to update button success state: {e}")
+
+    def _generate_csv_header(self, max_metadata_fields: int) -> List[str]:
+        """Generate CSV file header based on the maximum number of metadata fields.
+        
+        Args:
+            max_metadata_fields: Maximum number of metadata fields.
+        
+        Returns:
+            List of column headers for the CSV file.
+        """
+        header = ["File Name", "Error", "Artist Found", "Album Found"]
+        header.extend(
+            [
+                f"Key {i//2 + 1}" if i % 2 == 0 else f"Value {i//2 + 1}"
+                for i in range(max_metadata_fields * 2)
+            ]
+        )
+        return header
+
+    def _validate_metadata_dict(self, metadata_dict: Dict[str, Any]) -> bool:
+        """Validate metadata dictionary structure.
+        
+        Args:
+            metadata_dict: Dictionary containing metadata.
+        
+        Returns:
+            True if valid, False otherwise.
+        """
+        try:
+            if not isinstance(metadata_dict, dict):
+                return False
+            
+            # Check all values can be converted to strings
+            for value in metadata_dict.values():
+                try:
+                    str(value)
+                except Exception:
+                    return False
+                
+            return True
+        
+        except Exception as e:
+            logger.error(f"Metadata validation error: {e}")
+            return False

@@ -5,6 +5,7 @@ Custom dialog window for displaying messages to the user.
 import json
 from logging import getLogger
 from typing import Any, Dict, Optional
+from pathlib import Path
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
@@ -126,29 +127,40 @@ class CustomDialog(QDialog):
         self.center_window()
 
     def closeEvent(self, event: Any) -> None:
-        """
-        Handle the close event.
-
-        This method:
-        1. Stops the notification sound
-        2. Waits for the thread to finish
-        """
-        if self.notification_thread and self.notification_thread.isRunning():
-            self.notification_thread.terminate()
-        super().closeEvent(event)
-        # Wait for the thread to finish before quitting the application
-        if self.notification_thread:
-            self.notification_thread.wait()
-
-    def load_settings(self) -> None:
-        """Load settings from the settings file."""
+        """Handle dialog close with proper cleanup."""
         try:
-            with open("settings_jmo.json", "r") as f:
-                self.settings: Dict[str, Any] = json.load(f)
+            if hasattr(self, "notification_thread"):
+                if self.notification_thread and self.notification_thread.isRunning():
+                    self.notification_thread.requestInterruption()
+                    self.notification_thread.wait(1000)  # Wait up to 1 second
+                    if self.notification_thread.isRunning():
+                        self.notification_thread.terminate()
+                    
+            super().closeEvent(event)
+        except Exception as e:
+            logger.error(f"Error during dialog close: {e}")
+            event.accept()  # Ensure the dialog closes
 
-        except FileNotFoundError:
-            # Initialize self.settings dictionary
-            self.settings = {}
+    def load_settings(self) -> Dict[str, Any]:
+        """Load and validate settings from file.
+        
+        Returns:
+            Dict containing settings or default values
+        """
+        try:
+            if not Path("settings_jmo.json").exists():
+                return self._get_default_settings()
+            
+            with open("settings_jmo.json", "r", encoding="utf-8") as f:
+                settings = json.load(f)
+            
+            return self._validate_settings(settings)
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid settings file format: {e}")
+            return self._get_default_settings()
+        except Exception as e:
+            logger.error(f"Failed to load settings: {e}")
+            return self._get_default_settings()
 
     def setup_ui(self, custom_message: str) -> None:
         """Set up the dialog's user interface."""

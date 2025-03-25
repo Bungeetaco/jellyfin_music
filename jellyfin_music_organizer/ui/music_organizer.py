@@ -504,21 +504,31 @@ class MusicOrganizer(QWidget):
 
     def organize_error(self) -> None:
         """Show the error window for files with errors."""
-        if self.recall_files["error_files"]:
-            # Music File Error Window
+        try:
+            if not hasattr(self, "recall_files") or not self.recall_files.get("error_files"):
+                logger.warning("No error files to display")
+                return
+
             self.music_error_window = MusicErrorWindow(self.recall_files["error_files"])
             self.music_error_window.windowClosed.connect(self.user_interface)
             self.music_error_window.windowOpened.connect(self.user_interface)
             self.music_error_window.custom_dialog_signal.connect(self.custom_dialog_function)
             self.music_error_window.show()
+        except Exception as e:
+            logger.error(f"Failed to show error window: {e}")
+            self.custom_dialog_function("Failed to display error window")
 
     def settings_window(self) -> None:
         """Show the settings window."""
-        # Settings Window
-        self.music_error_window = SettingsWindow()
-        self.music_error_window.windowClosed.connect(self.settings_finish)
-        self.music_error_window.windowOpened.connect(self.user_interface)
-        self.music_error_window.show()
+        try:
+            settings_data = self.get_current_settings()
+            self.settings_window_instance = SettingsWindow(settings_data)
+            self.settings_window_instance.windowClosed.connect(self.settings_finish)
+            self.settings_window_instance.windowOpened.connect(self.user_interface)
+            self.settings_window_instance.show()
+        except Exception as e:
+            logger.error(f"Failed to show settings window: {e}")
+            self.custom_dialog_function("Failed to open settings")
 
     def settings_finish(self) -> None:
         """
