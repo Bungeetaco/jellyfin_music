@@ -22,5 +22,5 @@ class ASFAttribute(Protocol):
 
 
 # Type aliases for metadata values
-MetadataValue = TypeAlias = Union[str, List[str], ASFAttribute]
-MetadataDict = TypeAlias = Dict[str, MetadataValue]
+MetadataValue = Union[str, int, float, bool]
+MetadataDict = Dict[str, MetadataValue]

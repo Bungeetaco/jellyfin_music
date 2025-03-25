@@ -115,6 +115,14 @@ class LinuxNotificationStrategy(NotificationStrategy):
         pass
 
 
+class DummyNotificationStrategy(NotificationStrategy):
+    """Dummy notification strategy for unsupported platforms."""
+    
+    def notify(self, title: str, message: str) -> None:
+        """Do nothing."""
+        pass
+
+
 class NotificationManager(QObject):
     """Manage application notifications."""
 
@@ -243,3 +251,12 @@ class LinuxNotifier(SystemNotifier):
         except Exception as e:
             logger.error(f"Linux notification failed: {e}")
             return False
+
+
+def get_notification_strategy() -> NotificationStrategy:
+    """Get appropriate notification strategy for current platform."""
+    system = platform.system()
+    if system == "Windows":
+        return WindowsNotificationStrategy()
+    else:
+        return DummyNotificationStrategy()

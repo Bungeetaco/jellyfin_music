@@ -1,7 +1,10 @@
 from pathlib import Path
-from typing import Optional
-
+from typing import Optional, List
+import logging
 from PyQt5.QtWidgets import QFileDialog, QWidget
+from .qt_types import QtConstants
+
+logger = logging.getLogger(__name__)
 
 
 class DialogManager:

@@ -1,11 +1,16 @@
-from typing import Any, Callable, Dict, Generic, TypeVar
+import logging
+from typing import Any, Callable, Dict, Generic, TypeVar, List, Optional
+from dataclasses import dataclass
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
 T = TypeVar("T")
 
+logger = logging.getLogger(__name__)
 
-class Event(Generic[T]):
+
+@dataclass
+class Event:
     """Type-safe event implementation."""
 
     def __init__(self) -> None:

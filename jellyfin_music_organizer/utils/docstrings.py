@@ -1,5 +1,5 @@
 import inspect
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Any, Callable, Dict, Optional
 
 T = TypeVar("T")
 
@@ -35,3 +35,7 @@ def validate_docstrings() -> None:
     # Validate all modules
     for module in jellyfin_music_organizer.__all__:
         validate_module(module)
+
+
+def validate_docstring(func: Callable[..., Any]) -> None:
+    # ... existing code ...

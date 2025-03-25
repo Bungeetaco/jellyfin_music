@@ -160,7 +160,7 @@ class OrganizeThread(QThread):
 
                     try:
                         # Load and extract metadata from the music file
-                        metadata: Dict[str, str] = extract_metadata(path_in_str)
+                        metadata: Dict[str, str] = self.process_metadata(path)
                         if metadata is None:
                             raise ValueError(f"Could not load metadata from {path_in_str}")
 
@@ -314,3 +314,10 @@ class OrganizeThread(QThread):
             "metadata_dict": metadata_dict,
             "error": str(error),
         }
+
+    def process_metadata(self, file_path: Path) -> Dict[str, str]:
+        """Process metadata from file."""
+        try:
+            return self.metadata_handler.extract_metadata(file_path)
+        except Exception as e:
+            raise MetadataError(f"Failed to process metadata: {e}")
