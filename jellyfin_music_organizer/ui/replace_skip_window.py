@@ -258,12 +258,7 @@ class ReplaceSkipWindow(QWidget):
         Path(new_location).mkdir(parents=True, exist_ok=True)
         shutil.copy(path_in_str, f"{new_location}/{file_name}")
 
-    def update_file_info(
-        self,
-        source_path: str,
-        destination_path: str,
-        file_exists: bool
-    ) -> None:
+    def update_file_info(self, source_path: str, destination_path: str, file_exists: bool) -> None:
         """Update the window with information about the current file operation."""
         self.source_path = source_path
         self.destination_path = destination_path

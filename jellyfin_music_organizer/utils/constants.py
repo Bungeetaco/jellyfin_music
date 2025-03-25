@@ -83,5 +83,5 @@ ERROR_MESSAGES: Dict[str, str] = {
     "MISSING_REQUIRED": "Missing required metadata",
     "NETWORK_ERROR": "Network connection error",
     "PERMISSION_ERROR": "Permission denied",
-    "UNKNOWN_ERROR": "Unknown error occurred"
+    "UNKNOWN_ERROR": "Unknown error occurred",
 }
