@@ -33,4 +33,8 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: jellyfin-music-organizer-${{ matrix.os }}
+<<<<<<< HEAD
         path: dist/* 
+=======
+        path: dist/* 
+>>>>>>> b10bde59a0f4a0f723f54cc1c830801d45419115

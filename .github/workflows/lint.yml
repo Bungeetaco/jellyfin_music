@@ -30,4 +30,8 @@ jobs:
       run: flake8 . --count --max-line-length=100 --statistics
       
     - name: Type check with mypy
+<<<<<<< HEAD
       run: mypy jellyfin_music_organizer 
+=======
+      run: mypy jellyfin_music_organizer 
+>>>>>>> b10bde59a0f4a0f723f54cc1c830801d45419115

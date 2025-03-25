@@ -34,4 +34,8 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
+<<<<<<< HEAD
         file: ./coverage.xml 
+=======
+        file: ./coverage.xml 
+>>>>>>> b10bde59a0f4a0f723f54cc1c830801d45419115
