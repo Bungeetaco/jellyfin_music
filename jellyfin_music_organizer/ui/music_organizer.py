@@ -2,44 +2,56 @@
 Main window for the Jellyfin Music Organizer application.
 """
 
-from typing import Dict, Any, Optional, List
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                            QPushButton, QProgressBar, QApplication,
-                            QFileDialog, QSizeGrip, QSpacerItem, QSizePolicy)
+import json
+from typing import Any, Dict, List, Optional
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-import json
-from ..resources import resources_rc
+from PyQt5.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QSizeGrip,
+    QSizePolicy,
+    QSpacerItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 # Other classes within files
 from ..core.notification_audio_thread import NotificationAudioThread
 from ..core.organize_thread import OrganizeThread
+from ..resources import resources_rc
 from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
 from .replace_skip_window import ReplaceSkipWindow
 from .settings_window import SettingsWindow
 
+
 class MusicOrganizer(QWidget):
     """
     Main window for the Jellyfin Music Organizer application.
-    
+
     This window:
     1. Provides the main user interface
     2. Handles folder selection
     3. Manages the organization process
     4. Shows progress and results
     """
-    
+
     def __init__(self) -> None:
         """Initialize the MusicOrganizer window."""
         super().__init__()
 
         # Version Control
-        self.version: str = '3.06'
+        self.version: str = "3.06"
 
         # Set default settings
-        self.music_folder_path: str = ''
-        self.destination_folder_path: str = ''
+        self.music_folder_path: str = ""
+        self.destination_folder_path: str = ""
 
         # Setup and show user interface
         self.setup_ui()
@@ -53,7 +65,7 @@ class MusicOrganizer(QWidget):
     def showEvent(self, event: Any) -> None:
         """
         Handle the show event.
-        
+
         This method centers the window on the screen.
         """
         super().showEvent(event)
@@ -62,7 +74,7 @@ class MusicOrganizer(QWidget):
     def setup_titlebar(self) -> None:
         """
         Set up the custom title bar.
-        
+
         This method:
         1. Creates a custom title bar widget
         2. Adds window controls (minimize, close)
@@ -80,7 +92,7 @@ class MusicOrganizer(QWidget):
         hbox_title_layout.setContentsMargins(0, 0, 0, 0)
 
         self.icon_label: QLabel = QLabel()
-        self.icon_label.setPixmap(QIcon(':/Octopus.ico').pixmap(24, 24))
+        self.icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
         hbox_title_layout.addWidget(self.icon_label)
 
         self.title_label: QLabel = QLabel(f"Music Organizer v{self.version}")
@@ -90,7 +102,7 @@ class MusicOrganizer(QWidget):
         hbox_title_layout.addStretch()
 
         self.settings_button: QPushButton = QPushButton("⚙")
-        self.settings_button.setToolTip('Settings')
+        self.settings_button.setToolTip("Settings")
         self.settings_button.setFixedSize(24, 24)
         self.settings_button.setStyleSheet(
             "QPushButton { color: white; background-color: transparent; }"
@@ -100,7 +112,7 @@ class MusicOrganizer(QWidget):
         self.settings_button.clicked.connect(self.settings_window)
 
         self.minimize_button: QPushButton = QPushButton("—")
-        self.minimize_button.setToolTip('Minimize window')
+        self.minimize_button.setToolTip("Minimize window")
         self.minimize_button.setFixedSize(24, 24)
         self.minimize_button.setStyleSheet(
             "QPushButton { color: white; background-color: transparent; }"
@@ -110,7 +122,7 @@ class MusicOrganizer(QWidget):
         self.minimize_button.clicked.connect(self.showMinimized)
 
         self.close_button: QPushButton = QPushButton("✕")
-        self.close_button.setToolTip('Close window')
+        self.close_button.setToolTip("Close window")
         self.close_button.setFixedSize(24, 24)
         self.close_button.setStyleSheet(
             "QPushButton { color: white; background-color: transparent; }"
@@ -124,7 +136,7 @@ class MusicOrganizer(QWidget):
     def mousePressEvent(self, event: Any) -> None:
         """
         Handle mouse press events.
-        
+
         This method enables window dragging when clicking the title bar.
         """
         if event.button() == Qt.LeftButton and event.y() <= self.title_bar.height():
@@ -134,17 +146,17 @@ class MusicOrganizer(QWidget):
     def mouseMoveEvent(self, event: Any) -> None:
         """
         Handle mouse move events.
-        
+
         This method moves the window when dragging.
         """
-        if hasattr(self, 'draggable') and self.draggable:
+        if hasattr(self, "draggable") and self.draggable:
             if event.buttons() & Qt.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
     def mouseReleaseEvent(self, event: Any) -> None:
         """
         Handle mouse release events.
-        
+
         This method disables window dragging.
         """
         if event.button() == Qt.LeftButton:
@@ -153,7 +165,7 @@ class MusicOrganizer(QWidget):
     def setup_ui(self) -> None:
         """
         Set up the main user interface.
-        
+
         This method:
         1. Creates the window layout
         2. Adds folder selection buttons
@@ -161,9 +173,9 @@ class MusicOrganizer(QWidget):
         4. Adds window controls
         """
         # Window setup
-        self.setWindowTitle(f'Music Organizer v{self.version}')
-        self.setWindowIcon(QIcon(':/Octopus.ico'))
-        self.setGeometry(100, 100, 400, 260) # Set initial size of window (x, y, width, height)
+        self.setWindowTitle(f"Music Organizer v{self.version}")
+        self.setWindowIcon(QIcon(":/Octopus.ico"))
+        self.setGeometry(100, 100, 400, 260)  # Set initial size of window (x, y, width, height)
 
         # Main layout
         main_layout: QVBoxLayout = QVBoxLayout(self)
@@ -180,7 +192,7 @@ class MusicOrganizer(QWidget):
         vbox_main_layout: QVBoxLayout = QVBoxLayout(self.central_widget)
 
         # Create music folder select button
-        self.music_folder_select_button: QPushButton = QPushButton('Select Music Folder')
+        self.music_folder_select_button: QPushButton = QPushButton("Select Music Folder")
         vbox_main_layout.addWidget(self.music_folder_select_button)
         self.music_folder_select_button.clicked.connect(self.select_music_folder)
 
@@ -189,7 +201,9 @@ class MusicOrganizer(QWidget):
         vbox_main_layout.addWidget(self.music_folder_label)
 
         # Create destination folder select button
-        self.destination_folder_select_button: QPushButton = QPushButton('Select Destination Folder')
+        self.destination_folder_select_button: QPushButton = QPushButton(
+            "Select Destination Folder"
+        )
         vbox_main_layout.addWidget(self.destination_folder_select_button)
         self.destination_folder_select_button.clicked.connect(self.select_destination_folder)
 
@@ -202,7 +216,7 @@ class MusicOrganizer(QWidget):
         vbox_main_layout.addItem(spacer_item)
 
         # Create organize button
-        self.organize_button: QPushButton = QPushButton('Organize')
+        self.organize_button: QPushButton = QPushButton("Organize")
         # Check if settings are empty
         if not self.music_folder_path or not self.destination_folder_path:
             self.organize_button.setEnabled(False)
@@ -227,8 +241,10 @@ class MusicOrganizer(QWidget):
 
         # Add resizing handles
         self.bottom_right_grip: QSizeGrip = QSizeGrip(self)
-        self.bottom_right_grip.setToolTip('Resize window')
-        hbox_progress_grip_layout.addWidget(self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight)
+        self.bottom_right_grip.setToolTip("Resize window")
+        hbox_progress_grip_layout.addWidget(
+            self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+        )
 
     def center_window(self) -> None:
         """Center the window on the screen."""
@@ -241,13 +257,13 @@ class MusicOrganizer(QWidget):
     def select_music_folder(self) -> None:
         """
         Open a dialog to select the music source folder.
-        
+
         This method:
         1. Shows a folder selection dialog
         2. Updates the UI with the selected path
         3. Resets progress indicators
         """
-        music_folder_path = QFileDialog.getExistingDirectory(self, 'Select Music Folder')
+        music_folder_path = QFileDialog.getExistingDirectory(self, "Select Music Folder")
         if music_folder_path:
             self.music_folder_path = music_folder_path
             self.music_folder_label.setText(self.music_folder_path)
@@ -261,13 +277,15 @@ class MusicOrganizer(QWidget):
     def select_destination_folder(self) -> None:
         """
         Open a dialog to select the destination folder.
-        
+
         This method:
         1. Shows a folder selection dialog
         2. Updates the UI with the selected path
         3. Resets progress indicators
         """
-        destination_folder_path = QFileDialog.getExistingDirectory(self, 'Select Destination Folder')
+        destination_folder_path = QFileDialog.getExistingDirectory(
+            self, "Select Destination Folder"
+        )
         if destination_folder_path:
             self.destination_folder_path = destination_folder_path
             self.destination_folder_label.setText(self.destination_folder_path)
@@ -281,20 +299,20 @@ class MusicOrganizer(QWidget):
     def reset_progress_songs_label(self) -> None:
         """Reset the progress bar and songs label to their initial state."""
         self.music_progress_bar.setValue(0)  # Reset the progress bar to 0
-        self.music_progress_bar.setStyleSheet("") # Reset the style sheet to default
-        self.number_songs_label.setText('') # Reset number of songs label
+        self.music_progress_bar.setStyleSheet("")  # Reset the style sheet to default
+        self.number_songs_label.setText("")  # Reset number of songs label
 
     def load_settings(self) -> None:
         """
         Load settings from the settings file.
-        
+
         This method:
         1. Reads the settings file
         2. Updates the UI with saved paths
         3. Updates the organize button state
         """
         try:
-            with open('settings_jmo.json', 'r') as f:
+            with open("settings_jmo.json", "r") as f:
                 self.settings: Dict[str, Any] = json.load(f)
                 self.music_folder_path = self.settings.get("music_folder_path", "")
                 self.destination_folder_path = self.settings.get("destination_folder_path", "")
@@ -315,7 +333,7 @@ class MusicOrganizer(QWidget):
     def organize_function(self) -> None:
         """
         Start the music organization process.
-        
+
         This method:
         1. Disables UI elements
         2. Creates and starts the organization thread
@@ -325,8 +343,8 @@ class MusicOrganizer(QWidget):
         self.user_interface(False)
         # Variables needed in OrganizeThread
         info: Dict[str, str] = {
-            'selected_music_folder_path': self.music_folder_path,
-            'selected_destination_folder_path': self.destination_folder_path
+            "selected_music_folder_path": self.music_folder_path,
+            "selected_destination_folder_path": self.destination_folder_path,
         }
         self.organize_thread = OrganizeThread(info)
         self.organize_thread.number_songs_signal.connect(self.number_songs)
@@ -339,7 +357,7 @@ class MusicOrganizer(QWidget):
     def user_interface(self, msg: bool) -> None:
         """
         Enable or disable UI elements.
-        
+
         Args:
             msg: True to enable UI elements, False to disable them
         """
@@ -349,7 +367,7 @@ class MusicOrganizer(QWidget):
             self.music_folder_select_button,
             self.organize_button,
             self.close_button,
-            self.settings_button
+            self.settings_button,
         ]
 
         # Set the enabled state of each element based on the value of msg
@@ -360,11 +378,11 @@ class MusicOrganizer(QWidget):
     def number_songs(self, msg: int) -> None:
         """
         Update the number of songs label.
-        
+
         Args:
             msg: Number of songs found
         """
-        self.number_songs_label.setText(f'Number of songs found: {msg}')
+        self.number_songs_label.setText(f"Number of songs found: {msg}")
         if msg:
             # Initialize progress bar at zero percent
             self.music_progress(0)
@@ -372,14 +390,15 @@ class MusicOrganizer(QWidget):
     def music_progress(self, msg: int) -> None:
         """
         Update the progress bar.
-        
+
         Args:
             msg: Current progress percentage
         """
         self.music_progress_bar.setValue(int(msg))
         if self.music_progress_bar.value() == self.music_progress_bar.maximum():
             # Update the style sheet for the progress bar
-            self.music_progress_bar.setStyleSheet("""
+            self.music_progress_bar.setStyleSheet(
+                """
                 QProgressBar {
                     border: 1px solid black;
                     text-align: center;
@@ -390,33 +409,34 @@ class MusicOrganizer(QWidget):
                 QProgressBar::chunk {
                     background-color: rgba(255, 152, 152, 1);
                 }
-            """)
+            """
+            )
         else:
             # Check if the current style sheet is different from an empty string
             if self.music_progress_bar.styleSheet() != "":
                 # Reset the style sheet to default
                 self.music_progress_bar.setStyleSheet("")
-            
+
     def kill_thread(self, msg: str) -> None:
         """
         Clean up threads.
-        
+
         Args:
             msg: Type of thread to kill ('organize' or 'notification')
         """
-        if msg == 'organize' and hasattr(self, 'organize_thread'):
+        if msg == "organize" and hasattr(self, "organize_thread"):
             # Delete OrganizeThread if it exists
             del self.organize_thread
             # Re-enable UI elements
             self.user_interface(True)
-        if msg == 'notification' and hasattr(self, 'notification_thread'):
+        if msg == "notification" and hasattr(self, "notification_thread"):
             # Delete NotificationAudioThread if it exists
             del self.notification_thread
 
     def custom_dialog_function(self, msg: str) -> None:
         """
         Show a custom dialog with a message.
-        
+
         Args:
             msg: Message to display in the dialog
         """
@@ -428,18 +448,18 @@ class MusicOrganizer(QWidget):
     def organize_finish(self, recall_files: Dict[str, List[Dict[str, Any]]]) -> None:
         """
         Handle completion of the organization process.
-        
+
         Args:
             recall_files: Dictionary containing error and replace/skip file information
         """
-        self.kill_thread('organize')
+        self.kill_thread("organize")
         # Save recall_files for other functions
         self.recall_files = recall_files
         # Replace or Skip Files
-        if recall_files['replace_skip_files']:
-            if not self.settings.get('mute_sound', False):
+        if recall_files["replace_skip_files"]:
+            if not self.settings.get("mute_sound", False):
                 # Play ding sound (name of file)
-                self.notification_thread = NotificationAudioThread('audio_ding')
+                self.notification_thread = NotificationAudioThread("audio_ding")
                 self.notification_thread.kill_thread_signal.connect(self.kill_thread)
                 self.notification_thread.start()
             self.organize_replace_skip()
@@ -448,17 +468,19 @@ class MusicOrganizer(QWidget):
 
     def organize_replace_skip(self) -> None:
         """Show the replace/skip window for files that already exist."""
-        if self.recall_files['replace_skip_files']:
+        if self.recall_files["replace_skip_files"]:
             # Music File Replace Skip Window
-            self.music_replace_skip_window = ReplaceSkipWindow(self.recall_files['replace_skip_files'])
+            self.music_replace_skip_window = ReplaceSkipWindow(
+                self.recall_files["replace_skip_files"]
+            )
             self.music_replace_skip_window.windowClosed.connect(self.replace_skip_finish)
             self.music_replace_skip_window.windowOpened.connect(self.user_interface)
             self.music_replace_skip_window.show()
-            
+
     def replace_skip_finish(self) -> None:
         """
         Handle completion of the replace/skip process.
-        
+
         This method:
         1. Re-enables UI elements
         2. Updates progress bar
@@ -468,24 +490,24 @@ class MusicOrganizer(QWidget):
         self.user_interface(True)
         # Set progress bar to maximum
         self.music_progress(self.music_progress_bar.maximum())
-        if self.recall_files['error_files']:
-            if not self.settings.get('mute_sound', False):
+        if self.recall_files["error_files"]:
+            if not self.settings.get("mute_sound", False):
                 # Play ding sound (name of file)
-                self.notification_thread = NotificationAudioThread('audio_ding')
+                self.notification_thread = NotificationAudioThread("audio_ding")
                 self.notification_thread.kill_thread_signal.connect(self.kill_thread)
                 self.notification_thread.start()
             self.organize_error()
-        elif not self.settings.get('mute_sound', False):
+        elif not self.settings.get("mute_sound", False):
             # Play complete sound (name of file)
-            self.notification_thread = NotificationAudioThread('audio_complete')
+            self.notification_thread = NotificationAudioThread("audio_complete")
             self.notification_thread.kill_thread_signal.connect(self.kill_thread)
             self.notification_thread.start()
 
     def organize_error(self) -> None:
         """Show the error window for files with errors."""
-        if self.recall_files['error_files']:
+        if self.recall_files["error_files"]:
             # Music File Error Window
-            self.music_error_window = MusicErrorWindow(self.recall_files['error_files'])
+            self.music_error_window = MusicErrorWindow(self.recall_files["error_files"])
             self.music_error_window.windowClosed.connect(self.user_interface)
             self.music_error_window.windowOpened.connect(self.user_interface)
             self.music_error_window.custom_dialog_signal.connect(self.custom_dialog_function)
@@ -502,7 +524,7 @@ class MusicOrganizer(QWidget):
     def settings_finish(self) -> None:
         """
         Handle completion of settings changes.
-        
+
         This method:
         1. Re-enables UI elements
         2. Reloads settings
@@ -512,5 +534,3 @@ class MusicOrganizer(QWidget):
         # Load settings from file if it exists
         self.load_settings()
         self.reset_progress_songs_label()
-
-

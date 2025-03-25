@@ -2,38 +2,47 @@
 Custom dialog window for displaying messages to the user.
 """
 
-from typing import Optional, Dict, Any
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QWidget, QLabel,
-                            QPushButton, QApplication)
+import json
+from typing import Any, Dict, Optional
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-import json
-from ..resources import resources_rc
+from PyQt5.QtWidgets import (
+    QApplication,
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 # Other classes within files
 from ..core.notification_audio_thread import NotificationAudioThread
+from ..resources import resources_rc
+
 
 class CustomDialog(QDialog):
     """
     A custom dialog window for displaying messages to the user.
-    
+
     This dialog:
     1. Shows a custom message in a styled window
     2. Plays a notification sound (if enabled)
     3. Can be closed with a custom close button
     """
-    
+
     def __init__(self, custom_message: str) -> None:
         """
         Initialize the CustomDialog.
-        
+
         Args:
             custom_message: The message to display in the dialog
         """
         super().__init__()
 
         # Version Control
-        self.version: str = '3.06'
+        self.version: str = "3.06"
 
         # Set notification thread variable
         self.notification_thread: Optional[NotificationAudioThread] = None
@@ -42,8 +51,8 @@ class CustomDialog(QDialog):
         self.setWindowFlag(Qt.FramelessWindowHint)
 
         # Window title, icon, and size
-        self.setWindowTitle(f'Alert v{self.version}')
-        self.setWindowIcon(QIcon(':/Octopus.ico'))
+        self.setWindowTitle(f"Alert v{self.version}")
+        self.setWindowIcon(QIcon(":/Octopus.ico"))
 
         # Main layout
         layout: QVBoxLayout = QVBoxLayout()
@@ -57,7 +66,7 @@ class CustomDialog(QDialog):
 
         # Icon top left
         icon_label: QLabel = QLabel()
-        icon_label.setPixmap(QIcon(':/Octopus.ico').pixmap(24, 24))
+        icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
         title_layout.addWidget(icon_label)
 
         title_label: QLabel = QLabel(f"Alert v{self.version}")
@@ -66,7 +75,7 @@ class CustomDialog(QDialog):
         title_layout.addStretch()
 
         close_button: QPushButton = QPushButton("X")
-        close_button.setToolTip('Close window')
+        close_button.setToolTip("Close window")
         close_button.setFixedSize(24, 24)
         close_button.setStyleSheet(
             "QPushButton { color: white; background-color: transparent; }"
@@ -97,7 +106,7 @@ class CustomDialog(QDialog):
     def showEvent(self, event: Any) -> None:
         """
         Handle the show event.
-        
+
         This method:
         1. Loads settings
         2. Plays notification sound if enabled
@@ -105,8 +114,8 @@ class CustomDialog(QDialog):
         """
         # Load settings from file if it exists
         self.load_settings()
-        if not self.settings.get('mute_sound', False):
-            self.notification_thread = NotificationAudioThread('audio_ding') # (name of file)
+        if not self.settings.get("mute_sound", False):
+            self.notification_thread = NotificationAudioThread("audio_ding")  # (name of file)
             self.notification_thread.start()
         super().showEvent(event)
         self.center_window()
@@ -114,7 +123,7 @@ class CustomDialog(QDialog):
     def closeEvent(self, event: Any) -> None:
         """
         Handle the close event.
-        
+
         This method:
         1. Stops the notification sound
         2. Waits for the thread to finish
@@ -125,11 +134,11 @@ class CustomDialog(QDialog):
         # Wait for the thread to finish before quitting the application
         if self.notification_thread:
             self.notification_thread.wait()
-        
+
     def load_settings(self) -> None:
         """Load settings from the settings file."""
         try:
-            with open('settings_jmo.json', 'r') as f:
+            with open("settings_jmo.json", "r") as f:
                 self.settings: Dict[str, Any] = json.load(f)
 
         except FileNotFoundError:

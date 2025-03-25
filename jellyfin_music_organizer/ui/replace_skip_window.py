@@ -1,10 +1,20 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                            QListWidget, QPushButton, QApplication, QSizeGrip,
-                            QProgressBar)
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QIcon
-from pathlib import Path
 import shutil
+from pathlib import Path
+
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (
+    QApplication,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QProgressBar,
+    QPushButton,
+    QSizeGrip,
+    QVBoxLayout,
+    QWidget,
+)
+
 
 class ReplaceSkipWindow(QWidget):
     windowOpened = pyqtSignal(bool)
@@ -14,7 +24,7 @@ class ReplaceSkipWindow(QWidget):
         super().__init__()
 
         # Version Control
-        self.version = '3.06'
+        self.version = "3.06"
 
         self.replace_skip_files = replace_skip_files
         self.total_entries = len(self.replace_skip_files)
@@ -44,7 +54,7 @@ class ReplaceSkipWindow(QWidget):
         hbox_title_layout.setContentsMargins(0, 0, 0, 0)
 
         self.icon_label = QLabel()
-        self.icon_label.setPixmap(QIcon(':/Octopus.ico').pixmap(24, 24))
+        self.icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
         hbox_title_layout.addWidget(self.icon_label)
 
         self.title_label = QLabel(f"Replace or Skip Files Window v{self.version}")
@@ -60,7 +70,7 @@ class ReplaceSkipWindow(QWidget):
             self.offset = event.globalPos() - self.pos()
 
     def mouseMoveEvent(self, event):
-        if hasattr(self, 'draggable') and self.draggable:
+        if hasattr(self, "draggable") and self.draggable:
             if event.buttons() & Qt.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
@@ -71,7 +81,7 @@ class ReplaceSkipWindow(QWidget):
     def setup_ui(self):
         # Window setup
         self.setWindowTitle(f"Replace or Skip Files Window v{self.version}")
-        self.setWindowIcon(QIcon(':/Octopus.ico'))
+        self.setWindowIcon(QIcon(":/Octopus.ico"))
 
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -131,8 +141,10 @@ class ReplaceSkipWindow(QWidget):
 
         # Add resizing handles
         self.bottom_right_grip = QSizeGrip(self)
-        self.bottom_right_grip.setToolTip('Resize window')
-        hbox_progress_grip_layout.addWidget(self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight)
+        self.bottom_right_grip.setToolTip("Resize window")
+        hbox_progress_grip_layout.addWidget(
+            self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+        )
 
         # Populate QListWidget
         self.populate_list_widget()
@@ -153,7 +165,7 @@ class ReplaceSkipWindow(QWidget):
     def populate_list_widget(self):
         # Add each entry's 'file_name' to QListWidget
         for entry in self.replace_skip_files:
-            self.list_widget.addItem(entry['file_name'])
+            self.list_widget.addItem(entry["file_name"])
 
         # Set the initial selected item in QListWidget
         self.list_widget.setCurrentRow(0)
@@ -163,16 +175,22 @@ class ReplaceSkipWindow(QWidget):
         if selected_item:
             selected_file = selected_item.text()
             selected_entry = next(
-                (entry for entry in self.replace_skip_files if entry['file_name'] == selected_file), None)
+                (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
+                None,
+            )
             if selected_entry:
-                self.label.setText(f"The destination:\n{selected_entry['new_location']}\nAlready has a file named:\n{selected_entry['file_name']}")
+                self.label.setText(
+                    f"The destination:\n{selected_entry['new_location']}\nAlready has a file named:\n{selected_entry['file_name']}"
+                )
         else:
             self.label.clear()
 
     def skip_file(self):
         selected_file = self.list_widget.currentItem().text()
         selected_entry = next(
-            (entry for entry in self.replace_skip_files if entry['file_name'] == selected_file), None)
+            (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
+            None,
+        )
         if selected_entry:
             self.replace_skip_files.remove(selected_entry)
             self.list_widget.takeItem(self.list_widget.currentRow())
@@ -198,7 +216,9 @@ class ReplaceSkipWindow(QWidget):
     def replace_file(self):
         selected_file = self.list_widget.currentItem().text()
         selected_entry = next(
-            (entry for entry in self.replace_skip_files if entry['file_name'] == selected_file), None)
+            (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
+            None,
+        )
         if selected_entry:
             self.replace_file_action(selected_entry)
             self.skip_file()
@@ -207,17 +227,17 @@ class ReplaceSkipWindow(QWidget):
         while self.list_widget.count() > 0:
             selected_file = self.list_widget.item(0).text()
             selected_entry = next(
-                (entry for entry in self.replace_skip_files if entry['file_name'] == selected_file), None)
+                (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
+                None,
+            )
             if selected_entry:
                 self.replace_file_action(selected_entry)
                 self.skip_file()
 
     def replace_file_action(self, entry):
-        new_location = entry['new_location']
-        file_name = entry['file_name']
-        path_in_str = entry['path_in_str']
+        new_location = entry["new_location"]
+        file_name = entry["file_name"]
+        path_in_str = entry["path_in_str"]
 
         Path(new_location).mkdir(parents=True, exist_ok=True)
         shutil.copy(path_in_str, f"{new_location}/{file_name}")
-
-

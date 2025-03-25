@@ -2,25 +2,28 @@
 Thread for organizing music files based on their metadata.
 """
 
-from typing import Dict, List, Any, Optional
-from PyQt5.QtCore import QThread, pyqtSignal
+import json
+import shutil
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
-import shutil
-import json
+from PyQt5.QtCore import QThread, pyqtSignal
+
 from ..resources import resources_rc
+
 
 class OrganizeThread(QThread):
     """
     A QThread subclass that handles the music file organization process.
-    
+
     This thread:
     1. Scans for music files in the selected directory
     2. Extracts metadata from each file
     3. Creates organized directory structure
     4. Handles file copying and error cases
-    
+
     Signals:
         number_songs_signal (int): Emitted with total number of songs found
         music_progress_signal (int): Emitted with current progress percentage
@@ -28,7 +31,7 @@ class OrganizeThread(QThread):
         custom_dialog_signal (str): Emitted with custom dialog message
         organize_finish_signal (dict): Emitted with organization results
     """
-    
+
     number_songs_signal: pyqtSignal = pyqtSignal(int)
     music_progress_signal: pyqtSignal = pyqtSignal(int)
     kill_thread_signal: pyqtSignal = pyqtSignal(str)
@@ -38,7 +41,7 @@ class OrganizeThread(QThread):
     def __init__(self, info: Dict[str, str]) -> None:
         """
         Initialize the OrganizeThread.
-        
+
         Args:
             info: Dictionary containing source and destination folder paths
         """
@@ -54,7 +57,7 @@ class OrganizeThread(QThread):
     def load_settings(self) -> None:
         """Load settings from the settings file."""
         try:
-            with open('settings_jmo.json', 'r') as f:
+            with open("settings_jmo.json", "r") as f:
                 settings = json.load(f)
                 self.remove_illegal_chars = settings.get("remove_illegal_chars", True)
         except FileNotFoundError:
@@ -63,22 +66,29 @@ class OrganizeThread(QThread):
     def clean_filename(self, text: str) -> str:
         """
         Clean filename by removing or replacing illegal characters.
-        
+
         Args:
             text: The text to clean
-            
+
         Returns:
             str: The cleaned text
         """
         if self.remove_illegal_chars:
             # Remove characters that are not allowed in filenames
-            text = text.translate(str.maketrans("", "", ':*?<>|')).replace('/', '').replace('\\', '').replace('"', '').replace("'", '').replace('...', '')
+            text = (
+                text.translate(str.maketrans("", "", ":*?<>|"))
+                .replace("/", "")
+                .replace("\\", "")
+                .replace('"', "")
+                .replace("'", "")
+                .replace("...", "")
+            )
         return text.strip()
 
     def run(self) -> None:
         """
         Main thread execution method.
-        
+
         This method:
         1. Scans for music files
         2. Processes each file's metadata
@@ -87,29 +97,44 @@ class OrganizeThread(QThread):
         """
         # Supported audio file extensions
         extensions: List[str] = [
-            ".aif", ".aiff", ".ape", ".flac", ".m4a", ".m4b", ".m4r",
-            ".mp2", ".mp3", ".mp4", ".mpc", ".ogg", ".opus", ".wav", ".wma"
+            ".aif",
+            ".aiff",
+            ".ape",
+            ".flac",
+            ".m4a",
+            ".m4b",
+            ".m4r",
+            ".mp2",
+            ".mp3",
+            ".mp4",
+            ".mpc",
+            ".ogg",
+            ".opus",
+            ".wav",
+            ".wma",
         ]
 
         # Generate list of paths to music files
         pathlist: List[Path] = []
         for extension in extensions:
-            pathlist.extend(list(Path(self.info['selected_music_folder_path']).glob(f"**/*{extension}")))
+            pathlist.extend(
+                list(Path(self.info["selected_music_folder_path"]).glob(f"**/*{extension}"))
+            )
 
         # Update number of songs label
         total_number_of_songs: int = len(pathlist)
         self.number_songs_signal.emit(total_number_of_songs)
 
         # Define the artist and album values to search for
-        artist_values: List[str] = ['©art', 'artist', 'author', 'tpe1']
-        album_values: List[str] = ['©alb', 'album', 'talb', 'wm/albumtitle']
+        artist_values: List[str] = ["©art", "artist", "author", "tpe1"]
+        album_values: List[str] = ["©alb", "album", "talb", "wm/albumtitle"]
 
         # Check if folder has any songs
         if total_number_of_songs:
             # Initialize a dictionary to store file info for songs with errors
             recall_files: Dict[str, List[Dict[str, Any]]] = {
-                'error_files': [],
-                'replace_skip_files': []
+                "error_files": [],
+                "replace_skip_files": [],
             }
 
             # Don't include replace_skip_files in progress bar
@@ -118,13 +143,13 @@ class OrganizeThread(QThread):
             # Loop through each song and organize it
             for path in pathlist:
                 # Replace backslashes with forward slashes
-                path_in_str: str = str(path).replace('\\', '/')
+                path_in_str: str = str(path).replace("\\", "/")
                 # Get file name from path
                 file_name: str = path_in_str.split("/")[-1]
 
                 # Reset variables
-                artist_data: Any = ''
-                album_data: Any = ''
+                artist_data: Any = ""
+                album_data: Any = ""
                 metadata_dict: Dict[str, Any] = {}
                 file_info: Dict[str, Any] = {}
 
@@ -145,30 +170,40 @@ class OrganizeThread(QThread):
                             album_data = value
 
                     # Check if artist_data and album_data were found
-                    if artist_data == '' or album_data == '':
+                    if artist_data == "" or album_data == "":
                         raise Exception("Artist or album data not found")
 
                     # Convert the metadata values to strings
-                    artist: str = str(artist_data[0]) if isinstance(artist_data[0], ASFUnicodeAttribute) else artist_data[0]
-                    album: str = str(album_data[0]) if isinstance(album_data[0], ASFUnicodeAttribute) else album_data[0]
+                    artist: str = (
+                        str(artist_data[0])
+                        if isinstance(artist_data[0], ASFUnicodeAttribute)
+                        else artist_data[0]
+                    )
+                    album: str = (
+                        str(album_data[0])
+                        if isinstance(album_data[0], ASFUnicodeAttribute)
+                        else album_data[0]
+                    )
 
                     # Clean the artist and album names
                     artist = self.clean_filename(artist)
                     album = self.clean_filename(album)
 
                     # Construct new location
-                    new_location: str = f"{self.info['selected_destination_folder_path']}/{artist}/{album}"
+                    new_location: str = (
+                        f"{self.info['selected_destination_folder_path']}/{artist}/{album}"
+                    )
 
                     # Check if the file already exists in the new location
                     if Path(f"{new_location}/{file_name}").exists():
                         file_info = {
-                            'file_name': file_name,
-                            'new_location': new_location,
-                            'path_in_str': path_in_str,
-                            'error': 'File already exists in the destination folder'
+                            "file_name": file_name,
+                            "new_location": new_location,
+                            "path_in_str": path_in_str,
+                            "error": "File already exists in the destination folder",
                         }
 
-                        recall_files['replace_skip_files'].append(file_info)
+                        recall_files["replace_skip_files"].append(file_info)
                     else:
                         # Create directory and copy file to new location
                         Path(new_location).mkdir(parents=True, exist_ok=True)
@@ -176,18 +211,21 @@ class OrganizeThread(QThread):
 
                 except Exception as e:
                     file_info = {
-                        'file_name': file_name,
-                        'artist_found': artist_data,
-                        'album_found': album_data,
-                        'metadata_dict': metadata_dict,
-                        'error': str(e)
+                        "file_name": file_name,
+                        "artist_found": artist_data,
+                        "album_found": album_data,
+                        "metadata_dict": metadata_dict,
+                        "error": str(e),
                     }
 
-                    recall_files['error_files'].append(file_info)
+                    recall_files["error_files"].append(file_info)
 
                 finally:
                     # Update progress bar if no error or 'File already exists'
-                    if not file_info.get('error') or file_info.get('error') != 'File already exists in the destination folder':
+                    if (
+                        not file_info.get("error")
+                        or file_info.get("error") != "File already exists in the destination folder"
+                    ):
                         i += 1
                         self.music_progress_signal.emit(int(i / len(pathlist) * 100))
 
@@ -196,6 +234,6 @@ class OrganizeThread(QThread):
 
         else:
             # No songs were found
-            self.custom_dialog_signal.emit('No songs were found in the selected folder.')
+            self.custom_dialog_signal.emit("No songs were found in the selected folder.")
             # Kill OrganizeThread QThread
-            self.kill_thread_signal.emit('organize')
+            self.kill_thread_signal.emit("organize")

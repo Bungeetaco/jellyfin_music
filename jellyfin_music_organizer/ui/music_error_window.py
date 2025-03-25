@@ -1,11 +1,23 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QSizeGrip,
-                            QLabel, QPushButton, QSizePolicy, QListWidget,
-                            QTextEdit, QApplication, QFileDialog)
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
-from PyQt5.QtGui import QIcon
-import openpyxl
-import json
 import csv
+import json
+
+import openpyxl
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QPushButton,
+    QSizeGrip,
+    QSizePolicy,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+
 
 class MusicErrorWindow(QWidget):
     windowOpened = pyqtSignal(bool)
@@ -16,7 +28,7 @@ class MusicErrorWindow(QWidget):
         super().__init__()
 
         # Version Control
-        self.version = '3.06'
+        self.version = "3.06"
 
         self.error_files = error_files
 
@@ -45,7 +57,7 @@ class MusicErrorWindow(QWidget):
         hbox_title_layout.setContentsMargins(0, 0, 0, 0)
 
         self.icon_label = QLabel()
-        self.icon_label.setPixmap(QIcon(':/Octopus.ico').pixmap(24, 24))
+        self.icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
         hbox_title_layout.addWidget(self.icon_label)
 
         self.title_label = QLabel(f"Music Error Window v{self.version}")
@@ -55,7 +67,7 @@ class MusicErrorWindow(QWidget):
         hbox_title_layout.addStretch()
 
         self.close_button = QPushButton("✕")
-        self.close_button.setToolTip('Close window')
+        self.close_button.setToolTip("Close window")
         self.close_button.setFixedSize(24, 24)
         self.close_button.setStyleSheet(
             "QPushButton { color: white; background-color: transparent; }"
@@ -73,7 +85,7 @@ class MusicErrorWindow(QWidget):
             self.offset = event.globalPos() - self.pos()
 
     def mouseMoveEvent(self, event):
-        if hasattr(self, 'draggable') and self.draggable:
+        if hasattr(self, "draggable") and self.draggable:
             if event.buttons() & Qt.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
@@ -84,7 +96,7 @@ class MusicErrorWindow(QWidget):
     def setup_ui(self):
         # Window title, icon, and size
         self.setWindowTitle(f"Music Error Window v{self.version}")
-        self.setWindowIcon(QIcon(':/Octopus.ico'))
+        self.setWindowIcon(QIcon(":/Octopus.ico"))
 
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -111,16 +123,18 @@ class MusicErrorWindow(QWidget):
 
         # QLabel for text details
         text_label = QLabel(self)
-        text_label.setText("Files that don't have any metadata are unreadable by mutagen\n\n"
-                        "These are the known audio file keys that are being looked for:\n"
-                        "(capitalization doesn't matter)\n"
-                        "artist_values = ['©art', 'artist', 'author', 'tpe1']\n"
-                        "album_values = ['©alb', 'album', 'talb', 'wm/albumtitle']\n\n"
-                        "These audio files have missing artist and/or album keys\n"
-                        "Either:\n"
-                        "- Your files don't have an artist/album name\n"
-                        "- New keys need to be added to the program\n"
-                        "- Your file is corrupt/tampered with")
+        text_label.setText(
+            "Files that don't have any metadata are unreadable by mutagen\n\n"
+            "These are the known audio file keys that are being looked for:\n"
+            "(capitalization doesn't matter)\n"
+            "artist_values = ['©art', 'artist', 'author', 'tpe1']\n"
+            "album_values = ['©alb', 'album', 'talb', 'wm/albumtitle']\n\n"
+            "These audio files have missing artist and/or album keys\n"
+            "Either:\n"
+            "- Your files don't have an artist/album name\n"
+            "- New keys need to be added to the program\n"
+            "- Your file is corrupt/tampered with"
+        )
         hbox_list_text_layout.addWidget(text_label)
 
         # Create the details display widget on the bottom
@@ -165,8 +179,10 @@ class MusicErrorWindow(QWidget):
 
         # Add resizing handles
         self.bottom_right_grip = QSizeGrip(self)
-        self.bottom_right_grip.setToolTip('Resize window')
-        hbox_buttons_grip_layout.addWidget(self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight)
+        self.bottom_right_grip.setToolTip("Resize window")
+        hbox_buttons_grip_layout.addWidget(
+            self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+        )
 
         # Populate QListWidget
         self.populate_list_widget()
@@ -181,10 +197,10 @@ class MusicErrorWindow(QWidget):
     def populate_list_widget(self):
         # Populate the file list
         for info in self.error_files:
-            file_name = info['file_name']
+            file_name = info["file_name"]
             self.file_list_widget.addItem(file_name)
 
-        # Set the first item as the current row 
+        # Set the first item as the current row
         self.file_list_widget.setCurrentRow(0)
 
     def displayDetails(self, current_item):
@@ -195,15 +211,17 @@ class MusicErrorWindow(QWidget):
         selected_file = current_item.text()
 
         # Find the corresponding error_info
-        selected_info = next((info for info in self.error_files if info['file_name'] == selected_file), None)
+        selected_info = next(
+            (info for info in self.error_files if info["file_name"] == selected_file), None
+        )
 
         # Update the details display with file name, error, artist_found, album_found, and metadata information
         if selected_info:
-            file_name = selected_info['file_name']
-            error = selected_info['error']
-            artist_found = selected_info['artist_found']
-            album_found = selected_info['album_found']
-            metadata_dict = selected_info['metadata_dict']
+            file_name = selected_info["file_name"]
+            error = selected_info["error"]
+            artist_found = selected_info["artist_found"]
+            album_found = selected_info["album_found"]
+            metadata_dict = selected_info["metadata_dict"]
 
             details_text = f"File Name: {file_name}\n"
             details_text += f"Error: {error}\n"
@@ -230,10 +248,12 @@ class MusicErrorWindow(QWidget):
 
         # Update the button text and color temporarily
         self.copy_button.setText("Success")
-        self.copy_button.setStyleSheet("""
+        self.copy_button.setStyleSheet(
+            """
             background-color: rgba(255, 152, 152, 1);
             color: black;
-        """)
+        """
+        )
 
         # Stop any existing copy timers before creating a new one
         if hasattr(self, "reset_copy_timer"):
@@ -252,20 +272,20 @@ class MusicErrorWindow(QWidget):
         file_name, _ = QFileDialog.getSaveFileName(self, "Save TXT", "", "Text Files (*.txt)")
         if file_name:
             try:
-                with open(file_name, 'w', encoding='utf-8') as file:
+                with open(file_name, "w", encoding="utf-8") as file:
                     for info in self.error_files:
                         file.write(f"File Name: {info['file_name']}\n")
                         file.write(f"Error: {info['error']}\n")
-                        if info['artist_found']:
+                        if info["artist_found"]:
                             file.write(f"Artist Found: {info['artist_found'][0]}\n")
                         else:
                             file.write("Artist Found: False\n")
-                        if info['album_found']:
+                        if info["album_found"]:
                             file.write(f"Album Found: {info['album_found'][0]}\n\n")
                         else:
                             file.write("Album Found: False\n\n")
                         file.write("Metadata:\n")
-                        metadata_dict = info['metadata_dict']
+                        metadata_dict = info["metadata_dict"]
                         if metadata_dict:
                             for key, value in metadata_dict.items():
                                 file.write(f"{key}: {value}\n")
@@ -275,10 +295,12 @@ class MusicErrorWindow(QWidget):
 
                     # Update the button text and color temporarily
                     self.txt_button.setText("Success")
-                    self.txt_button.setStyleSheet("""
+                    self.txt_button.setStyleSheet(
+                        """
                         background-color: rgba(255, 152, 152, 1);
                         color: black;
-                    """)
+                    """
+                    )
 
                     # Stop any existing txt timers before creating a new one
                     if hasattr(self, "reset_txt_timer"):
@@ -290,9 +312,9 @@ class MusicErrorWindow(QWidget):
                     self.reset_txt_timer.start(1000)
 
             except Exception as e:
-                self.custom_dialog_signal.emit('An error occurred while generating the TXT file.')
+                self.custom_dialog_signal.emit("An error occurred while generating the TXT file.")
         else:
-            self.custom_dialog_signal.emit('Please provide a valid file name for the TXT file.')
+            self.custom_dialog_signal.emit("Please provide a valid file name for the TXT file.")
 
     def resetTXTButton(self):
         self.txt_button.setText("Generate TXT File")
@@ -306,26 +328,28 @@ class MusicErrorWindow(QWidget):
                 rows = []
 
                 # Determine the maximum number of metadata fields
-                max_metadata_fields = max(len(info['metadata_dict']) for info in self.error_files)
+                max_metadata_fields = max(len(info["metadata_dict"]) for info in self.error_files)
 
                 # Generate rows
                 for info in self.error_files:
-                    metadata_dict = {str(key): str(value) for key, value in info['metadata_dict'].items()}
+                    metadata_dict = {
+                        str(key): str(value) for key, value in info["metadata_dict"].items()
+                    }
 
                     # Get the first value from the list if available
-                    artist_found = info['artist_found'][0] if info['artist_found'] else "None"
-                    album_found = info['album_found'][0] if info['album_found'] else "None"
+                    artist_found = info["artist_found"][0] if info["artist_found"] else "None"
+                    album_found = info["album_found"][0] if info["album_found"] else "None"
 
                     # Create an empty row
-                    row = [info['file_name'], info['error'], artist_found, album_found]
+                    row = [info["file_name"], info["error"], artist_found, album_found]
 
                     # Generate metadata keys and values for the current row
                     metadata_keys = list(metadata_dict.keys())
                     metadata_values = list(metadata_dict.values())
 
                     # Fill in missing metadata fields with 'None'
-                    metadata_keys.extend(['None'] * (max_metadata_fields - len(metadata_keys)))
-                    metadata_values.extend(['None'] * (max_metadata_fields - len(metadata_values)))
+                    metadata_keys.extend(["None"] * (max_metadata_fields - len(metadata_keys)))
+                    metadata_values.extend(["None"] * (max_metadata_fields - len(metadata_values)))
 
                     # Add the metadata keys and values to the row
                     for key, value in zip(metadata_keys, metadata_values):
@@ -340,24 +364,31 @@ class MusicErrorWindow(QWidget):
 
                 # Fill in missing values in each row with 'None' to ensure equal length
                 for row in rows:
-                    row.extend(['None'] * (max_columns - len(row)))
+                    row.extend(["None"] * (max_columns - len(row)))
 
                 # Determine the column headers based on the maximum row length
-                header = ['File Name', 'Error', 'Artist Found', 'Album Found']
-                header.extend([f"Key {i//2 + 1}" if i % 2 == 0 else f"Value {i//2 + 1}" for i in range(max_metadata_fields*2)])
+                header = ["File Name", "Error", "Artist Found", "Album Found"]
+                header.extend(
+                    [
+                        f"Key {i//2 + 1}" if i % 2 == 0 else f"Value {i//2 + 1}"
+                        for i in range(max_metadata_fields * 2)
+                    ]
+                )
 
                 # Write to the CSV file with UTF-8 encoding
-                with open(file_name, mode='w', encoding='utf-8-sig', newline='') as file:
+                with open(file_name, mode="w", encoding="utf-8-sig", newline="") as file:
                     writer = csv.writer(file)
                     writer.writerow(header)
                     writer.writerows(rows)
 
                 # Update the button text and color temporarily
                 self.csv_button.setText("Success")
-                self.csv_button.setStyleSheet("""
+                self.csv_button.setStyleSheet(
+                    """
                     background-color: rgba(255, 152, 152, 1);
                     color: black;
-                """)
+                """
+                )
 
                 # Stop any existing csv timers before creating a new one
                 if hasattr(self, "reset_csv_timer"):
@@ -369,9 +400,9 @@ class MusicErrorWindow(QWidget):
                 self.reset_csv_timer.start(1000)
 
             except Exception as e:
-                self.custom_dialog_signal.emit('An error occurred while generating the CSV file.')
+                self.custom_dialog_signal.emit("An error occurred while generating the CSV file.")
         else:
-            self.custom_dialog_signal.emit('Please provide a valid file name for the CSV.')
+            self.custom_dialog_signal.emit("Please provide a valid file name for the CSV.")
 
     def resetCSVButton(self):
         self.csv_button.setText("Generate CSV File")
@@ -389,18 +420,15 @@ class MusicErrorWindow(QWidget):
                 rows = []
                 max_metadata_columns = 0
                 for info in self.error_files:
-                    metadata_dict = {str(key): str(value) for key, value in info['metadata_dict'].items()}
+                    metadata_dict = {
+                        str(key): str(value) for key, value in info["metadata_dict"].items()
+                    }
 
                     # Extract values from the list if available
-                    artist_found = info['artist_found'][0] if info['artist_found'] else "None"
-                    album_found = info['album_found'][0] if info['album_found'] else "None"
+                    artist_found = info["artist_found"][0] if info["artist_found"] else "None"
+                    album_found = info["album_found"][0] if info["album_found"] else "None"
 
-                    row = [
-                        info['file_name'],
-                        info['error'],
-                        artist_found,
-                        album_found
-                    ]
+                    row = [info["file_name"], info["error"], artist_found, album_found]
 
                     # Generate metadata keys and values for the current row
                     metadata_keys = list(metadata_dict.keys())
@@ -408,7 +436,10 @@ class MusicErrorWindow(QWidget):
 
                     # Convert problematic values to strings before appending to the row
                     row = [str(cell) if isinstance(cell, list) else cell for cell in row]
-                    metadata_values = [str(value) if isinstance(value, list) else value for value in metadata_values]
+                    metadata_values = [
+                        str(value) if isinstance(value, list) else value
+                        for value in metadata_values
+                    ]
 
                     # Add the metadata keys and values to the row
                     for key, value in zip(metadata_keys, metadata_values):
@@ -426,11 +457,16 @@ class MusicErrorWindow(QWidget):
 
                 # Fill in missing values in each row with 'None' to ensure equal length
                 for row in rows:
-                    row.extend(['None'] * (max_columns - len(row)))
+                    row.extend(["None"] * (max_columns - len(row)))
 
                 # Determine the column headers based on the maximum row length
-                header = ['File Name', 'Error', 'Artist Found', 'Album Found']
-                header.extend([f"Key {i//2 + 1}" if i % 2 == 0 else f"Value {i//2 + 1}" for i in range(0, max_columns - 4)])
+                header = ["File Name", "Error", "Artist Found", "Album Found"]
+                header.extend(
+                    [
+                        f"Key {i//2 + 1}" if i % 2 == 0 else f"Value {i//2 + 1}"
+                        for i in range(0, max_columns - 4)
+                    ]
+                )
 
                 # Write the header row
                 ws.append(header)
@@ -449,7 +485,7 @@ class MusicErrorWindow(QWidget):
                                 max_length = len(cell.value)
                         except:
                             pass
-                    adjusted_width = (max_length + 2)
+                    adjusted_width = max_length + 2
                     ws.column_dimensions[column[0].column_letter].width = adjusted_width
 
                 # Save the Excel file
@@ -457,10 +493,12 @@ class MusicErrorWindow(QWidget):
 
                 # Update the button text and color temporarily
                 self.excel_button.setText("Success")
-                self.excel_button.setStyleSheet("""
+                self.excel_button.setStyleSheet(
+                    """
                     background-color: rgba(255, 152, 152, 1);
                     color: black;
-                """)
+                """
+                )
 
                 # Stop any existing excel timers before creating a new one
                 if hasattr(self, "reset_excel_timer"):
@@ -472,9 +510,9 @@ class MusicErrorWindow(QWidget):
                 self.reset_excel_timer.start(1000)
 
             except Exception as e:
-                self.custom_dialog_signal.emit('An error occurred while generating the Excel file.')
+                self.custom_dialog_signal.emit("An error occurred while generating the Excel file.")
         else:
-            self.custom_dialog_signal.emit('Please provide a valid file name for the Excel file.')
+            self.custom_dialog_signal.emit("Please provide a valid file name for the Excel file.")
 
     def resetExcelButton(self):
         self.excel_button.setText("Generate Excel File")
@@ -486,29 +524,33 @@ class MusicErrorWindow(QWidget):
             try:
                 data = []
                 for info in self.error_files:
-                    metadata_dict = {str(key): str(value) for key, value in info['metadata_dict'].items()}
-                    
-                    artist_found = info['artist_found'][0] if info['artist_found'] else "False"
-                    album_found = info['album_found'][0] if info['album_found'] else "False"
-                    
+                    metadata_dict = {
+                        str(key): str(value) for key, value in info["metadata_dict"].items()
+                    }
+
+                    artist_found = info["artist_found"][0] if info["artist_found"] else "False"
+                    album_found = info["album_found"][0] if info["album_found"] else "False"
+
                     row_data = {
-                        'filename': info['file_name'],
-                        'error': info['error'],
-                        'artist_found': artist_found,
-                        'album_found': album_found,
-                        'metadata_dict': metadata_dict
+                        "filename": info["file_name"],
+                        "error": info["error"],
+                        "artist_found": artist_found,
+                        "album_found": album_found,
+                        "metadata_dict": metadata_dict,
                     }
                     data.append(row_data)
 
-                with open(file_name, 'w') as file:
+                with open(file_name, "w") as file:
                     json.dump(data, file, indent=4)
 
                 # Update the button text and color temporarily
                 self.json_button.setText("Success")
-                self.json_button.setStyleSheet("""
+                self.json_button.setStyleSheet(
+                    """
                     background-color: rgba(255, 152, 152, 1);
                     color: black;
-                """)
+                """
+                )
 
                 # Stop any existing json timers before creating a new one
                 if hasattr(self, "reset_json_timer"):
@@ -520,11 +562,10 @@ class MusicErrorWindow(QWidget):
                 self.reset_json_timer.start(1000)
 
             except Exception as e:
-                self.custom_dialog_signal.emit('An error occurred while generating the JSON file.')
+                self.custom_dialog_signal.emit("An error occurred while generating the JSON file.")
         else:
-            self.custom_dialog_signal.emit('Please provide a valid file name for the JSON file.')
+            self.custom_dialog_signal.emit("Please provide a valid file name for the JSON file.")
 
     def resetJSONButton(self):
         self.json_button.setText("Generate JSON File")
         self.json_button.setStyleSheet("")
-

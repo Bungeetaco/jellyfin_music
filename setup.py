@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="jellyfin_music_organizer",
@@ -12,13 +12,13 @@ setup(
         "openpyxl>=3.0.0",
     ],
     entry_points={
-        'console_scripts': [
-            'jellyfin-music-organizer=jellyfin_music_organizer.main:main',
+        "console_scripts": [
+            "jellyfin-music-organizer=jellyfin_music_organizer.main:main",
         ],
     },
     author="Gabriel",
     description="A tool for organizing music files based on their metadata",
-    long_description=open('README.md').read(),
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     python_requires=">=3.7",
-) 
+)

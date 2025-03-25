@@ -1,9 +1,22 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                            QPushButton, QApplication, QSizeGrip, QCheckBox,
-                            QSpacerItem, QSizePolicy,QFrame, QFileDialog)
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
-from PyQt5.QtGui import QIcon
 import json
+
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QFileDialog,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizeGrip,
+    QSizePolicy,
+    QSpacerItem,
+    QVBoxLayout,
+    QWidget,
+)
+
 
 class SettingsWindow(QWidget):
     windowOpened = pyqtSignal(bool)
@@ -13,11 +26,11 @@ class SettingsWindow(QWidget):
         super().__init__()
 
         # Version Control
-        self.version = '3.06'
+        self.version = "3.06"
 
         # Initialize attributes
-        self.music_folder_path = ''
-        self.destination_folder_path = ''
+        self.music_folder_path = ""
+        self.destination_folder_path = ""
 
         # Setup and show user interface
         self.setup_ui()
@@ -47,7 +60,7 @@ class SettingsWindow(QWidget):
         hbox_title_layout.setContentsMargins(0, 0, 0, 0)
 
         self.icon_label = QLabel()
-        self.icon_label.setPixmap(QIcon(':/Octopus.ico').pixmap(24, 24))
+        self.icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
         hbox_title_layout.addWidget(self.icon_label)
 
         self.title_label = QLabel(f"Settings Window v{self.version}")
@@ -57,7 +70,7 @@ class SettingsWindow(QWidget):
         hbox_title_layout.addStretch()
 
         self.close_button = QPushButton("✕")
-        self.close_button.setToolTip('Close window')
+        self.close_button.setToolTip("Close window")
         self.close_button.setFixedSize(24, 24)
         self.close_button.setStyleSheet(
             "QPushButton { color: white; background-color: transparent; }"
@@ -75,7 +88,7 @@ class SettingsWindow(QWidget):
             self.offset = event.globalPos() - self.pos()
 
     def mouseMoveEvent(self, event):
-        if hasattr(self, 'draggable') and self.draggable:
+        if hasattr(self, "draggable") and self.draggable:
             if event.buttons() & Qt.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
@@ -86,8 +99,8 @@ class SettingsWindow(QWidget):
     def setup_ui(self):
         # Window setup
         self.setWindowTitle(f"Settings Window v{self.version}")
-        self.setWindowIcon(QIcon(':/Octopus.ico'))
-        self.setGeometry(100, 100, 400, 300) # Set initial size of window (x, y, width, height)
+        self.setWindowIcon(QIcon(":/Octopus.ico"))
+        self.setGeometry(100, 100, 400, 300)  # Set initial size of window (x, y, width, height)
 
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -125,7 +138,9 @@ class SettingsWindow(QWidget):
         # Create the illegal characters checkbox
         self.illegal_chars_checkbox = QCheckBox("Remove illegal characters from filenames")
         self.illegal_chars_checkbox.setChecked(True)  # Enabled by default
-        self.illegal_chars_checkbox.setToolTip("Remove characters that are not allowed in filenames (e.g., :*?<>|)")
+        self.illegal_chars_checkbox.setToolTip(
+            "Remove characters that are not allowed in filenames (e.g., :*?<>|)"
+        )
         vbox_main_layout.addWidget(self.illegal_chars_checkbox)
 
         # Add a spacer item to create an empty line
@@ -142,12 +157,12 @@ class SettingsWindow(QWidget):
         vbox_main_layout.addLayout(hbox_music_clear_layout)
 
         # Create music folder select button
-        self.music_folder_select_button = QPushButton('Set Default Music Folder')
+        self.music_folder_select_button = QPushButton("Set Default Music Folder")
         hbox_music_clear_layout.addWidget(self.music_folder_select_button, 1)
         self.music_folder_select_button.clicked.connect(self.select_music_folder)
 
         # Create music folder clear button
-        self.music_folder_clear_button = QPushButton('Clear')
+        self.music_folder_clear_button = QPushButton("Clear")
         hbox_music_clear_layout.addWidget(self.music_folder_clear_button)
         self.music_folder_clear_button.clicked.connect(self.clear_music_folder)
 
@@ -160,12 +175,12 @@ class SettingsWindow(QWidget):
         vbox_main_layout.addLayout(hbox_destination_clear_layout)
 
         # Create destination folder select button
-        self.destination_folder_select_button = QPushButton('Set Default Destination Folder')
+        self.destination_folder_select_button = QPushButton("Set Default Destination Folder")
         hbox_destination_clear_layout.addWidget(self.destination_folder_select_button, 1)
         self.destination_folder_select_button.clicked.connect(self.select_destination_folder)
 
         # Create destination folder clear button
-        self.destination_folder_clear_button = QPushButton('Clear')
+        self.destination_folder_clear_button = QPushButton("Clear")
         hbox_destination_clear_layout.addWidget(self.destination_folder_clear_button)
         self.destination_folder_clear_button.clicked.connect(self.clear_destination_folder)
 
@@ -182,10 +197,10 @@ class SettingsWindow(QWidget):
         vbox_main_layout.addLayout(hbox_save_reset_layout)
 
         # Create save settings button
-        self.save_button = QPushButton('Save Settings')
+        self.save_button = QPushButton("Save Settings")
         hbox_save_reset_layout.addWidget(self.save_button, 1)
         self.save_button.clicked.connect(self.save_settings)
-        
+
         # Create a line between the save and reset button
         line_save_reset = QFrame()
         line_save_reset.setFrameShape(QFrame.VLine)
@@ -193,13 +208,13 @@ class SettingsWindow(QWidget):
         hbox_save_reset_layout.addWidget(line_save_reset)
 
         # Create reset settings button
-        self.reset_button = QPushButton('Reset && Save All Settings')
+        self.reset_button = QPushButton("Reset && Save All Settings")
         hbox_save_reset_layout.addWidget(self.reset_button, 1)
         self.reset_button.clicked.connect(self.reset_settings)
-        
+
         # Add resizing handles
         self.bottom_right_grip = QSizeGrip(self)
-        self.bottom_right_grip.setToolTip('Resize window')
+        self.bottom_right_grip.setToolTip("Resize window")
         hbox_save_reset_layout.addWidget(self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight)
 
     def center_window(self):
@@ -210,33 +225,37 @@ class SettingsWindow(QWidget):
         self.move(x, y)
 
     def select_music_folder(self):
-        music_folder_path = QFileDialog.getExistingDirectory(self, 'Select Music Folder')
+        music_folder_path = QFileDialog.getExistingDirectory(self, "Select Music Folder")
         if music_folder_path:
             self.music_folder_path = music_folder_path
             self.music_folder_label.setText(self.music_folder_path)
 
     def clear_music_folder(self):
-        self.music_folder_path = ''
-        self.music_folder_label.setText('')
+        self.music_folder_path = ""
+        self.music_folder_label.setText("")
 
     def select_destination_folder(self):
-        destination_folder_path = QFileDialog.getExistingDirectory(self, 'Select Destination Folder')
+        destination_folder_path = QFileDialog.getExistingDirectory(
+            self, "Select Destination Folder"
+        )
         if destination_folder_path:
             self.destination_folder_path = destination_folder_path
             self.destination_folder_label.setText(self.destination_folder_path)
 
     def clear_destination_folder(self):
-        self.destination_folder_path = ''
-        self.destination_folder_label.setText('')
+        self.destination_folder_path = ""
+        self.destination_folder_label.setText("")
 
     def load_settings(self):
         try:
-            with open('settings_jmo.json', 'r') as f:
+            with open("settings_jmo.json", "r") as f:
                 self.settings = json.load(f)
                 self.music_folder_path = self.settings.get("music_folder_path", "")
                 self.destination_folder_path = self.settings.get("destination_folder_path", "")
                 self.sound_checkbox.setChecked(self.settings.get("mute_sound", False))
-                self.illegal_chars_checkbox.setChecked(self.settings.get("remove_illegal_chars", True))
+                self.illegal_chars_checkbox.setChecked(
+                    self.settings.get("remove_illegal_chars", True)
+                )
 
                 # Update the labels with the loaded values
                 self.music_folder_label.setText(self.music_folder_path)
@@ -251,19 +270,21 @@ class SettingsWindow(QWidget):
             "music_folder_path": self.music_folder_path,
             "destination_folder_path": self.destination_folder_path,
             "mute_sound": self.sound_checkbox.isChecked(),
-            "remove_illegal_chars": self.illegal_chars_checkbox.isChecked()
+            "remove_illegal_chars": self.illegal_chars_checkbox.isChecked(),
         }
 
         # Save settings to file
-        with open('settings_jmo.json', 'w') as file:
+        with open("settings_jmo.json", "w") as file:
             json.dump(settings, file, indent=4)
 
         # Update the button text and color temporarily
         self.save_button.setText("Success")
-        self.save_button.setStyleSheet("""
+        self.save_button.setStyleSheet(
+            """
             background-color: rgba(255, 152, 152, 1);
             color: black;
-        """)
+        """
+        )
 
         # Stop any existing save timers before creating a new one
         if hasattr(self, "reset_save_timer"):
@@ -279,9 +300,9 @@ class SettingsWindow(QWidget):
         self.save_button.setStyleSheet("")
 
     def reset_settings(self):
-        #Default settings
-        self.music_folder_path = ''
-        self.destination_folder_path = ''
+        # Default settings
+        self.music_folder_path = ""
+        self.destination_folder_path = ""
         self.sound_checkbox.setChecked(False)
         self.illegal_chars_checkbox.setChecked(True)  # Default to True
 
@@ -294,10 +315,12 @@ class SettingsWindow(QWidget):
 
         # Update the button text and color temporarily
         self.reset_button.setText("Success")
-        self.reset_button.setStyleSheet("""
+        self.reset_button.setStyleSheet(
+            """
             background-color: rgba(255, 152, 152, 1);
             color: black;
-        """)
+        """
+        )
 
         # Stop any existing reset timers before creating a new one
         if hasattr(self, "reset_reset_timer"):
@@ -311,5 +334,3 @@ class SettingsWindow(QWidget):
     def resetResetButton(self):
         self.reset_button.setText("Reset && Save All Settings")
         self.reset_button.setStyleSheet("")
-
-
