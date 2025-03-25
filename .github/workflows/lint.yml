@@ -20,13 +20,28 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black flake8 mypy
+        pip install black flake8 mypy types-all
         pip install -r requirements.txt
         
     - name: Check formatting with black
       run: black --check .
       
     - name: Lint with flake8
-      run: flake8 . --count --max-line-length=100 --statistics
+      run: |
+        flake8 . \
+          --count \
+          --max-line-length=100 \
+          --statistics \
+          --exclude=.git,__pycache__,build,dist
       
     - name: Type check with mypy
+      run: |
+        mypy jellyfin_music_organizer \
+          --ignore-missing-imports \
+          --disallow-untyped-defs \
+          --check-untyped-defs
+
+    - name: Check import sorting
+      run: |
+        pip install isort
+        isort --check-only --diff .
