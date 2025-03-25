@@ -3,32 +3,34 @@
 import logging
 import traceback
 from functools import wraps
-from typing import Any, Callable, List, Optional, ParamSpec, TypeVar
+from typing import Any, Callable, List, Optional, ParamSpec, TypeVar, Union, Dict
+from logging import Logger
+from .typing_compat import P
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
-P = ParamSpec("P")
+P = ParamSpec('P')
 
 
 def handle_errors(
-    error_message: str, callback: Optional[Callable[[Exception], Any]] = None
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    """Decorator for consistent error handling."""
-
-    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+    logger: Optional[Logger] = None,
+    default_return: Optional[T] = None,
+    reraise: bool = False
+) -> Callable[[Callable[P, T]], Callable[P, Union[T, None]]]:
+    """Decorator for consistent error handling with proper type hints."""
+    def decorator(func: Callable[P, T]) -> Callable[P, Union[T, None]]:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Union[T, None]:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logger.error(f"{error_message}: {str(e)}\n" f"Traceback:\n{traceback.format_exc()}")
-                if callback:
-                    return callback(e)
-                raise
-
+                if logger:
+                    logger.error(f"Error in {func.__name__}: {str(e)}")
+                if reraise:
+                    raise
+                return default_return
         return wrapper
-
     return decorator
 
 
@@ -54,3 +56,27 @@ class ResourceManager:
                     resource.deleteLater()
             except Exception as e:
                 logger.error(f"Failed to clean up resource: {e}")
+
+
+class ErrorCollector:
+    """Collect and manage errors during processing."""
+    
+    def __init__(self) -> None:
+        self.errors: Dict[str, str] = {}
+        self.warnings: Dict[str, str] = {}
+
+    def add_error(self, key: str, message: str) -> None:
+        """Add an error message."""
+        self.errors[key] = message
+
+    def add_warning(self, key: str, message: str) -> None:
+        """Add a warning message."""
+        self.warnings[key] = message
+
+    def has_errors(self) -> bool:
+        """Check if there are any errors."""
+        return bool(self.errors)
+
+    def get_error_summary(self) -> str:
+        """Get a formatted summary of all errors."""
+        return "\n".join(f"{k}: {v}" for k, v in self.errors.items())

@@ -6,7 +6,7 @@ import json
 import logging
 import platform
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from .platform_utils import PlatformPaths
 
@@ -30,10 +30,10 @@ class ConfigManager:
         "platform_specific": {},
     }
 
-    def __init__(self, config_path: Optional[str] = None) -> None:
+    def __init__(self, config_path: Optional[Union[str, Path]] = None) -> None:
         self.logger = logging.getLogger(__name__)
-        self.config_path = config_path
-        self.settings: Dict[str, Any] = {}
+        self.settings: Dict[str, Any] = self.DEFAULT_CONFIG.copy()
+        self.config_path = Path(config_path) if config_path else self._get_default_config_path()
 
     def _get_platform_defaults(self) -> Dict[str, Any]:
         """Get platform-specific default settings."""
@@ -61,29 +61,29 @@ class ConfigManager:
             return False
 
     def load(self) -> Dict[str, Any]:
-        """Load configuration with validation."""
+        """Load configuration from file."""
         try:
-            if self.config_path and Path(self.config_path).exists():
-                with open(self.config_path, "r") as f:
-                    loaded_config = json.load(f)
-                    if self.validate_config(loaded_config):
-                        self.settings.update(loaded_config)
-                    else:
-                        self.logger.warning("Invalid configuration, using defaults")
+            if self.config_path.exists():
+                with open(self.config_path, 'r') as f:
+                    loaded_settings = json.load(f)
+                    if self.validate_config(loaded_settings):
+                        self.settings.update(loaded_settings)
             return self.settings
         except Exception as e:
-            self.logger.error(f"Error loading configuration: {e}")
+            self.logger.error(f"Failed to load config: {e}")
             return self.settings
 
-    def save(self) -> None:
-        """Save current configuration to file."""
+    def save(self, settings: Optional[Dict[str, Any]] = None) -> None:
+        """Save configuration to file."""
         try:
+            if settings is not None:
+                self.settings.update(settings)
+
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, "w") as f:
+            with open(self.config_path, 'w') as f:
                 json.dump(self.settings, f, indent=4)
-            self.logger.info("Configuration saved successfully")
         except Exception as e:
-            self.logger.error(f"Error saving configuration: {e}")
+            self.logger.error(f"Failed to save config: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -125,3 +125,7 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Failed to get log path: {e}")
             raise
+
+    def _get_default_config_path(self) -> Path:
+        """Get the default configuration file path."""
+        return PlatformPaths.get_app_data_dir() / "config.json"

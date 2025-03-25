@@ -7,10 +7,11 @@ import shutil
 import stat
 from logging import getLogger
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
 from .exceptions import FileOperationError
+from .error_handler import handle_errors
 
 logger = getLogger(__name__)
 
@@ -185,105 +186,74 @@ def safe_remove(path: str) -> None:
 
 
 class FileOperations:
-    """Platform-independent file operations."""
+    """Safe file operations with proper error handling."""
 
     @staticmethod
-    def ensure_writable(path: Path) -> None:
-        """Ensure path is writable on all platforms.
-
-        Args:
-            path: Path to make writable
-
-        Raises:
-            FileOperationError: If path cannot be made writable
-        """
-        try:
-            if os.name == "nt":  # Windows
-                if path.exists() and not os.access(path, os.W_OK):
-                    os.chmod(path, stat.S_IWRITE)
-            else:  # Unix-like
-                if path.exists():
-                    path.chmod(path.stat().st_mode | stat.S_IWRITE)
-        except Exception as e:
-            logger.error(f"Failed to make path writable: {e}")
-            raise FileOperationError(f"Cannot make path writable: {e}", str(path))
+    @handle_errors(logger=logger)
+    def ensure_writable(path: Path) -> bool:
+        """Ensure a path is writable."""
+        if path.exists():
+            if os.access(path, os.W_OK):
+                return True
+            # Try to make it writable
+            try:
+                path.chmod(path.stat().st_mode | 0o200)
+                return True
+            except Exception:
+                return False
+        return True
 
     @staticmethod
-    def safe_copy(source: Path, destination: Path, overwrite: bool = False) -> None:
-        """Copy file safely across platforms.
+    @handle_errors(logger=logger)
+    def safe_copy(
+        source: Path,
+        destination: Path,
+        overwrite: bool = False,
+        preserve_metadata: bool = True
+    ) -> bool:
+        """Safely copy a file with metadata preservation."""
+        if not source.exists():
+            raise FileNotFoundError(f"Source file not found: {source}")
 
-        Args:
-            source: Source path
-            destination: Destination path
-            overwrite: Whether to overwrite existing files
+        if destination.exists() and not overwrite:
+            raise FileExistsError(f"Destination file exists: {destination}")
 
-        Raises:
-            FileOperationError: If copy operation fails
-        """
-        try:
-            # Create destination directory if needed
-            destination.parent.mkdir(parents=True, exist_ok=True)
+        # Ensure destination directory exists
+        destination.parent.mkdir(parents=True, exist_ok=True)
 
-            if destination.exists():
-                if not overwrite:
-                    raise FileOperationError("Destination exists", str(destination))
-                FileOperations.ensure_writable(destination)
-                destination.unlink()
+        # Ensure both paths are writable
+        if not FileOperations.ensure_writable(source):
+            raise PermissionError(f"Source file not writable: {source}")
+        if not FileOperations.ensure_writable(destination):
+            raise PermissionError(f"Destination path not writable: {destination}")
 
-            # Copy with metadata preservation
+        # Copy with metadata preservation if requested
+        if preserve_metadata:
             shutil.copy2(source, destination)
-
-        except Exception as e:
-            logger.error(f"File copy failed: {e}")
-            raise FileOperationError(f"Copy failed: {e}", str(source))
-
-    @staticmethod
-    def safe_remove(path: Path) -> None:
-        """Remove file safely across platforms.
-
-        Args:
-            path: Path to remove
-
-        Raises:
-            FileOperationError: If removal fails
-        """
-        try:
-            if not path.exists():
-                return
-
-            FileOperations.ensure_writable(path)
-            if path.is_file():
-                path.unlink()
-            else:
-                shutil.rmtree(path)
-        except Exception as e:
-            logger.error(f"File removal failed: {e}")
-            raise FileOperationError(f"Remove failed: {e}", str(path))
+        else:
+            shutil.copy(source, destination)
+        return True
 
     @staticmethod
-    def get_legal_filename(filename: str) -> str:
-        """Get legal filename for current platform.
+    def is_audio_file(path: Path) -> bool:
+        """Check if a file is a supported audio file."""
+        return path.suffix.lower() in SUPPORTED_AUDIO_EXTENSIONS
 
-        Args:
-            filename: Original filename
-
-        Returns:
-            Legal filename for current platform
-        """
-        if os.name == "nt":  # Windows
-            illegal_chars = '<>:"/\\|?*'
-            max_length = 255
-        else:  # Unix-like
-            illegal_chars = "/"
-            max_length = 255
-
+    @staticmethod
+    def get_legal_filename(filename: str, max_length: int = 255) -> str:
+        """Generate a legal filename."""
         # Replace illegal characters
+        illegal_chars = '<>:"/\\|?*'
         for char in illegal_chars:
-            filename = filename.replace(char, "_")
+            filename = filename.replace(char, '_')
 
-        # Truncate if too long
+        # Handle special cases
+        filename = filename.strip('. ')  # Remove leading/trailing dots and spaces
+        
+        # Truncate if necessary
         if len(filename) > max_length:
             name, ext = os.path.splitext(filename)
-            filename = name[: max_length - len(ext)] + ext
+            max_name_length = max_length - len(ext)
+            filename = name[:max_name_length] + ext
 
-        return filename.strip()
+        return filename or '_'  # Return '_' if filename would be empty

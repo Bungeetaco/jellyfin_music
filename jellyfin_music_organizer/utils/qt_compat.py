@@ -1,14 +1,9 @@
 """Qt compatibility layer for type checking."""
 
-from typing import Union
-
+from typing import Optional
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication
-
-# Type definitions for Qt enums and flags
-QtWindowFlags = Union[Qt.WindowFlags, Qt.WindowType]
-QtAlignment = Union[Qt.Alignment, Qt.AlignmentFlag]
-
+from PyQt5.QtWidgets import QApplication, QWidget
+from .qt_types import WindowFlags, QtConstants
 
 class QtCompat:
     """Compatibility layer for Qt attributes."""
@@ -16,16 +11,19 @@ class QtCompat:
     @staticmethod
     def set_high_dpi_scaling(app: QApplication) -> None:
         """Enable high DPI scaling."""
-        try:
-            app.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
-            app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
-        except Exception:
-            pass
+        app.setAttribute(QtConstants.AA_EnableHighDpiScaling)
+        app.setAttribute(QtConstants.AA_UseHighDpiPixmaps)
 
     @staticmethod
-    def get_window_flags(frameless: bool = False) -> QtWindowFlags:
+    def get_window_flags(frameless: bool = False) -> WindowFlags:
         """Get appropriate window flags."""
-        flags = Qt.WindowType.Window
+        flags = QtConstants.Window
         if frameless:
-            flags |= Qt.WindowType.FramelessWindowHint
+            flags |= QtConstants.FramelessWindowHint
         return flags
+
+    @staticmethod
+    def setup_window(window: QWidget, frameless: bool = False) -> None:
+        """Set up window flags and attributes."""
+        flags = QtCompat.get_window_flags(frameless)
+        window.setWindowFlags(flags)

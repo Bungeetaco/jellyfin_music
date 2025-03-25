@@ -1,9 +1,10 @@
 """Platform-specific keyboard shortcuts."""
 
 import platform
-from typing import Dict
+from typing import Dict, Optional
 
 from PyQt5.QtCore import Qt
+from .qt_types import KeyboardModifier, QtConst
 
 
 class ShortcutManager:
@@ -28,10 +29,16 @@ class ShortcutManager:
         }
 
     @staticmethod
-    def get_modifier_key() -> Qt.KeyboardModifier:
+    def get_modifier_key() -> KeyboardModifier:
         """Get platform-specific modifier key.
 
         Returns:
             Qt modifier key constant
         """
-        return Qt.MetaModifier if platform.system() == "Darwin" else Qt.ControlModifier
+        return QtConst.MetaModifier if platform.system() == "Darwin" else QtConst.ControlModifier
+
+def get_platform_modifier() -> KeyboardModifier:
+    """Get the platform-specific modifier key."""
+    if platform.system() == "Darwin":
+        return QtConst.MetaModifier
+    return QtConst.ControlModifier

@@ -3,10 +3,10 @@ import os
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Callable
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QPoint
+from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
 
 from ..utils.config import ConfigManager
 from ..utils.dialogs import DialogManager
+from ..utils.qt_types import QtConstants
 
 logger = getLogger(__name__)
 
@@ -30,14 +31,16 @@ class SettingsWindow(QWidget):
     windowClosed = pyqtSignal()
     settings_changed = pyqtSignal(dict)
 
-    def __init__(self, settings: Dict[str, Any]) -> None:
+    def __init__(self, settings: Dict[str, Any], version: str) -> None:
         """Initialize settings window."""
         super().__init__()
         self.config_manager = ConfigManager()
         self.dialog_manager = DialogManager()
         self.settings = settings.copy()
         self._original_settings = settings.copy()
-        self.version = self.settings.get("version", "unknown")
+        self.version = version
+        self.drag_position: Optional[QPoint] = None
+        self.reset_reset_timer: Optional[Callable[[], None]] = None
         self._setup_platform_specific()
         try:
             # Initialize attributes
@@ -45,7 +48,7 @@ class SettingsWindow(QWidget):
             self.destination_folder_path = ""
 
             # Setup and show user interface
-            self.setup_ui()
+            self._setup_ui()
 
             # Load settings from file if it exists
             self.load_settings()
@@ -75,53 +78,49 @@ class SettingsWindow(QWidget):
             self.settings.get(key) != self._original_settings.get(key) for key in self.settings
         )
 
-    def setup_titlebar(self):
-        # Hides the default titlebar
-        self.setWindowFlag(Qt.FramelessWindowHint)
-
-        # Title bar widget
+    def setup_titlebar(self) -> None:
+        """Set up the custom titlebar."""
+        self.setWindowFlag(QtConstants.FramelessWindowHint)
+        
         self.title_bar = QWidget(self)
         self.title_bar.setObjectName("TitleBar")
         self.title_bar.setFixedHeight(32)
 
-        hbox_title_layout = QHBoxLayout(self.title_bar)
-        hbox_title_layout.setContentsMargins(0, 0, 0, 0)
+        layout = QHBoxLayout(self.title_bar)
+        layout.setContentsMargins(0, 0, 0, 0)
 
+        # Icon and title
         self.icon_label = QLabel()
         self.icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
-        hbox_title_layout.addWidget(self.icon_label)
+        layout.addWidget(self.icon_label)
 
         self.title_label = QLabel(f"Settings Window v{self.version}")
         self.title_label.setStyleSheet("color: white;")
-        hbox_title_layout.addWidget(self.title_label)
+        layout.addWidget(self.title_label)
 
-        hbox_title_layout.addStretch()
+        layout.addStretch()
+        layout.setAlignment(QtConstants.AlignRight)
 
+        # Close button
         self.close_button = QPushButton("✕")
-        self.close_button.setToolTip("Close window")
         self.close_button.setFixedSize(24, 24)
-        self.close_button.setStyleSheet(
-            "QPushButton { color: white; background-color: transparent; }"
-            "QPushButton:hover { background-color: red; }"
-        )
-        hbox_title_layout.addWidget(self.close_button)
         self.close_button.clicked.connect(self.close)
-
-        hbox_title_layout.setAlignment(Qt.AlignRight)
+        layout.addWidget(self.close_button)
 
     # Mouse events allow the title bar to be dragged around
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and event.y() <= self.title_bar.height():
-            self.draggable = True
-            self.offset = event.globalPos() - self.pos()
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Handle mouse press events for window dragging."""
+        if event.button() == QtConstants.LeftButton:
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
 
     def mouseMoveEvent(self, event):
         if hasattr(self, "draggable") and self.draggable:
-            if event.buttons() & Qt.LeftButton:
-                self.move(event.globalPos() - self.offset)
+            if event.buttons() & QtConstants.LeftButton:
+                self.move(event.globalPos() - self.drag_position)
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == QtConstants.LeftButton:
             self.draggable = False
 
     def setup_ui(self) -> None:
@@ -135,8 +134,7 @@ class SettingsWindow(QWidget):
 
             # Title bar (skip on macOS to use native window decorations)
             if not is_mac:
-                title_bar = self._create_title_bar()
-                main_layout.addWidget(title_bar)
+                self.setup_titlebar()
 
             # Folder selection section with platform-specific spacing
             folder_section = QVBoxLayout()
@@ -157,9 +155,9 @@ class SettingsWindow(QWidget):
 
             # Apply platform-specific window flags
             if is_mac:
-                self.setWindowFlags(Qt.Window)
+                self.setWindowFlags(QtConstants.Window)
             else:
-                self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+                self.setWindowFlags(QtConstants.Window | QtConstants.FramelessWindowHint)
 
             self.setLayout(main_layout)
 

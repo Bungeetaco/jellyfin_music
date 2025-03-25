@@ -3,9 +3,11 @@ Performance optimization utilities for the Jellyfin Music Organizer application.
 """
 
 import time
-from functools import lru_cache
+from functools import lru_cache, wraps
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+import logging
+from time import perf_counter
 
 from .logger import setup_logger
 
@@ -146,43 +148,51 @@ def get_file_info(file_path: str) -> Dict[str, Any]:
 
 
 class PerformanceMonitor:
-    """
-    Monitors application performance.
-
-    This class:
-    1. Tracks execution time
-    2. Monitors memory usage
-    3. Provides performance metrics
-    """
+    """Monitor and log performance metrics."""
 
     def __init__(self) -> None:
-        """Initialize the performance monitor."""
-        self.start_time: Optional[float] = None
-        self.logger = setup_logger()
+        self.logger = logging.getLogger(__name__)
+        self.metrics: Dict[str, float] = {}
+        self.start_times: Dict[str, float] = {}
 
-    def start(self) -> None:
-        """Start performance monitoring."""
-        self.start_time = time.time()
+    def start(self, operation: str) -> None:
+        """Start timing an operation."""
+        self.start_times[operation] = perf_counter()
 
-    def stop(self) -> float:
-        """
-        Stop performance monitoring.
+    def stop(self, operation: str) -> Optional[float]:
+        """Stop timing an operation and return duration."""
+        try:
+            start_time = self.start_times.pop(operation)
+            duration = perf_counter() - start_time
+            self.metrics[operation] = duration
+            return duration
+        except KeyError:
+            self.logger.warning(f"No start time found for operation: {operation}")
+            return None
 
-        Returns:
-            Elapsed time in seconds
-        """
-        if self.start_time is None:
-            return 0.0
-        elapsed = time.time() - self.start_time
-        self.start_time = None
-        return elapsed
+    def get_metrics(self) -> Dict[str, float]:
+        """Get all collected metrics."""
+        return self.metrics.copy()
 
-    def log_performance(self, operation: str, elapsed: float) -> None:
-        """
-        Log performance metrics.
-
-        Args:
-            operation: Name of the operation
-            elapsed: Elapsed time in seconds
-        """
-        self.logger.info(f"Performance: {operation} took {elapsed:.2f} seconds")
+    @staticmethod
+    def timed(operation_name: str) -> Callable:
+        """Decorator for timing function execution."""
+        def decorator(func: Callable) -> Callable:
+            @wraps(func)
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
+                start = perf_counter()
+                try:
+                    result = func(*args, **kwargs)
+                    duration = perf_counter() - start
+                    logging.getLogger(__name__).debug(
+                        f"{operation_name} took {duration:.3f} seconds"
+                    )
+                    return result
+                except Exception as e:
+                    duration = perf_counter() - start
+                    logging.getLogger(__name__).error(
+                        f"{operation_name} failed after {duration:.3f} seconds: {e}"
+                    )
+                    raise
+            return wrapper
+        return decorator

@@ -6,9 +6,9 @@ import json
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -17,6 +17,7 @@ from ..utils.config_manager import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
 from ..utils.resource_manager import ResourceManager
+from ..utils.qt_types import QtConstants
 
 logger = getLogger(__name__)
 
@@ -31,13 +32,14 @@ class CustomDialog(QDialog):
     3. Can be closed with a custom close button
     """
 
-    def __init__(self, custom_message: str) -> None:
+    def __init__(self, custom_message: str, parent: Optional[QWidget] = None) -> None:
         """Initialize dialog with platform-specific settings."""
-        super().__init__()
+        super().__init__(parent)
         self.resource_manager = ResourceManager()
         self.config_manager = ConfigManager()
         self.settings = self.config_manager.load()
         self.notification_manager = NotificationManager()
+        self.drag_position: Optional[QPoint] = None
 
         self.resource_manager.register(
             "notification_manager", self.notification_manager, lambda x: x.deleteLater()
@@ -50,16 +52,17 @@ class CustomDialog(QDialog):
         """Configure platform-specific window behavior."""
         system = platform.system()
         try:
+            flags = QtConstants.Dialog | QtConstants.WindowStaysOnTopHint
             if system == "Darwin":
                 # Use native window decorations on macOS
-                self.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint)
-                self.setAttribute(Qt.WA_MacAlwaysShowToolWindow)
+                self.setWindowFlags(flags)
+                self.setAttribute(QtConstants.WA_MacAlwaysShowToolWindow)
             elif system == "Windows":
                 # Custom window frame on Windows
-                self.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)
+                self.setWindowFlags(flags | QtConstants.FramelessWindowHint)
             else:
                 # Default behavior for Linux
-                self.setWindowFlags(Qt.Dialog)
+                self.setWindowFlags(flags)
 
             # Set platform-specific style
             if system == "Windows":
@@ -71,7 +74,7 @@ class CustomDialog(QDialog):
         except Exception as e:
             logger.error(f"Failed to setup platform-specific settings: {e}")
             # Fall back to basic window flags
-            self.setWindowFlags(Qt.Dialog)
+            self.setWindowFlags(QtConstants.Dialog)
 
     def center_window(self) -> None:
         """Center the dialog window on the screen."""
@@ -181,14 +184,13 @@ class CustomDialog(QDialog):
         error_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(error_label)
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
         """Handle mouse press events for window dragging."""
-        try:
-            if event.button() == Qt.LeftButton:
-                self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-                event.accept()
-        except Exception as e:
-            logger.error(f"Mouse press event error: {e}")
+        if event is None:
+            return
+        if event.button() == QtConstants.LeftButton:
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
 
     def _handle_notification_error(self, error_msg: str) -> None:
         """Handle notification errors."""

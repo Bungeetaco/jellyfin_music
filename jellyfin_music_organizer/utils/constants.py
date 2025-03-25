@@ -3,7 +3,8 @@ Constants used throughout the Jellyfin Music Organizer application.
 """
 
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Any, Optional, Final
+from enum import Enum, auto
 
 
 # Application metadata
@@ -73,35 +74,39 @@ class MetadataTags:
 
 
 # UI Configuration
-class UIConfig:
-    """UI configuration constants."""
-
-    WINDOW_DIMENSIONS = {"width": 400, "height": 260, "x": 100, "y": 100}
-    TITLE_BAR_HEIGHT = 32
-    ICON_SIZE = 24
-
-    # UI Styles
-    STYLES: Dict[str, str] = {
-        "title_bar_button": (
-            "QPushButton {"
-            "   color: white;"
-            "   background-color: transparent;"
-            "} "
-            "QPushButton:hover {"
-            "   background-color: {color};"
-            "}"
-        ),
-        "progress_bar": (
-            "QProgressBar {"
-            "   border: 1px solid black;"
-            "   text-align: center;"
-            "   color: black;"
-            "   background-color: rgba(255, 152, 152, 1);"
-            "} "
-            "QProgressBar::chunk {"
-            "   background-color: rgba(255, 152, 152, 1);"
-            "}"
-        ),
+class UIConstants:
+    """UI-related constants."""
+    
+    WINDOW_DIMENSIONS: Final[Dict[str, int]] = {
+        "width": 400,
+        "height": 260,
+        "x": 100,
+        "y": 100
+    }
+    
+    TITLE_BAR_HEIGHT: Final[int] = 32
+    ICON_SIZE: Final[int] = 24
+    BUTTON_SIZE: Final[int] = 24
+    
+    STYLE_TEMPLATES: Final[Dict[str, str]] = {
+        "title_bar": """
+            QWidget#TitleBar {
+                background-color: %(bg_color)s;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+            }
+        """,
+        "button": """
+            QPushButton {
+                background-color: transparent;
+                color: %(text_color)s;
+                border: none;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: %(hover_color)s;
+            }
+        """
     }
 
 
@@ -193,3 +198,75 @@ class NotificationConfig:
 
 # Initialize paths
 Paths.ensure_paths()
+
+def get_metadata_value(metadata: Dict[str, Any], key: str, default: Optional[str] = None) -> str:
+    """Safely get metadata value with proper type handling."""
+    value = metadata.get(key, default)
+    if isinstance(value, list):
+        return value[0] if value else default or ""
+    return str(value) if value is not None else default or ""
+
+
+# Audio file extensions
+SUPPORTED_AUDIO_EXTENSIONS: Set[str] = {
+    ".mp3", ".m4a", ".flac", ".ogg", ".wav", ".wma", ".aac"
+}
+
+# Metadata tags
+METADATA_TAGS: Set[str] = {
+    "title", "artist", "album", "albumartist", "date", "genre", "tracknumber"
+}
+
+
+class FileType(Enum):
+    """Enumeration of supported file types."""
+    MP3 = auto()
+    FLAC = auto()
+    M4A = auto()
+    OGG = auto()
+    WAV = auto()
+    WMA = auto()
+    AAC = auto()
+
+class MetadataFields(Enum):
+    """Enumeration of metadata fields."""
+    TITLE = "title"
+    ARTIST = "artist"
+    ALBUM = "album"
+    ALBUM_ARTIST = "albumartist"
+    TRACK_NUMBER = "tracknumber"
+    DISC_NUMBER = "discnumber"
+    YEAR = "date"
+    GENRE = "genre"
+
+class FileConstants:
+    """File-related constants."""
+    
+    SUPPORTED_EXTENSIONS: Final[Set[str]] = {
+        ".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma", ".aac"
+    }
+    
+    MAX_FILENAME_LENGTH: Final[int] = 255
+    BUFFER_SIZE: Final[int] = 8192  # 8KB buffer for file operations
+    
+    METADATA_ENCODING: Final[str] = "utf-8"
+    
+    @staticmethod
+    def is_supported_extension(ext: str) -> bool:
+        """Check if file extension is supported."""
+        return ext.lower() in FileConstants.SUPPORTED_EXTENSIONS
+
+class ConfigConstants:
+    """Configuration-related constants."""
+    
+    DEFAULT_CONFIG: Final[Dict[str, Any]] = {
+        "music_folder_path": "",
+        "destination_folder_path": "",
+        "mute_sound": False,
+        "version": "3.06",
+        "window_state": {},
+        "platform_specific": {}
+    }
+    
+    CONFIG_VERSION: Final[str] = "3.06"
+    CONFIG_FILENAME: Final[str] = "config.json"

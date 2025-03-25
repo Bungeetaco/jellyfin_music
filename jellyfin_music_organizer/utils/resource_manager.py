@@ -2,53 +2,56 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, Optional, TypeVar
+from typing import Any, Callable, Dict, Generator, Optional, TypeVar, Generic
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 
-class ResourceManager:
-    """Manage application resources and cleanup."""
+class ResourceManager(Generic[T]):
+    """Type-safe resource management."""
 
     def __init__(self) -> None:
-        self._resources: Dict[str, Any] = {}
-        self._cleanup_handlers: Dict[str, Callable[[Any], None]] = {}
+        self._resources: Dict[str, T] = {}
+        self._cleanup_handlers: Dict[str, Callable[[T], None]] = {}
 
     def register(
-        self, resource_id: str, resource: Any, cleanup_handler: Optional[Callable] = None
+        self,
+        resource_id: str,
+        resource: T,
+        cleanup_handler: Optional[Callable[[T], None]] = None
     ) -> None:
-        """Register a resource with optional cleanup handler."""
+        """Register a resource with optional cleanup."""
+        if resource_id in self._resources:
+            self.cleanup(resource_id)
         self._resources[resource_id] = resource
         if cleanup_handler:
             self._cleanup_handlers[resource_id] = cleanup_handler
 
-    def cleanup(self) -> None:
-        """Clean up all registered resources."""
-        for resource_id in list(self._resources.keys()):
-            self._cleanup_resource(resource_id)
+    def get(self, resource_id: str) -> Optional[T]:
+        """Get a registered resource."""
+        return self._resources.get(resource_id)
 
-    def _cleanup_resource(self, resource_id: str) -> None:
+    def cleanup(self, resource_id: str) -> None:
         """Clean up a specific resource."""
-        try:
-            resource = self._resources.pop(resource_id, None)
-            if resource:
-                handler = self._cleanup_handlers.pop(resource_id, None)
-                if handler:
-                    handler(resource)
-                elif hasattr(resource, "close"):
-                    resource.close()
-                elif hasattr(resource, "cleanup"):
-                    resource.cleanup()
-                elif hasattr(resource, "deleteLater"):
-                    resource.deleteLater()
-        except Exception as e:
-            logger.error(f"Failed to clean up resource {resource_id}: {e}")
+        if resource_id in self._resources:
+            resource = self._resources[resource_id]
+            if resource_id in self._cleanup_handlers:
+                try:
+                    self._cleanup_handlers[resource_id](resource)
+                except Exception as e:
+                    logger.error(f"Cleanup error for {resource_id}: {e}")
+            del self._resources[resource_id]
+            self._cleanup_handlers.pop(resource_id, None)
 
     @contextmanager
     def managed_resource(
-        self, resource_id: str, resource: T, cleanup_handler: Optional[Callable[[T], None]] = None
+        self,
+        resource_id: str,
+        resource: T,
+        cleanup_handler: Optional[Callable[[T], None]] = None
     ) -> Generator[T, None, None]:
         """Context manager for temporary resources."""
         try:

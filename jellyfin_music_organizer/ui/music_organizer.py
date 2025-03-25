@@ -34,6 +34,8 @@ from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
 from .replace_skip_window import ReplaceSkipWindow
 from .settings_window import SettingsWindow
+from ..utils.qt_compat import QtCompat
+from ..utils.qt_types import QtConstants
 
 logger = getLogger(__name__)
 
@@ -548,17 +550,17 @@ class MusicOrganizer(QWidget):
         try:
             system = platform.system()
             if system == "Windows":
-                self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-                QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+                self.setWindowFlags(QtConstants.Window | QtConstants.FramelessWindowHint)
+                QtCompat.set_high_dpi_scaling(QApplication.instance())
             elif system == "Darwin":
-                self.setWindowFlags(Qt.Window)
-                self.setAttribute(Qt.WA_MacShowFocusRect, False)
+                self.setWindowFlags(QtConstants.Window)
+                self.setAttribute(QtConstants.WA_MacShowFocusRect, False)
             else:  # Linux
-                self.setWindowFlags(Qt.Window)
+                self.setWindowFlags(QtConstants.Window)
                 self.setStyle(QStyleFactory.create("Fusion"))
         except Exception as e:
             logger.error(f"Failed to setup platform-specific window: {e}")
-            self.setWindowFlags(Qt.Window)  # Fallback
+            self.setWindowFlags(QtConstants.Window)  # Fallback
 
         # Apply platform-specific font settings
         font_settings = PlatformUI.get_font_settings()

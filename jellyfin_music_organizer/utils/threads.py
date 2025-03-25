@@ -6,12 +6,13 @@ import threading
 from logging import getLogger
 from pathlib import Path
 from queue import Queue
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple, cast
 
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 from .logger import setup_logger
+from .qt_types import QMediaPlayerConst, QtMediaConstants
 
 logger = getLogger(__name__)
 
@@ -151,36 +152,52 @@ class ThreadManager:
         return name in self.active_threads and self.active_threads[name].is_alive()
 
 
-class NotificationAudioThread(QThread):
-    """Thread for playing notification sounds."""
-
-    kill_thread_signal = pyqtSignal()
+class BaseThread(QThread):
+    """Base thread class with proper typing."""
+    
     error_signal = pyqtSignal(str)
-    media_status_changed = pyqtSignal(QMediaPlayer.MediaStatus)
-
-    def __init__(self, audio_file_name: str) -> None:
-        """Initialize notification thread with resource validation.
-
-        Args:
-            audio_file_name: Name of the audio file to play
-        """
+    
+    def __init__(self, **kwargs: Dict[str, Any]) -> None:
         super().__init__()
-        self.audio_file_name = audio_file_name
-        self.player: Optional[QMediaPlayer] = None
-        self.is_running = True
+        self.kwargs: Dict[str, Any] = kwargs or {}
+        self.is_running: bool = True
+
+    def get_args(self) -> Optional[Tuple[Any, ...]]:
+        """Get thread arguments safely."""
+        try:
+            return tuple(self.kwargs.values())
+        except Exception as e:
+            self.error_signal.emit(f"Failed to get arguments: {e}")
+            return None
+
+
+class NotificationAudioThread(BaseThread):
+    """Thread for handling audio notifications."""
+    
+    media_status_changed = pyqtSignal(int)
+    
+    def __init__(self, audio_file: str) -> None:
+        super().__init__(audio_file=audio_file)
+        self._player: Optional[QMediaPlayer] = None
+
+    def on_media_status_changed(self, status: int) -> None:
+        """Handle media status changes."""
+        self.media_status_changed.emit(status)
+        if status == QtMediaConstants.EndOfMedia:
+            self.is_running = False
 
     def run(self) -> None:
         """Run the notification thread with proper cleanup."""
         try:
-            self.player = QMediaPlayer()
-            self.player.setMedia(self._get_media_content())
-            self.player.mediaStatusChanged.connect(self.on_media_status_changed)
-            self.player.error.connect(self._handle_player_error)
+            self._player = QMediaPlayer()
+            self._player.setMedia(self._get_media_content())
+            self._player.mediaStatusChanged.connect(self.on_media_status_changed)
+            self._player.error.connect(self._handle_player_error)
 
-            self.player.play()
+            self._player.play()
 
             # Wait for playback to complete
-            while self.is_running and self.player.state() == QMediaPlayer.PlayingState:
+            while self._player.state() == QMediaPlayer.PlayingState:
                 self.msleep(100)
 
         except Exception as e:
@@ -198,36 +215,30 @@ class NotificationAudioThread(QThread):
         Raises:
             RuntimeError: If audio file not found
         """
-        resource_path = f":/sounds/{self.audio_file_name}.wav"
+        resource_path = f":/sounds/{self.kwargs['audio_file']}.wav"
         if not Path(resource_path).exists():
             logger.error(f"Audio file not found: {resource_path}")
-            raise RuntimeError(f"Audio file not found: {self.audio_file_name}")
+            raise RuntimeError(f"Audio file not found: {self.kwargs['audio_file']}")
 
         return QMediaContent(QUrl.fromLocalFile(resource_path))
 
-    def on_media_status_changed(self, status: QMediaPlayer.MediaStatus) -> None:
-        """Handle media status changes."""
-        self.media_status_changed.emit(status)
-        if status == QMediaPlayer.EndOfMedia:
-            self.is_running = False
-
     def _handle_player_error(self) -> None:
         """Handle player errors."""
-        if self.player:
-            error_msg = self.player.errorString()
+        if self._player:
+            error_msg = self._player.errorString()
             self.error_signal.emit(f"Player error: {error_msg}")
 
     def _cleanup(self) -> None:
         """Clean up resources."""
         try:
-            if self.player:
-                self.player.stop()
-                self.player.deleteLater()
-                self.player = None
+            if self._player:
+                self._player.stop()
+                self._player.deleteLater()
+                self._player = None
         except Exception as e:
             logger.error(f"Cleanup error: {e}")
 
     def stop(self) -> None:
         """Stop the notification thread safely."""
-        self.is_running = False
+        self.quit()
         self._cleanup()

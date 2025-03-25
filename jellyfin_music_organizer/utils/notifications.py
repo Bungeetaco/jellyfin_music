@@ -3,7 +3,9 @@
 import logging
 import platform
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, cast, Protocol, Dict, Any
+import sys
+from pathlib import Path
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -11,41 +13,78 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from .config import ConfigManager
 from .notification_config import NotificationConfig
 from .platform_utils import PlatformPaths
+from .qt_types import QtMediaConstants
 
 logger = logging.getLogger(__name__)
 
+if sys.platform == "win32":
+    import winsound
+    import winreg
+    from ctypes import windll
+    
+    # Windows constants
+    MB_OK = 0x00000000
+    MB_ICONHAND = 0x00000010
+    MB_ICONASTERISK = 0x00000040
+    SND_ALIAS = 0x00010000
+
 
 class NotificationStrategy(ABC):
-    """Abstract base class for platform-specific notification strategies."""
-
+    """Abstract base class for platform-specific notifications."""
+    
     @abstractmethod
     def play_sound(self, sound_name: str) -> bool:
-        """Play platform-specific notification sound."""
-        raise NotImplementedError
+        """Play notification sound."""
+        pass
 
     @abstractmethod
     def is_available(self) -> bool:
-        """Check if the notification system is available."""
-        raise NotImplementedError
+        """Check if notification system is available."""
+        pass
+
+    @abstractmethod
+    def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
+        """Show notification message."""
+        pass
 
 
 class WindowsNotificationStrategy(NotificationStrategy):
-    def play_sound(self, sound_name: str) -> bool:
-        try:
-            import winsound
+    """Windows-specific notification implementation."""
 
-            winsound.PlaySound(sound_name, winsound.SND_ALIAS)
+    def __init__(self) -> None:
+        if sys.platform == "win32":
+            import winsound
+            import winreg
+            self.winsound = winsound
+            self.winreg = winreg
+        else:
+            self.winsound = None
+            self.winreg = None
+
+    def play_sound(self, sound_name: str) -> bool:
+        if not self.winsound:
+            return False
+        try:
+            self.winsound.PlaySound(sound_name, self.winsound.SND_ALIAS)
             return True
-        except ImportError:
+        except Exception:
             return False
 
     def is_available(self) -> bool:
+        if not (self.winsound and self.winreg):
+            return False
         try:
-            import winreg
-
-            winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"AppEvents\Schemes")
+            self.winreg.OpenKey(self.winreg.HKEY_CURRENT_USER, r"AppEvents\Schemes")
             return True
-        except ImportError:
+        except Exception:
+            return False
+
+    def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
+        try:
+            from win32gui import MessageBeep
+            MessageBeep(icon_type)
+            return True
+        except Exception:
             return False
 
 
@@ -57,6 +96,10 @@ class MacNotificationStrategy(NotificationStrategy):
         pass
 
     def is_available(self) -> bool:
+        # Implementation
+        pass
+
+    def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
         # Implementation
         pass
 
@@ -72,30 +115,40 @@ class LinuxNotificationStrategy(NotificationStrategy):
         # Implementation
         pass
 
+    def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
+        # Implementation
+        pass
+
 
 class NotificationManager(QObject):
-    """Enhanced cross-platform notification management."""
-
-    error_signal = pyqtSignal(str)
+    """Manage application notifications."""
+    
     notification_played = pyqtSignal(str)
+    error_signal = pyqtSignal(str)
 
     def __init__(self) -> None:
-        """Initialize notification manager."""
         super().__init__()
-        self.config = ConfigManager()
-        self.settings = self.config.load()
-        self._strategy: NotificationStrategy = self._create_strategy()
-        self._fallback_player: Optional[QMediaPlayer] = None
+        self._strategy = self._create_strategy()
+        self._player: Optional[QMediaPlayer] = None
+        self._setup_player()
 
     def _create_strategy(self) -> NotificationStrategy:
         """Create appropriate notification strategy for platform."""
         system = platform.system().lower()
         if system == "windows":
             return WindowsNotificationStrategy()
-        elif system == "darwin":
-            return MacNotificationStrategy()
-        else:
-            return LinuxNotificationStrategy()
+        # Add other platform strategies here
+        return DummyNotificationStrategy()
+
+    def _setup_player(self) -> None:
+        """Set up media player for fallback sounds."""
+        self._player = QMediaPlayer()
+        self._player.mediaStatusChanged.connect(self._on_media_status_changed)
+
+    def _on_media_status_changed(self, status: int) -> None:
+        """Handle media status changes."""
+        if status == QtMediaConstants.EndOfMedia:
+            self._player.stop()
 
     def play_notification(self, sound_type: str) -> None:
         """Play notification with improved error handling."""
@@ -117,15 +170,15 @@ class NotificationManager(QObject):
     def _play_fallback(self, sound_type: str) -> None:
         """Play fallback sound if system sound fails."""
         try:
-            if not self._fallback_player:
-                self._fallback_player = QMediaPlayer()
+            if not self._player:
+                self._player = QMediaPlayer()
 
             sound_file = PlatformPaths.get_resource_path() / f"{sound_type}.wav"
             if not sound_file.exists():
                 raise FileNotFoundError(f"Fallback sound not found: {sound_file}")
 
-            self._fallback_player.setMedia(QMediaContent(QUrl.fromLocalFile(str(sound_file))))
-            self._fallback_player.play()
+            self._player.setMedia(QMediaContent(QUrl.fromLocalFile(str(sound_file))))
+            self._player.play()
         except Exception as e:
             logger.error(f"Fallback sound playback failed: {e}")
             self.error_signal.emit(str(e))

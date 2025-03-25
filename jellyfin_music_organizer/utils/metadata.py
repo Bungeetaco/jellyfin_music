@@ -3,7 +3,7 @@ Metadata operations utility functions for the Jellyfin Music Organizer applicati
 """
 
 from logging import getLogger
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
@@ -11,11 +11,12 @@ from mutagen.asf import ASFUnicodeAttribute
 from .constants import METADATA_TAGS
 from .exceptions import MetadataError
 from .file_ops import sanitize_filename
+from .typing_compat import MetadataValue
 
 logger = getLogger(__name__)
 
 
-def extract_metadata(file_path: str) -> Dict[str, Any]:
+def extract_metadata(file_path: str) -> Dict[str, MetadataValue]:
     """
     Extract metadata from a music file.
 
@@ -33,13 +34,13 @@ def extract_metadata(file_path: str) -> Dict[str, Any]:
         if metadata is None:
             raise MetadataError("Could not read file metadata")
 
-        metadata_dict: Dict[str, Any] = {}
-        for key, value in metadata.items():
-            metadata_dict[key] = value
-
-        return metadata_dict
+        return {
+            tag: metadata.get(tag, "") 
+            for tag in METADATA_TAGS 
+            if tag in metadata
+        }
     except Exception as e:
-        raise MetadataError(f"Error extracting metadata: {e}")
+        raise MetadataError(f"Failed to extract metadata: {e}")
 
 
 def get_artist_album(metadata: Dict[str, Any]) -> Tuple[str, str]:
@@ -112,9 +113,15 @@ def validate_metadata(metadata: Dict[str, Any]) -> bool:
         return False
 
 
-def get_metadata_value(metadata: Any, key: str) -> str:
+def get_metadata_value(metadata: Dict[str, MetadataValue], key: str, default: str = "") -> str:
     """Safely extract metadata value."""
     value = metadata.get(key)
+    if value is None:
+        return default
+
     if isinstance(value, (list, ASFUnicodeAttribute)):
-        return str(value[0]) if value else ""
-    return str(value) if value is not None else ""
+        try:
+            return str(value[0]) if value else default
+        except (IndexError, TypeError):
+            return default
+    return str(value)

@@ -6,14 +6,14 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple, cast
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from ..utils.file_ops import FileOperations
-from ..utils.metadata_types import MutagenFile
+from ..utils.metadata import extract_metadata, get_metadata_value
 from .exceptions import FileOperationError
 
 logger = logging.getLogger(__name__)
@@ -161,13 +161,9 @@ class OrganizeThread(QThread):
 
                     try:
                         # Load and extract metadata from the music file
-                        metadata: MutagenFile = mutagen.File(path_in_str)
+                        metadata: Dict[str, str] = extract_metadata(path_in_str)
                         if metadata is None:
                             raise ValueError(f"Could not load metadata from {path_in_str}")
-
-                        # Iterate over the metadata items and add them to the dictionary
-                        for key, value in metadata.items():
-                            metadata_dict[key] = value
 
                         # Loop through the metadata to find matching artist and album values
                         for key, value in metadata.items():
@@ -211,11 +207,11 @@ class OrganizeThread(QThread):
                             recall_files["replace_skip_files"].append(file_info)
                         else:
                             # Create directory and copy file to new location
-                            self._copy_file(path, Path(new_location))
+                            self.organize_file(path, metadata)
 
                     except Exception as e:
                         file_info = self._create_error_info(
-                            file_name, artist_data, album_data, metadata_dict, str(e)
+                            file_name, artist_data, album_data, metadata, str(e)
                         )
 
                         recall_files["error_files"].append(file_info)
@@ -262,22 +258,19 @@ class OrganizeThread(QThread):
             "error": "File already exists in the destination folder",
         }
 
-    def _copy_file(self, source: Path, destination: Path) -> None:
-        """Copy file with platform-independent handling."""
+    def organize_file(self, source: Path, metadata: Dict[str, str]) -> None:
+        """Organize a single file based on its metadata."""
         try:
-            # Ensure legal filename
-            dest_name = FileOperations.get_legal_filename(destination.name)
-            final_dest = destination.parent / dest_name
-
-            # Perform safe copy
-            FileOperations.safe_copy(source, final_dest)
-
-        except FileOperationError as e:
-            logger.error(f"File copy error: {e}")
-            raise
+            # Create destination path from metadata
+            dest = self._create_destination_path(metadata)
+            
+            # Ensure destination directory exists
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Copy file with metadata preservation
+            FileOperations.safe_copy(source, dest, preserve_metadata=True)
         except Exception as e:
-            logger.error(f"Unexpected error during file copy: {e}")
-            raise FileOperationError(f"Copy failed: {e}", str(source))
+            raise FileOperationError(f"Failed to organize file: {e}")
 
     def _validate_path(self, path: str) -> bool:
         """Validate path exists and is accessible.

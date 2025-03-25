@@ -6,12 +6,13 @@ import os
 import platform
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget
+from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget, QDesktopWidget
 
 from .qt_compat import QtCompat, QtWindowFlags
+from .qt_types import QtConstants
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,19 @@ class PlatformPaths:
         if hasattr(sys, "_MEIPASS"):  # PyInstaller bundle
             return Path(sys._MEIPASS) / "resources" / resource_name
         return Path(__file__).parent.parent / "resources" / resource_name
+
+    @staticmethod
+    def get_screen_geometry(desktop: Optional[QDesktopWidget] = None) -> Tuple[int, int, int, int]:
+        """Get screen geometry safely."""
+        try:
+            if desktop is None:
+                desktop = QApplication.desktop()
+            if desktop is not None:
+                rect = desktop.screenGeometry()
+                return rect.x(), rect.y(), rect.width(), rect.height()
+        except Exception as e:
+            logger.error(f"Failed to get screen geometry: {e}")
+        return 0, 0, 800, 600  # Default fallback
 
 
 class PlatformUI:
@@ -89,18 +103,17 @@ class PlatformUI:
         """Configure platform-specific window settings."""
         try:
             system = platform.system()
-            flags: QtWindowFlags = QtCompat.get_window_flags(frameless=(system == "Windows"))
-            window.setWindowFlags(flags)
-
             if system == "Windows":
-                window.setAttribute(Qt.WA_TranslucentBackground)
+                window.setWindowFlags(QtConstants.Window | QtConstants.FramelessWindowHint)
+                window.setAttribute(QtConstants.WA_TranslucentBackground)
             elif system == "Darwin":
-                window.setAttribute(Qt.WA_MacShowFocusRect, False)
-
-            PlatformUI._apply_platform_style(window)
+                window.setWindowFlags(QtConstants.Window)
+                window.setAttribute(QtConstants.WA_MacShowFocusRect, False)
+            else:  # Linux
+                window.setWindowFlags(QtConstants.Window)
         except Exception as e:
             logger.error(f"Failed to setup window: {e}")
-            window.setWindowFlags(Qt.Window)
+            window.setWindowFlags(QtConstants.Window)  # Fallback
 
     @staticmethod
     def _apply_platform_style(window: QWidget) -> None:

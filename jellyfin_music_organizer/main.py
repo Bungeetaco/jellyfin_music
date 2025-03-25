@@ -13,6 +13,7 @@ from .ui.music_organizer import MusicOrganizer
 from .utils.config import ConfigManager
 from .utils.logger import setup_logger
 from .utils.platform_utils import PlatformPaths, platform
+from .utils.qt_compat import QtCompat
 
 
 def main() -> None:
@@ -23,19 +24,18 @@ def main() -> None:
         # Set up logging with platform-specific paths
         log_path = PlatformPaths.get_app_data_dir() / "logs" / "app.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        logger = setup_logger(log_file=log_path)
+        logger = setup_logger(log_file=str(log_path))
         logger.info("Starting Jellyfin Music Organizer")
 
         # Initialize configuration with platform-specific paths
         config_path = PlatformPaths.get_app_data_dir() / "config.json"
-        config = ConfigManager(config_path)
+        config = ConfigManager(str(config_path))
         config.load()
 
         # Set up platform-specific UI settings
         app = QApplication(sys.argv)
         if platform.system() == "Windows":
-            app.setAttribute(Qt.AA_EnableHighDpiScaling)
-            app.setAttribute(Qt.AA_UseHighDpiPixmaps)
+            QtCompat.set_high_dpi_scaling(app)
 
         window = MusicOrganizer()
         window.show()

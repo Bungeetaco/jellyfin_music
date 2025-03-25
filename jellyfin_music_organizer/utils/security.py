@@ -5,7 +5,9 @@ Security utilities for the Jellyfin Music Organizer application.
 import hashlib
 import os
 import secrets
-from typing import Optional
+from typing import Optional, List, Set
+import re
+from pathlib import Path
 
 from .exceptions import FileOperationError
 from .logger import setup_logger
@@ -98,24 +100,11 @@ class SecurityManager:
         Returns:
             Sanitized path
         """
-        # Remove invalid characters
-        invalid_chars = '<>:"|?*'
-        sanitized = "".join(char for char in path if char not in invalid_chars)
-
-        # Normalize path separators
-        sanitized = sanitized.replace("\\", "/")
-
-        # Remove path traversal attempts
-        parts = sanitized.split("/")
-        filtered_parts = []
-        for part in parts:
-            if part == "..":
-                if filtered_parts:
-                    filtered_parts.pop()
-            elif part and part != ".":
-                filtered_parts.append(part)
-
-        return "/".join(filtered_parts)
+        # Convert to Path object and resolve
+        clean_path = Path(path).resolve()
+        
+        # Convert back to string and normalize separators
+        return str(clean_path).replace("\\", "/")
 
     def calculate_file_hash(self, path: str, algorithm: str = "sha256") -> Optional[str]:
         """
@@ -151,3 +140,53 @@ class SecurityManager:
         """
         actual_hash = self.calculate_file_hash(path)
         return actual_hash is not None and actual_hash == expected_hash
+
+
+class SecurityUtils:
+    """Security-related utilities."""
+
+    UNSAFE_PATTERNS: Set[str] = {
+        r"\.\.\/",  # Directory traversal
+        r"^\/",     # Absolute paths
+        r"^\\\\"    # UNC paths
+    }
+
+    @staticmethod
+    def sanitize_path(path: str) -> str:
+        """Sanitize a path string to prevent path traversal."""
+        # Convert to Path object and resolve
+        clean_path = Path(path).resolve()
+        
+        # Convert back to string and normalize separators
+        return str(clean_path).replace("\\", "/")
+
+    @staticmethod
+    def is_safe_path(path: str, base_path: Optional[str] = None) -> bool:
+        """Check if a path is safe to use."""
+        try:
+            path = Path(path).resolve()
+            if base_path:
+                base_path = Path(base_path).resolve()
+                return str(path).startswith(str(base_path))
+            
+            # Check for unsafe patterns
+            path_str = str(path)
+            return not any(
+                re.search(pattern, path_str)
+                for pattern in SecurityUtils.UNSAFE_PATTERNS
+            )
+        except Exception:
+            return False
+
+    @staticmethod
+    def filter_path_components(parts: List[str]) -> List[str]:
+        """Filter unsafe path components."""
+        filtered_parts: List[str] = []
+        for part in parts:
+            # Remove or replace unsafe characters
+            safe_part = re.sub(r'[<>:"|?*]', '_', part)
+            # Remove leading/trailing spaces and dots
+            safe_part = safe_part.strip('. ')
+            if safe_part and safe_part not in {'.', '..'}:
+                filtered_parts.append(safe_part)
+        return filtered_parts

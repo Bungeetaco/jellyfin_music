@@ -1,23 +1,54 @@
 """Type stubs for Qt-related attributes."""
 
-from typing import TypeAlias, Union
+from typing import Union, Optional
+from typing_extensions import TypeAlias
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QFont, QMouseEvent
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtMultimedia import QMediaPlayer
+from .typing_compat import WindowFlags, KeyboardModifier, Alignment
 
-from PyQt5.QtCore import Qt
+# Qt type aliases
+WindowFlags = TypeAlias = Union[Qt.WindowFlags, Qt.WindowType]
+KeyboardModifier = TypeAlias = Union[Qt.KeyboardModifier, Qt.KeyboardModifiers]
+Alignment = TypeAlias = Union[Qt.Alignment, Qt.AlignmentFlag]
+MouseButton = TypeAlias = Qt.MouseButton
 
-# Qt Enums
-WindowType: TypeAlias = Union[Qt.WindowType, Qt.WindowFlags]
+class QtConstants:
+    """Qt constants for type-safe access."""
+    
+    # Window flags
+    Window: WindowFlags = Qt.Window
+    Dialog: WindowFlags = Qt.Dialog
+    FramelessWindowHint: WindowFlags = Qt.FramelessWindowHint
+    WindowStaysOnTopHint: WindowFlags = Qt.WindowStaysOnTopHint
 
-# Qt Attributes that mypy can't detect
-setattr(Qt, "Window", Qt.WindowType.Window)
-setattr(Qt, "Dialog", Qt.WindowType.Dialog)
-setattr(Qt, "FramelessWindowHint", Qt.WindowType.FramelessWindowHint)
-setattr(Qt, "WindowStaysOnTopHint", Qt.WindowType.WindowStaysOnTopHint)
-setattr(Qt, "WA_MacShowFocusRect", "WA_MacShowFocusRect")
-setattr(Qt, "WA_MacAlwaysShowToolWindow", "WA_MacAlwaysShowToolWindow")
-setattr(Qt, "WA_TranslucentBackground", "WA_TranslucentBackground")
-setattr(Qt, "AA_EnableHighDpiScaling", "AA_EnableHighDpiScaling")
-setattr(Qt, "AA_UseHighDpiPixmaps", "AA_UseHighDpiPixmaps")
-setattr(Qt, "LeftButton", Qt.MouseButton.LeftButton)
-setattr(Qt, "AlignRight", Qt.AlignmentFlag.AlignRight)
-setattr(Qt, "AlignBottom", Qt.AlignmentFlag.AlignBottom)
-setattr(Qt, "AlignCenter", Qt.AlignmentFlag.AlignCenter)
+    # Button flags
+    LeftButton: MouseButton = Qt.LeftButton
+
+    # Alignment flags
+    AlignRight: Alignment = Qt.AlignRight
+    AlignBottom: Alignment = Qt.AlignBottom
+    AlignCenter: Alignment = Qt.AlignCenter
+
+    # Window attributes
+    WA_TranslucentBackground: int = Qt.WA_TranslucentBackground
+    WA_MacShowFocusRect: int = Qt.WA_MacShowFocusRect
+    WA_MacAlwaysShowToolWindow: int = Qt.WA_MacAlwaysShowToolWindow
+
+    # Application attributes
+    AA_EnableHighDpiScaling: int = Qt.AA_EnableHighDpiScaling
+    AA_UseHighDpiPixmaps: int = Qt.AA_UseHighDpiPixmaps
+
+    # Modifiers
+    MetaModifier: KeyboardModifier = Qt.MetaModifier
+    ControlModifier: KeyboardModifier = Qt.ControlModifier
+
+class QtMediaConstants:
+    """Qt multimedia constants."""
+    PlayingState: int = QMediaPlayer.PlayingState
+    EndOfMedia: int = QMediaPlayer.EndOfMedia
+
+# Global instances for easy access
+Qt = QtConstants()
+QMediaPlayerConst = QtMediaConstants()
