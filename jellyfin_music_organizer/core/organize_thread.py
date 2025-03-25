@@ -12,7 +12,6 @@ from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
 
-
 class OrganizeThread(QThread):
     """
     A QThread subclass that handles the music file organization process.
