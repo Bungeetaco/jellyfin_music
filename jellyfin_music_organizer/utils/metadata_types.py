@@ -1,8 +1,7 @@
 """Type definitions for metadata handling."""
 
-from typing import Any, Dict, List, Protocol, TypeVar, Union
+from typing import Any, Dict, Protocol, TypeVar, Union
 
-from typing_extensions import TypeAlias
 
 T = TypeVar("T")
 

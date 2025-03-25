@@ -1,6 +1,6 @@
 import logging
-from typing import Any, Callable, Dict, Generic, TypeVar, List, Optional
 from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, TypeVar
 
 from PyQt5.QtCore import QObject, pyqtSignal
 

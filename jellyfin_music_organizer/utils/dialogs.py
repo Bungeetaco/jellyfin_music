@@ -1,8 +1,9 @@
-from pathlib import Path
-from typing import Optional, List
 import logging
+from pathlib import Path
+from typing import Optional
+
 from PyQt5.QtWidgets import QFileDialog, QWidget
-from .qt_types import QtConstants
+
 
 logger = logging.getLogger(__name__)
 

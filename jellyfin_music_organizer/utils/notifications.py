@@ -117,10 +117,9 @@ class LinuxNotificationStrategy(NotificationStrategy):
 
 class DummyNotificationStrategy(NotificationStrategy):
     """Dummy notification strategy for unsupported platforms."""
-    
+
     def notify(self, title: str, message: str) -> None:
         """Do nothing."""
-        pass
 
 
 class NotificationManager(QObject):

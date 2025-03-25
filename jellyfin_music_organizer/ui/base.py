@@ -1,3 +1,4 @@
+import platform
 from typing import Any, Dict, Optional
 
 from PyQt5.QtCore import QPoint, Qt
@@ -6,7 +7,6 @@ from PyQt5.QtWidgets import QDialog, QWidget
 
 from ..utils.qt_types import QtConstants
 from ..utils.window_state import WindowStateManager
-import platform
 
 
 class DraggableWidget(QWidget):
