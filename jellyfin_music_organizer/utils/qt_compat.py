@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget
 from .qt_types import WindowFlags, QtConstants
 
+
 class QtCompat:
     """Compatibility layer for Qt attributes."""
 
