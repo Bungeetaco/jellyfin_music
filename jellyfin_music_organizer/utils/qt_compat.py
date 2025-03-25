@@ -1,10 +1,8 @@
 """Qt compatibility layer for type checking."""
 
-
 from PyQt5.QtWidgets import QApplication, QWidget
 
 from .qt_types import QtConstants, WindowFlags
-
 
 
 class QtCompat:

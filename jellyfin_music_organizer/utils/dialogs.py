@@ -4,7 +4,6 @@ from typing import Optional
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
 
-
 class DialogManager:
     """Manage dialog operations with proper type safety."""
 
