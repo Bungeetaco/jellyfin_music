@@ -1,21 +1,24 @@
 import shutil
 from logging import getLogger
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
     QListWidget,
+    QListWidgetItem,
     QProgressBar,
     QPushButton,
     QSizeGrip,
     QVBoxLayout,
     QWidget,
 )
+
+from ..utils.qt_types import QtConstants, AlignmentFlag, MouseButton
 
 logger = getLogger(__name__)
 
@@ -39,18 +42,21 @@ class ReplaceSkipWindow(QWidget):
         # Setup and show user interface
         self.setup_ui()
 
-    def showEvent(self, event):
+    def showEvent(self, event: QEvent) -> None:
+        """Handle show event."""
         self.windowOpened.emit(False)
         super().showEvent(event)
         self.center_window()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QEvent) -> None:
+        """Handle close event."""
         self.windowClosed.emit()
         super().closeEvent(event)
 
-    def setup_titlebar(self):
+    def setup_titlebar(self) -> None:
+        """Set up the custom titlebar."""
         # Hides the default titlebar
-        self.setWindowFlag(Qt.FramelessWindowHint)
+        self.setWindowFlag(QtConstants.FramelessWindowHint)
 
         # Title bar widget
         self.title_bar = QWidget(self)
@@ -71,21 +77,25 @@ class ReplaceSkipWindow(QWidget):
         hbox_title_layout.addStretch()
 
     # Mouse events allow the title bar to be dragged around
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and event.y() <= self.title_bar.height():
+    def mousePressEvent(self, event: QEvent) -> None:
+        """Handle mouse press event."""
+        if event.button() == MouseButton.LeftButton and event.y() <= self.title_bar.height():
             self.draggable = True
             self.offset = event.globalPos() - self.pos()
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QEvent) -> None:
+        """Handle mouse move event."""
         if hasattr(self, "draggable") and self.draggable:
-            if event.buttons() & Qt.LeftButton:
+            if event.buttons() & MouseButton.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
+    def mouseReleaseEvent(self, event: QEvent) -> None:
+        """Handle mouse release event."""
+        if event.button() == MouseButton.LeftButton:
             self.draggable = False
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        """Set up the user interface."""
         # Window setup
         self.setWindowTitle(f"Replace or Skip Files Window v{self.version}")
         self.setWindowIcon(QIcon(":/Octopus.ico"))
@@ -150,7 +160,9 @@ class ReplaceSkipWindow(QWidget):
         self.bottom_right_grip = QSizeGrip(self)
         self.bottom_right_grip.setToolTip("Resize window")
         hbox_progress_grip_layout.addWidget(
-            self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+            self.bottom_right_grip,
+            0,
+            AlignmentFlag.AlignBottom | AlignmentFlag.AlignRight
         )
 
         # Populate QListWidget
@@ -162,19 +174,23 @@ class ReplaceSkipWindow(QWidget):
         # Update the label initially
         self.update_label()
 
-    def center_window(self):
-        screen = QApplication.desktop().screenGeometry()
+    def center_window(self) -> None:
+        """Center the window on the screen."""
+        desktop = QApplication.desktop()
+        if desktop is None:
+            logger.warning("Could not get desktop widget")
+            return
+            
+        screen = desktop.screenGeometry()
         window_size = self.geometry()
         x = (screen.width() - window_size.width()) // 2
         y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
 
-    def populate_list_widget(self):
-        # Add each entry's 'file_name' to QListWidget
+    def populate_list_widget(self) -> None:
+        """Populate the list widget with file entries."""
         for entry in self.replace_skip_files:
             self.list_widget.addItem(entry["file_name"])
-
-        # Set the initial selected item in QListWidget
         self.list_widget.setCurrentRow(0)
 
     def update_label(self) -> None:
@@ -202,8 +218,14 @@ class ReplaceSkipWindow(QWidget):
         except Exception as e:
             logger.error(f"Failed to update label: {e}")
 
-    def skip_file(self):
-        selected_file = self.list_widget.currentItem().text()
+    def skip_file(self) -> None:
+        """Handle skipping the current file."""
+        current_item = self.list_widget.currentItem()
+        if current_item is None:
+            logger.warning("No item selected")
+            return
+
+        selected_file = current_item.text()
         selected_entry = next(
             (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
             None,
@@ -223,15 +245,22 @@ class ReplaceSkipWindow(QWidget):
         if remaining_entries == 0:
             self.close()
 
-    def skip_all(self):
+    def skip_all(self) -> None:
+        """Skip all remaining files."""
         self.replace_skip_files.clear()
         self.list_widget.clear()
         self.label.clear()
         self.music_progress_bar.setValue(self.music_progress_bar.maximum())
         self.close()
 
-    def replace_file(self):
-        selected_file = self.list_widget.currentItem().text()
+    def replace_file(self) -> None:
+        """Handle replacing the current file."""
+        current_item = self.list_widget.currentItem()
+        if current_item is None:
+            logger.warning("No item selected")
+            return
+
+        selected_file = current_item.text()
         selected_entry = next(
             (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
             None,
@@ -240,9 +269,14 @@ class ReplaceSkipWindow(QWidget):
             self.replace_file_action(selected_entry)
             self.skip_file()
 
-    def replace_all(self):
+    def replace_all(self) -> None:
+        """Replace all remaining files."""
         while self.list_widget.count() > 0:
-            selected_file = self.list_widget.item(0).text()
+            current_item = self.list_widget.item(0)
+            if current_item is None:
+                continue
+
+            selected_file = current_item.text()
             selected_entry = next(
                 (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
                 None,
@@ -251,7 +285,8 @@ class ReplaceSkipWindow(QWidget):
                 self.replace_file_action(selected_entry)
                 self.skip_file()
 
-    def replace_file_action(self, entry):
+    def replace_file_action(self, entry: Dict[str, str]) -> None:
+        """Perform the file replacement action."""
         new_location = entry["new_location"]
         file_name = entry["file_name"]
         path_in_str = entry["path_in_str"]

@@ -3,12 +3,12 @@ Metadata operations utility functions for the Jellyfin Music Organizer applicati
 """
 
 from logging import getLogger
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
 
-from .constants import METADATA_TAGS
+from .constants import MetadataTags
 from .exceptions import MetadataError
 from .file_ops import sanitize_filename
 from .typing_compat import MetadataValue
@@ -34,9 +34,30 @@ def extract_metadata(file_path: str) -> Dict[str, MetadataValue]:
         if metadata is None:
             raise MetadataError("Could not read file metadata")
 
-        return {tag: metadata.get(tag, "") for tag in METADATA_TAGS if tag in metadata}
+        return {tag: metadata.get(tag, "") for tag in MetadataTags.get_tags("all")}
     except Exception as e:
         raise MetadataError(f"Failed to extract metadata: {e}")
+
+
+def _convert_to_string(value: Union[str, List[str], ASFUnicodeAttribute]) -> str:
+    """Convert metadata value to string safely.
+    
+    Args:
+        value: Metadata value to convert
+        
+    Returns:
+        String representation of the value
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, ASFUnicodeAttribute):
+        return str(value)
+    if isinstance(value, list) and value:
+        first_value = value[0]
+        if isinstance(first_value, ASFUnicodeAttribute):
+            return str(first_value)
+        return str(first_value)
+    return ""
 
 
 def get_artist_album(metadata: Dict[str, Any]) -> Tuple[str, str]:
@@ -65,25 +86,20 @@ def get_artist_album(metadata: Dict[str, Any]) -> Tuple[str, str]:
                 continue
 
             lowercase_key = key.lower()
-            if lowercase_key in METADATA_TAGS["artist"]:
+            if lowercase_key in MetadataTags.get_tags("artist"):
                 artist_data = value
-            elif lowercase_key in METADATA_TAGS["album"]:
+            elif lowercase_key in MetadataTags.get_tags("album"):
                 album_data = value
 
         if not artist_data or not album_data:
             raise MetadataError("Missing artist or album information")
 
         # Convert to strings and handle special cases
-        artist = (
-            str(artist_data[0])
-            if isinstance(artist_data[0], ASFUnicodeAttribute)
-            else str(artist_data[0])
-        )
-        album = (
-            str(album_data[0])
-            if isinstance(album_data[0], ASFUnicodeAttribute)
-            else str(album_data[0])
-        )
+        artist = _convert_to_string(artist_data)
+        album = _convert_to_string(album_data)
+
+        if not artist or not album:
+            raise MetadataError("Empty artist or album value")
 
         return sanitize_filename(artist), sanitize_filename(album)
 
@@ -117,7 +133,9 @@ def get_metadata_value(metadata: Dict[str, MetadataValue], key: str, default: st
 
     if isinstance(value, (list, ASFUnicodeAttribute)):
         try:
-            return str(value[0]) if value else default
+            if isinstance(value, list):
+                return str(value[0]) if value else default
+            return str(value)
         except (IndexError, TypeError):
             return default
     return str(value)

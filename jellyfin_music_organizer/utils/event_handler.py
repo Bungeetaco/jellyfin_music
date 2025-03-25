@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, TypeVar
+from typing import Any, Callable, Dict, Generic, List, TypeVar
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -10,23 +10,35 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Event:
+class Event(Generic[T]):
     """Type-safe event implementation."""
 
     def __init__(self) -> None:
         self._handlers: List[Callable[[T], None]] = []
 
     def connect(self, handler: Callable[[T], None]) -> None:
-        """Connect an event handler."""
+        """Connect an event handler.
+        
+        Args:
+            handler: Callback function to handle the event
+        """
         self._handlers.append(handler)
 
     def disconnect(self, handler: Callable[[T], None]) -> None:
-        """Disconnect an event handler."""
+        """Disconnect an event handler.
+        
+        Args:
+            handler: Callback function to remove
+        """
         if handler in self._handlers:
             self._handlers.remove(handler)
 
     def emit(self, data: T) -> None:
-        """Emit event to all handlers."""
+        """Emit event to all handlers.
+        
+        Args:
+            data: Event data to pass to handlers
+        """
         for handler in self._handlers:
             try:
                 handler(data)
@@ -42,23 +54,38 @@ class EventManager(QObject):
     task_completed = pyqtSignal(str, bool)
 
     def __init__(self) -> None:
+        """Initialize the event manager."""
         super().__init__()
         self._events: Dict[str, Event[Any]] = {}
 
     def register_event(self, event_name: str) -> None:
-        """Register a new event type."""
+        """Register a new event type.
+        
+        Args:
+            event_name: Name of the event to register
+        """
         if event_name not in self._events:
-            self._events[event_name] = Event()
+            self._events[event_name] = Event[Any]()
 
     def emit_event(self, event_name: str, data: Any) -> None:
-        """Emit an event with data."""
+        """Emit an event with data.
+        
+        Args:
+            event_name: Name of the event to emit
+            data: Data to pass to event handlers
+        """
         if event_name in self._events:
             self._events[event_name].emit(data)
         else:
             logger.warning(f"Unknown event: {event_name}")
 
     def connect_event(self, event_name: str, handler: Callable[[Any], None]) -> None:
-        """Connect a handler to an event."""
+        """Connect a handler to an event.
+        
+        Args:
+            event_name: Name of the event to connect to
+            handler: Callback function to handle the event
+        """
         if event_name in self._events:
             self._events[event_name].connect(handler)
         else:

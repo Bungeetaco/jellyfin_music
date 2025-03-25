@@ -2,11 +2,11 @@
 
 import inspect
 import logging
-from typing import Any, Callable, Dict, Type, TypeVar
+from typing import Any, Callable, Dict, List, Type, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")  # Add TypeVar definition
+T = TypeVar("T")
 
 
 def validate_docstring(func: Callable[..., Any]) -> None:
@@ -55,7 +55,7 @@ def extract_docstring_sections(docstring: str) -> Dict[str, str]:
     """
     sections: Dict[str, str] = {}
     current_section = "description"
-    current_content: list[str] = []
+    current_content: List[str] = []
 
     for line in docstring.split("\n"):
         line = line.strip()
@@ -132,6 +132,8 @@ def document_class(cls: Type[T]) -> Type[T]:
 def validate_docstrings() -> None:
     """Validate docstrings across the codebase."""
     import jellyfin_music_organizer
+    from importlib import import_module
+    from pathlib import Path
 
     def validate_module(module: Any) -> None:
         for name, obj in inspect.getmembers(module):
@@ -141,6 +143,18 @@ def validate_docstrings() -> None:
                 if not obj.__doc__:
                     raise ValueError(f"Missing docstring for function {module.__name__}.{name}")
 
-    # Validate all modules
-    for module in jellyfin_music_organizer.__all__:
-        validate_module(module)
+    # Get all Python files in the package
+    package_path = Path(jellyfin_music_organizer.__file__).parent
+    for py_file in package_path.rglob("*.py"):
+        if py_file.stem == "__init__":
+            continue
+        
+        # Convert file path to module path
+        relative_path = py_file.relative_to(package_path.parent)
+        module_path = str(relative_path.with_suffix("")).replace("/", ".")
+        
+        try:
+            module = import_module(module_path)
+            validate_module(module)
+        except Exception as e:
+            logger.error(f"Failed to validate module {module_path}: {e}")

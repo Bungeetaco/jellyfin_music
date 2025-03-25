@@ -37,14 +37,23 @@ class MigrationManager:
         self._migrations.sort(key=lambda m: m.version)
 
     def get_current_version(self) -> int:
-        """Get current database version."""
+        """Get current database version.
+        
+        Returns:
+            int: Current database version number, defaults to 0 if not found
+        """
         try:
             if not self.db_path.exists():
                 return 0
 
             with open(self.db_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return data.get("version", 0)
+                version = data.get("version", 0)
+                # Ensure we return an integer
+                if not isinstance(version, int):
+                    self.logger.warning(f"Invalid version type in database: {type(version)}")
+                    return 0
+                return version
         except Exception as e:
             self.logger.error(f"Failed to get current version: {e}")
             return 0

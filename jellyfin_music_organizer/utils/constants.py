@@ -186,9 +186,9 @@ class NotificationConfig:
         Returns:
             Sound identifier for platform
         """
-        return cls.SOUNDS.get(sound_type, {}).get(
-            platform, cls.SOUNDS.get(sound_type, {}).get("fallback")
-        )
+        sound_dict = cls.SOUNDS.get(sound_type, {})
+        platform_sound = sound_dict.get(platform)
+        return platform_sound if platform_sound is not None else sound_dict.get("fallback", "")
 
 
 # Initialize paths

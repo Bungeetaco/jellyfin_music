@@ -4,7 +4,8 @@ import os
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict, List, TypeAlias, Union
+from typing import Any, Dict, List, Union, Callable
+from typing_extensions import TypeAlias
 
 import openpyxl
 from PyQt5.QtCore import QSettings, Qt, QTimer, pyqtSignal
@@ -27,6 +28,7 @@ from ..utils.dialogs import DialogManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
 from ..utils.window_state import WindowStateManager
+from ..utils.qt_types import QtConstants
 
 logger = getLogger(__name__)
 
@@ -40,6 +42,7 @@ class MusicErrorWindow(QWidget):
     windowOpened = pyqtSignal(bool)
     windowClosed = pyqtSignal(bool)
     custom_dialog_signal = pyqtSignal(str)
+    reset_copy_timer: QTimer
 
     def __init__(self, error_files: List[ErrorDict]) -> None:
         """Initialize the error window.
@@ -63,9 +66,12 @@ class MusicErrorWindow(QWidget):
 
     def showEvent(self, event: Any) -> None:
         """Handle window show event."""
-        self.windowOpened.emit(False)
-        super().showEvent(event)
-        self.center_window()
+        try:
+            self.windowOpened.emit(False)
+            super().showEvent(event)
+            self.center_window()
+        except Exception as e:
+            logger.error(f"Show event error: {e}")
 
     def closeEvent(self, event: Any) -> None:
         """Handle window close with state saving."""
@@ -79,7 +85,7 @@ class MusicErrorWindow(QWidget):
     def setup_titlebar(self) -> None:
         """Set up the custom titlebar."""
         # Hides the default titlebar
-        self.setWindowFlag(Qt.FramelessWindowHint)
+        self.setWindowFlag(QtConstants.FramelessWindowHint)
 
         # Title bar widget
         self.title_bar = QWidget(self)
@@ -233,7 +239,11 @@ class MusicErrorWindow(QWidget):
     def center_window(self) -> None:
         """Center the window on the screen."""
         try:
-            screen = QApplication.desktop().screenGeometry()
+            desktop = QApplication.desktop()
+            if desktop is None:
+                raise RuntimeError("Failed to get desktop")
+                
+            screen = desktop.screenGeometry()
             window_size = self.geometry()
             x = (screen.width() - window_size.width()) // 2
             y = (screen.height() - window_size.height()) // 2
@@ -338,6 +348,9 @@ class MusicErrorWindow(QWidget):
         """Copy the details to clipboard."""
         try:
             clipboard = QApplication.clipboard()
+            if clipboard is None:
+                raise RuntimeError("Failed to get clipboard")
+                
             text = self.details_display.toPlainText()
             if not text:
                 logger.warning("No text to copy to clipboard")
@@ -402,16 +415,18 @@ class MusicErrorWindow(QWidget):
         self,
         title: str,
         file_filter: str,
-        save_function: callable,
+        save_function: Callable[[str], None],
         error_message: str,
         success_button: QPushButton,
     ) -> None:
         """Handle file saving with dialog manager."""
         try:
-            file_path, selected_filter = DialogManager.get_save_file(
-                self, title, file_filter, file_filter.split("*")[1].split(")")[0]
+            file_path = DialogManager.get_save_file(
+                self, 
+                title, 
+                file_filter, 
+                Path(file_filter.split("*")[1].split(")")[0])
             )
-
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)
         except Exception as e:

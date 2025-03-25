@@ -6,13 +6,14 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from ..utils.exceptions import MetadataError
 from ..utils.file_ops import FileOperations
+from ..utils.metadata import MetadataValue  # Import the correct type
 from .exceptions import FileOperationError
 
 logger = logging.getLogger(__name__)
@@ -256,6 +257,30 @@ class OrganizeThread(QThread):
             "error": "File already exists in the destination folder",
         }
 
+    def _create_destination_path(self, metadata: Dict[str, str]) -> Path:
+        """Create destination path from metadata.
+
+        Args:
+            metadata: File metadata containing artist and album info
+
+        Returns:
+            Path: Destination path for the file
+
+        Raises:
+            FileOperationError: If required metadata is missing
+        """
+        try:
+            artist = self.clean_filename(metadata.get('artist', ''))
+            album = self.clean_filename(metadata.get('album', ''))
+            filename = self.clean_filename(metadata.get('filename', ''))
+
+            if not all([artist, album, filename]):
+                raise FileOperationError("Missing required metadata")
+
+            return Path(self.info['selected_destination_folder_path']) / artist / album / filename
+        except Exception as e:
+            raise FileOperationError(f"Failed to create destination path: {e}")
+
     def organize_file(self, source: Path, metadata: Dict[str, str]) -> None:
         """Organize a single file based on its metadata."""
         try:
@@ -268,6 +293,7 @@ class OrganizeThread(QThread):
             # Copy file with metadata preservation
             FileOperations.safe_copy(source, dest, preserve_metadata=True)
         except Exception as e:
+            logger.error(f"Failed to organize file: {e}")
             raise FileOperationError(f"Failed to organize file: {e}")
 
     def _validate_path(self, path: str) -> bool:
@@ -315,19 +341,39 @@ class OrganizeThread(QThread):
         }
 
     def process_metadata(self, file_path: Path) -> Dict[str, str]:
-        """Process metadata from file."""
-        try:
-            if not hasattr(self, "metadata_handler"):
-                from ..utils.metadata import MetadataHandler
+        """Process metadata from file.
+        
+        Args:
+            file_path: Path to the music file
 
-                self.metadata_handler = MetadataHandler()
-            metadata = self.metadata_handler.extract_metadata(file_path)
+        Returns:
+            Dict[str, str]: Processed metadata
+
+        Raises:
+            MetadataError: If metadata processing fails
+        """
+        try:
+            from ..utils.metadata import extract_metadata  # Import the function directly
+
+            metadata = extract_metadata(file_path)
             if not metadata:
                 raise MetadataError("No metadata found")
-            return metadata
+            
+            # Convert metadata to Dict[str, str]
+            processed_metadata: Dict[str, str] = {}
+            for key, value in metadata.items():
+                if isinstance(value, (str, list)):
+                    processed_metadata[key] = str(value[0] if isinstance(value, list) else value)
+                elif isinstance(value, ASFUnicodeAttribute):
+                    processed_metadata[key] = str(value)
+                else:
+                    processed_metadata[key] = str(value)
+
+            return processed_metadata
+
         except Exception as e:
             raise MetadataError(f"Failed to process metadata: {e}")
 
     def process_file(self, file_path: Path) -> Dict[str, str]:
         """Process a single file."""
-        return self.process_metadata(file_path)  # Reuse existing method
+        return self.process_metadata(file_path)

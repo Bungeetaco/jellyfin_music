@@ -3,7 +3,7 @@ import os
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Union
 
 from PyQt5.QtCore import QPoint, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon, QMouseEvent
@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
 
 from ..utils.config import ConfigManager
 from ..utils.dialogs import DialogManager
-from ..utils.qt_types import QtConstants
+from ..utils.qt_types import QtConstants, WindowFlags, WindowType
 
 logger = getLogger(__name__)
 
@@ -40,7 +40,7 @@ class SettingsWindow(QWidget):
         self._original_settings = settings.copy()
         self.version = version
         self.drag_position: Optional[QPoint] = None
-        self.reset_reset_timer: Optional[Callable[[], None]] = None
+        self.reset_timer: Optional[QTimer] = None
         self._setup_platform_specific()
         try:
             # Initialize attributes
@@ -56,7 +56,8 @@ class SettingsWindow(QWidget):
             logger.error(f"Failed to initialize settings window: {e}")
             raise
 
-    def showEvent(self, event):
+    def showEvent(self, event: QMouseEvent) -> None:
+        """Handle show event."""
         self.windowOpened.emit(False)
         super().showEvent(event)
         self.center_window()
@@ -108,18 +109,20 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.close_button)
 
     # Mouse events allow the title bar to be dragged around
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
         """Handle mouse press events for window dragging."""
-        if event.button() == QtConstants.LeftButton:
+        if event and event.button() == QtConstants.LeftButton:
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
             event.accept()
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        """Handle mouse move events."""
         if hasattr(self, "draggable") and self.draggable:
             if event.buttons() & QtConstants.LeftButton:
                 self.move(event.globalPos() - self.drag_position)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        """Handle mouse release events."""
         if event.button() == QtConstants.LeftButton:
             self.draggable = False
 
@@ -155,9 +158,10 @@ class SettingsWindow(QWidget):
 
             # Apply platform-specific window flags
             if is_mac:
-                self.setWindowFlags(QtConstants.Window)
+                flags: Union[WindowFlags, WindowType] = QtConstants.Window
             else:
-                self.setWindowFlags(QtConstants.Window | QtConstants.FramelessWindowHint)
+                flags = QtConstants.Window | QtConstants.FramelessWindowHint
+            self.setWindowFlags(flags)
 
             self.setLayout(main_layout)
 
@@ -165,8 +169,14 @@ class SettingsWindow(QWidget):
             logger.error(f"Failed to set up settings UI: {e}")
             raise
 
-    def center_window(self):
-        screen = QApplication.desktop().screenGeometry()
+    def center_window(self) -> None:
+        """Center the window on the screen."""
+        desktop = QApplication.desktop()
+        if desktop is None:
+            logger.warning("Could not get desktop widget")
+            return
+            
+        screen = desktop.screenGeometry()
         window_size = self.geometry()
         x = (screen.width() - window_size.width()) // 2
         y = (screen.height() - window_size.height()) // 2
@@ -175,10 +185,11 @@ class SettingsWindow(QWidget):
     def select_music_folder(self) -> None:
         """Handle music folder selection."""
         try:
-            folder_path = self.dialog_manager.get_folder_dialog(
+            folder_path = QFileDialog.getExistingDirectory(
                 self,
                 "Select Music Folder",
-                Path(self.music_folder_path) if self.music_folder_path else Path.home() / "Music",
+                str(Path.home() / "Music") if not self.music_folder_path else self.music_folder_path,
+                QFileDialog.ShowDirsOnly
             )
 
             if not folder_path:
@@ -189,7 +200,7 @@ class SettingsWindow(QWidget):
                 logger.warning(f"Invalid music folder path: {folder_path}")
                 return
 
-            self.music_folder_path = str(folder_path)
+            self.music_folder_path = folder_path
             self.music_folder_label.setText(self.music_folder_path)
             self._save_settings()
 
@@ -294,7 +305,8 @@ class SettingsWindow(QWidget):
             logger.error(f"Failed to save settings: {e}")
             raise RuntimeError("Failed to save settings") from e
 
-    def reset_settings(self):
+    def reset_settings(self) -> None:
+        """Reset all settings to default values."""
         # Default settings
         self.music_folder_path = ""
         self.destination_folder_path = ""
@@ -308,25 +320,16 @@ class SettingsWindow(QWidget):
         # Save settings to file
         self.save_settings()
 
-        # Update the button text and color temporarily
-        self.reset_button.setText("Success")
-        self.reset_button.setStyleSheet(
-            """
-            background-color: rgba(255, 152, 152, 1);
-            color: black;
-        """
-        )
+        # Fix timer handling
+        if self.reset_timer is not None:
+            self.reset_timer.stop()
 
-        # Stop any existing reset timers before creating a new one
-        if hasattr(self, "reset_reset_timer"):
-            self.reset_reset_timer.stop()
+        self.reset_timer = QTimer(self)
+        self.reset_timer.timeout.connect(self.resetResetButton)
+        self.reset_timer.start(1000)
 
-        # Create a new reset timer to reset the button text and color after 1 seconds
-        self.reset_reset_timer = QTimer(self)
-        self.reset_reset_timer.timeout.connect(self.resetResetButton)
-        self.reset_reset_timer.start(1000)
-
-    def resetResetButton(self):
+    def resetResetButton(self) -> None:
+        """Reset the reset button appearance."""
         self.reset_button.setText("Reset && Save All Settings")
         self.reset_button.setStyleSheet("")
 
@@ -348,10 +351,12 @@ class SettingsWindow(QWidget):
         # Implement your validation logic here
         return True  # Placeholder, actual implementation needed
 
-    def _setup_platform_specific(self):
+    def _setup_platform_specific(self) -> None:
+        """Set up platform-specific configurations."""
         # Implement platform-specific setup logic
         pass
 
     def show_error(self, message: str) -> None:
+        """Show error message to user."""
         # Implement error handling logic
         pass

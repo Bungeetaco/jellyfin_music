@@ -4,7 +4,7 @@ Configuration management for the Jellyfin Music Organizer.
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -20,7 +20,7 @@ class AppConfig:
     mute_sound: bool = False
     version: str = "3.06"
     remove_illegal_chars: bool = True
-    window_state: Dict[str, Any] = None
+    window_state: Dict[str, Any] = field(default_factory=dict)
 
 
 class ConfigManager:

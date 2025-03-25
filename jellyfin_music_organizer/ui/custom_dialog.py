@@ -6,7 +6,7 @@ import json
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, cast
 
 from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayo
 from ..utils.config_manager import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
-from ..utils.qt_types import QtConstants
+from ..utils.qt_types import QtConstants, WindowFlags, WindowType
 from ..utils.resource_manager import ResourceManager
 
 logger = getLogger(__name__)
@@ -35,14 +35,17 @@ class CustomDialog(QDialog):
     def __init__(self, custom_message: str, parent: Optional[QWidget] = None) -> None:
         """Initialize dialog with platform-specific settings."""
         super().__init__(parent)
-        self.resource_manager = ResourceManager()
+        self.resource_manager: ResourceManager = ResourceManager()
         self.config_manager = ConfigManager()
         self.settings = self.config_manager.load()
         self.notification_manager = NotificationManager()
         self.drag_position: Optional[QPoint] = None
 
+        # Register resources with unique IDs
         self.resource_manager.register(
-            "notification_manager", self.notification_manager, lambda x: x.deleteLater()
+            resource_id="notification_manager",
+            resource=self.notification_manager,
+            cleanup_handler=lambda x: x.deleteLater()
         )
 
         self._setup_platform_specific()
@@ -52,7 +55,9 @@ class CustomDialog(QDialog):
         """Configure platform-specific window behavior."""
         system = platform.system()
         try:
-            flags = QtConstants.Dialog | QtConstants.WindowStaysOnTopHint
+            flags: Union[WindowFlags, WindowType] = (
+                QtConstants.Dialog | QtConstants.WindowStaysOnTopHint
+            )
             if system == "Darwin":
                 # Use native window decorations on macOS
                 self.setWindowFlags(flags)
@@ -73,8 +78,7 @@ class CustomDialog(QDialog):
 
         except Exception as e:
             logger.error(f"Failed to setup platform-specific settings: {e}")
-            # Fall back to basic window flags
-            self.setWindowFlags(QtConstants.Dialog)
+            self.setWindowFlags(cast(WindowFlags, QtConstants.Dialog))
 
     def center_window(self) -> None:
         """Center the dialog window on the screen."""
@@ -101,7 +105,7 @@ class CustomDialog(QDialog):
     def closeEvent(self, event: Any) -> None:
         """Handle dialog close with proper cleanup."""
         try:
-            self.resource_manager.cleanup()
+            self.resource_manager.cleanup(resource_id="notification_manager")
             super().closeEvent(event)
         except Exception as e:
             logger.error(f"Close event error: {e}")
@@ -113,20 +117,23 @@ class CustomDialog(QDialog):
         Returns:
             Dict containing settings or default values
         """
+        default_settings = {
+            "version": "3.06",
+            "mute_sound": False,
+            # Add other default settings as needed
+        }
+
         try:
             if not Path("settings_jmo.json").exists():
-                return self._get_default_settings()
+                return default_settings
 
             with open("settings_jmo.json", "r", encoding="utf-8") as f:
                 settings = json.load(f)
+                return {**default_settings, **settings}  # Merge with defaults
 
-            return self._validate_settings(settings)
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid settings file format: {e}")
-            return self._get_default_settings()
         except Exception as e:
             logger.error(f"Failed to load settings: {e}")
-            return self._get_default_settings()
+            return default_settings
 
     def setup_ui(self, custom_message: str) -> None:
         """Set up the dialog UI with platform-specific styling."""
@@ -181,7 +188,7 @@ class CustomDialog(QDialog):
     def _setup_message_area(self, layout: QVBoxLayout, custom_message: str) -> None:
         """Set up the message area of the dialog."""
         error_label = QLabel(custom_message)
-        error_label.setAlignment(Qt.AlignCenter)
+        error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(error_label)
 
     def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:

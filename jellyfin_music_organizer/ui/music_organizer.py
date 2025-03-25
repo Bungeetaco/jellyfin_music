@@ -5,9 +5,9 @@ Main window for the Jellyfin Music Organizer application.
 import json
 import platform
 from logging import getLogger
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
-from PyQt5.QtCore import QFont, Qt
+from PyQt5.QtCore import QFont, Qt, QCoreApplication
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -30,7 +30,13 @@ from ..utils.config import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
 from ..utils.qt_compat import QtCompat
-from ..utils.qt_types import QtConstants
+from ..utils.qt_types import (
+    QtConstants,
+    WindowFlags,
+    WindowType,
+    AlignmentFlag,
+    MouseButton,
+)
 from ..utils.window_manager import WindowManager
 from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
@@ -57,7 +63,7 @@ class MusicOrganizer(QWidget):
         self.window_manager = WindowManager()
         self.notification_manager = NotificationManager()
         self.config_manager = ConfigManager()
-        self.settings = self.config_manager.load()
+        self.settings: Dict[str, Any] = self.config_manager.load()
         self._setup_platform_specific()
 
         # Version Control
@@ -95,7 +101,7 @@ class MusicOrganizer(QWidget):
         3. Makes the window draggable
         """
         # Hides the default titlebar
-        self.setWindowFlag(Qt.FramelessWindowHint)
+        self.setWindowFlag(QtConstants.FramelessWindowHint)
 
         # Title bar widget
         self.title_bar: QWidget = QWidget(self)
@@ -145,7 +151,7 @@ class MusicOrganizer(QWidget):
         hbox_title_layout.addWidget(self.close_button)
         self.close_button.clicked.connect(self.close)
 
-        hbox_title_layout.setAlignment(Qt.AlignRight)
+        hbox_title_layout.setAlignment(AlignmentFlag.AlignRight)
 
     def mousePressEvent(self, event: Any) -> None:
         """
@@ -153,7 +159,7 @@ class MusicOrganizer(QWidget):
 
         This method enables window dragging when clicking the title bar.
         """
-        if event.button() == Qt.LeftButton and event.y() <= self.title_bar.height():
+        if event.button() == MouseButton.LeftButton and event.y() <= self.title_bar.height():
             self.draggable = True
             self.offset = event.globalPos() - self.pos()
 
@@ -164,7 +170,7 @@ class MusicOrganizer(QWidget):
         This method moves the window when dragging.
         """
         if hasattr(self, "draggable") and self.draggable:
-            if event.buttons() & Qt.LeftButton:
+            if event.buttons() & MouseButton.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
     def mouseReleaseEvent(self, event: Any) -> None:
@@ -173,7 +179,7 @@ class MusicOrganizer(QWidget):
 
         This method disables window dragging.
         """
-        if event.button() == Qt.LeftButton:
+        if event.button() == MouseButton.LeftButton:
             self.draggable = False
 
     def setup_ui(self) -> None:
@@ -257,7 +263,7 @@ class MusicOrganizer(QWidget):
         self.bottom_right_grip: QSizeGrip = QSizeGrip(self)
         self.bottom_right_grip.setToolTip("Resize window")
         hbox_progress_grip_layout.addWidget(
-            self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+            self.bottom_right_grip, 0, AlignmentFlag.AlignBottom | AlignmentFlag.AlignRight
         )
 
     def center_window(self) -> None:
@@ -323,9 +329,10 @@ class MusicOrganizer(QWidget):
         """
         try:
             with open("settings_jmo.json", "r") as f:
-                self.settings: Dict[str, Any] = json.load(f)
-                self.music_folder_path = self.settings.get("music_folder_path", "")
-                self.destination_folder_path = self.settings.get("destination_folder_path", "")
+                settings_data: Dict[str, Any] = json.load(f)
+                self.music_folder_path = settings_data.get("music_folder_path", "")
+                self.destination_folder_path = settings_data.get("destination_folder_path", "")
+                self.settings.update(settings_data)
 
                 # Update the labels with the loaded values
                 self.music_folder_label.setText(self.music_folder_path)
@@ -337,8 +344,7 @@ class MusicOrganizer(QWidget):
                 else:
                     self.organize_button.setEnabled(True)
         except FileNotFoundError:
-            # Initialize self.settings dictionary
-            self.settings = {}
+            logger.warning("Settings file not found")
 
     def organize_function(self) -> None:
         """
@@ -550,8 +556,15 @@ class MusicOrganizer(QWidget):
         try:
             system = platform.system()
             if system == "Windows":
-                self.setWindowFlags(QtConstants.Window | QtConstants.FramelessWindowHint)
-                QtCompat.set_high_dpi_scaling(QApplication.instance())
+                flags: Union[WindowFlags, WindowType] = (
+                    QtConstants.Window | QtConstants.FramelessWindowHint
+                )
+                self.setWindowFlags(flags)
+                
+                app = QApplication.instance()
+                if isinstance(app, QApplication):
+                    QtCompat.set_high_dpi_scaling(app)
+                    
             elif system == "Darwin":
                 self.setWindowFlags(QtConstants.Window)
                 self.setAttribute(QtConstants.WA_MacShowFocusRect, False)
