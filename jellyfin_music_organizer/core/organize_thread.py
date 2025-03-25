@@ -13,6 +13,9 @@ import mutagen
 from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from ..utils.file_ops import FileOperations
+from .exceptions import FileOperationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -97,137 +100,141 @@ class OrganizeThread(QThread):
         3. Creates organized directory structure
         4. Handles file copying and errors
         """
-        # Supported audio file extensions
-        extensions: List[str] = [
-            ".aif",
-            ".aiff",
-            ".ape",
-            ".flac",
-            ".m4a",
-            ".m4b",
-            ".m4r",
-            ".mp2",
-            ".mp3",
-            ".mp4",
-            ".mpc",
-            ".ogg",
-            ".opus",
-            ".wav",
-            ".wma",
-        ]
+        try:
+            # Supported audio file extensions
+            extensions: List[str] = [
+                ".aif",
+                ".aiff",
+                ".ape",
+                ".flac",
+                ".m4a",
+                ".m4b",
+                ".m4r",
+                ".mp2",
+                ".mp3",
+                ".mp4",
+                ".mpc",
+                ".ogg",
+                ".opus",
+                ".wav",
+                ".wma",
+            ]
 
-        # Generate list of paths to music files
-        pathlist: List[Path] = []
-        for extension in extensions:
-            pathlist.extend(
-                list(Path(self.info["selected_music_folder_path"]).glob(f"**/*{extension}"))
-            )
+            # Generate list of paths to music files
+            pathlist: List[Path] = []
+            for extension in extensions:
+                pathlist.extend(
+                    list(Path(self.info["selected_music_folder_path"]).glob(f"**/*{extension}"))
+                )
 
-        # Update number of songs label
-        total_number_of_songs: int = len(pathlist)
-        self.number_songs_signal.emit(total_number_of_songs)
+            # Update number of songs label
+            total_number_of_songs: int = len(pathlist)
+            self.number_songs_signal.emit(total_number_of_songs)
 
-        # Define the artist and album values to search for
-        artist_values: List[str] = ["©art", "artist", "author", "tpe1"]
-        album_values: List[str] = ["©alb", "album", "talb"]
+            # Define the artist and album values to search for
+            artist_values: List[str] = ["©art", "artist", "author", "tpe1"]
+            album_values: List[str] = ["©alb", "album", "talb"]
 
-        # Check if folder has any songs
-        if total_number_of_songs:
-            # Initialize a dictionary to store file info for songs with errors
-            recall_files: Dict[str, List[Dict[str, Any]]] = {
-                "error_files": [],
-                "replace_skip_files": [],
-            }
+            # Check if folder has any songs
+            if total_number_of_songs:
+                # Initialize a dictionary to store file info for songs with errors
+                recall_files: Dict[str, List[Dict[str, Any]]] = {
+                    "error_files": [],
+                    "replace_skip_files": [],
+                }
 
-            # Don't include replace_skip_files in progress bar
-            i: int = 0
+                # Don't include replace_skip_files in progress bar
+                i: int = 0
 
-            # Loop through each song and organize it
-            for path in pathlist:
-                # Replace backslashes with forward slashes
-                path_in_str: str = str(path).replace("\\", "/")
-                # Get file name from path
-                file_name: str = path_in_str.split("/")[-1]
+                # Loop through each song and organize it
+                for path in pathlist:
+                    # Replace backslashes with forward slashes
+                    path_in_str: str = str(path).replace("\\", "/")
+                    # Get file name from path
+                    file_name: str = path_in_str.split("/")[-1]
 
-                # Reset variables
-                artist_data: Any = ""
-                album_data: Any = ""
-                metadata_dict: Dict[str, Any] = {}
-                file_info: Dict[str, Any] = {}
+                    # Reset variables
+                    artist_data: Any = ""
+                    album_data: Any = ""
+                    metadata_dict: Dict[str, Any] = {}
+                    file_info: Dict[str, Any] = {}
 
-                try:
-                    # Load and extract metadata from the music file
-                    metadata: mutagen.File = mutagen.File(path_in_str)
+                    try:
+                        # Load and extract metadata from the music file
+                        metadata: mutagen.File = mutagen.File(path_in_str)
 
-                    # Iterate over the metadata items and add them to the dictionary
-                    for key, value in metadata.items():
-                        metadata_dict[key] = value
+                        # Iterate over the metadata items and add them to the dictionary
+                        for key, value in metadata.items():
+                            metadata_dict[key] = value
 
-                    # Loop through the metadata to find matching artist and album values
-                    for key, value in metadata.items():
-                        lowercase_key: str = key.lower()
-                        if lowercase_key in artist_values:
-                            artist_data = value
-                        elif lowercase_key in album_values:
-                            album_data = value
+                        # Loop through the metadata to find matching artist and album values
+                        for key, value in metadata.items():
+                            lowercase_key: str = key.lower()
+                            if lowercase_key in artist_values:
+                                artist_data = value
+                            elif lowercase_key in album_values:
+                                album_data = value
 
-                    # Check if artist_data and album_data were found
-                    if artist_data == "" or album_data == "":
-                        raise Exception("Artist or album data not found")
+                        # Check if artist_data and album_data were found
+                        if artist_data == "" or album_data == "":
+                            raise Exception("Artist or album data not found")
 
-                    # Convert the metadata values to strings
-                    artist: str = (
-                        str(artist_data[0])
-                        if isinstance(artist_data[0], ASFUnicodeAttribute)
-                        else artist_data[0]
-                    )
-                    album: str = (
-                        str(album_data[0])
-                        if isinstance(album_data[0], ASFUnicodeAttribute)
-                        else album_data[0]
-                    )
+                        # Convert the metadata values to strings
+                        artist: str = (
+                            str(artist_data[0])
+                            if isinstance(artist_data[0], ASFUnicodeAttribute)
+                            else artist_data[0]
+                        )
+                        album: str = (
+                            str(album_data[0])
+                            if isinstance(album_data[0], ASFUnicodeAttribute)
+                            else album_data[0]
+                        )
 
-                    # Clean the artist and album names
-                    artist = self.clean_filename(artist)
-                    album = self.clean_filename(album)
+                        # Clean the artist and album names
+                        artist = self.clean_filename(artist)
+                        album = self.clean_filename(album)
 
-                    # Construct new location
-                    new_location: str = (
-                        f"{self.info['selected_destination_folder_path']}/{artist}/{album}"
-                    )
+                        # Construct new location
+                        new_location: str = (
+                            f"{self.info['selected_destination_folder_path']}/{artist}/{album}"
+                        )
 
-                    # Check if the file already exists in the new location
-                    if Path(f"{new_location}/{file_name}").exists():
-                        file_info = self._handle_existing_file(file_name, new_location, path_in_str)
+                        # Check if the file already exists in the new location
+                        if Path(f"{new_location}/{file_name}").exists():
+                            file_info = self._handle_existing_file(file_name, new_location, path_in_str)
 
-                        recall_files["replace_skip_files"].append(file_info)
-                    else:
-                        # Create directory and copy file to new location
-                        self._copy_file(path_in_str, f"{new_location}/{file_name}")
+                            recall_files["replace_skip_files"].append(file_info)
+                        else:
+                            # Create directory and copy file to new location
+                            self._copy_file(path, Path(new_location))
 
-                except Exception as e:
-                    file_info = self._create_error_info(
-                        file_name, artist_data, album_data, metadata_dict, str(e)
-                    )
+                    except Exception as e:
+                        file_info = self._create_error_info(
+                            file_name, artist_data, album_data, metadata_dict, str(e)
+                        )
 
-                    recall_files["error_files"].append(file_info)
+                        recall_files["error_files"].append(file_info)
 
-                finally:
-                    # Update progress bar if no error or 'File already exists'
-                    if (
-                        not file_info.get("error")
-                        or file_info.get("error") != "File already exists in the destination folder"
-                    ):
-                        i += 1
-                        self.music_progress_signal.emit(int(i / len(pathlist) * 100))
+                    finally:
+                        # Update progress bar if no error or 'File already exists'
+                        if (
+                            not file_info.get("error")
+                            or file_info.get("error") != "File already exists in the destination folder"
+                        ):
+                            i += 1
+                            self.music_progress_signal.emit(int(i / len(pathlist) * 100))
 
-            # Send recall_files
-            self.organize_finish_signal.emit(recall_files)
+                # Send recall_files
+                self.organize_finish_signal.emit(recall_files)
 
-        else:
-            # No songs were found
-            self.custom_dialog_signal.emit("No songs were found in the selected folder.")
-            # Kill OrganizeThread QThread
+            else:
+                # No songs were found
+                self.custom_dialog_signal.emit("No songs were found in the selected folder.")
+                self.kill_thread_signal.emit("organize")
+        except Exception as e:
+            logger.error(f"Organization thread error: {e}")
+            self.custom_dialog_signal.emit(f"Organization failed: {str(e)}")
             self.kill_thread_signal.emit("organize")
 
     def _handle_existing_file(
@@ -250,43 +257,22 @@ class OrganizeThread(QThread):
             "error": "File already exists in the destination folder",
         }
 
-    def _copy_file(self, source_path: str, destination_path: str, create_dirs: bool = True) -> None:
-        """Copy file with proper error handling.
-
-        Args:
-            source_path: Source file path
-            destination_path: Destination file path
-            create_dirs: Whether to create destination directories
-
-        Raises:
-            OSError: If file copy fails
-        """
+    def _copy_file(self, source: Path, destination: Path) -> None:
+        """Copy file with platform-independent handling."""
         try:
-            if create_dirs:
-                Path(destination_path).parent.mkdir(parents=True, exist_ok=True)
-
-            # Verify source file exists and is readable
-            source = Path(source_path)
-            if not source.exists():
-                raise FileNotFoundError(f"Source file not found: {source_path}")
-            if not os.access(source, os.R_OK):
-                raise PermissionError(f"Cannot read source file: {source_path}")
-
-            # Check destination path
-            dest = Path(destination_path)
-            if dest.exists():
-                raise FileExistsError(f"Destination file already exists: {destination_path}")
-
-            # Copy file with metadata
-            shutil.copy2(source_path, destination_path)
-
-            # Verify copy was successful
-            if not dest.exists():
-                raise RuntimeError(f"File copy failed: {destination_path}")
-
+            # Ensure legal filename
+            dest_name = FileOperations.get_legal_filename(destination.name)
+            final_dest = destination.parent / dest_name
+            
+            # Perform safe copy
+            FileOperations.safe_copy(source, final_dest)
+            
+        except FileOperationError as e:
+            logger.error(f"File copy error: {e}")
+            raise
         except Exception as e:
-            logger.error(f"Failed to copy file from {source_path} to {destination_path}: {e}")
-            raise OSError(f"Copy failed: {str(e)}")
+            logger.error(f"Unexpected error during file copy: {e}")
+            raise FileOperationError(f"Copy failed: {e}", str(source))
 
     def _validate_path(self, path: str) -> bool:
         """Validate path exists and is accessible.
@@ -310,19 +296,19 @@ class OrganizeThread(QThread):
         artist_data: List[str],
         album_data: List[str],
         metadata_dict: Dict[str, Any],
-        error: str,
+        error: str
     ) -> Dict[str, Any]:
-        """Create standardized error information dictionary.
-
+        """Create error information dictionary.
+        
         Args:
             file_name: Name of the file
             artist_data: Artist information
             album_data: Album information
             metadata_dict: File metadata
             error: Error message
-
+            
         Returns:
-            Dictionary with error information
+            Dictionary containing error information
         """
         return {
             "file_name": file_name,

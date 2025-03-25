@@ -1,6 +1,9 @@
 import csv
 import json
+import os
+import platform
 from logging import getLogger
+from pathlib import Path
 from typing import Any, Dict, List, TypeAlias, Union
 
 import openpyxl
@@ -19,6 +22,10 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from ..utils.dialogs import DialogManager
+from ..utils.notifications import NotificationManager
+from ..utils.window_state import WindowStateManager
 
 logger = getLogger(__name__)
 
@@ -40,34 +47,18 @@ class MusicErrorWindow(QWidget):
             error_files: List of dictionaries containing error information.
         """
         super().__init__()
-
-        # Initialize instance variables
-        self.version: str = "3.06"
-        self.error_files: List[Dict[str, Any]] = error_files
-        self.current_error_index: int = 0
-        self.draggable: bool = False
-        self.offset = None
-
-        # UI elements will be initialized in setup_ui
-        self.title_bar = None
-        self.icon_label = None
-        self.title_label = None
-        self.close_button = None
-        self.file_list_widget = None
-        self.details_display = None
-        self.copy_button = None
-        self.txt_button = None
-        self.csv_button = None
-        self.excel_button = None
-        self.json_button = None
-        self.bottom_right_grip = None
-
-        # Setup and show user interface
-        try:
-            self.setup_ui()
-        except Exception as e:
-            logger.error(f"Failed to initialize window: {e}")
-            raise RuntimeError("Failed to initialize window") from e
+        self.window_state = WindowStateManager("MusicErrorWindow")
+        self.notification_manager = NotificationManager()
+        
+        if not self._validate_error_files(error_files):
+            raise ValueError("Invalid error files format")
+            
+        self.error_files = error_files
+        self._setup_platform_specific()
+        self.setup_ui()
+        
+        if not self.window_state.restore_state(self):
+            PlatformUI.center_window(self)
 
     def showEvent(self, event: Any) -> None:
         """Handle window show event."""
@@ -76,20 +67,13 @@ class MusicErrorWindow(QWidget):
         self.center_window()
 
     def closeEvent(self, event: Any) -> None:
-        """Handle window close event."""
+        """Handle window close with state saving."""
         try:
-            # Stop all timers
-            for attr in dir(self):
-                if attr.endswith("_timer"):
-                    timer = getattr(self, attr)
-                    if isinstance(timer, QTimer):
-                        timer.stop()
-
-            self.windowClosed.emit(True)
+            self.window_state.save_state(self)
             super().closeEvent(event)
         except Exception as e:
-            logger.error(f"Error during window close: {e}")
-            event.accept()  # Ensure window closes even if there's an error
+            logger.error(f"Close event error: {e}")
+            event.accept()
 
     def setup_titlebar(self) -> None:
         """Set up the custom titlebar."""
@@ -421,32 +405,31 @@ class MusicErrorWindow(QWidget):
         error_message: str,
         success_button: QPushButton,
     ) -> None:
-        """Handle file saving with dialog and error handling.
-
-        Args:
-            title: Dialog title
-            file_filter: File type filter
-            save_function: Function to save the file
-            error_message: Error message to display on failure
-            success_button: Button to update on success
-        """
+        """Handle file saving with dialog manager."""
         try:
-            file_name, _ = QFileDialog.getSaveFileName(
-                self, title, "", file_filter, options=QFileDialog.DontUseNativeDialog
+            file_path, selected_filter = DialogManager.get_save_file(
+                self, title, file_filter, file_filter.split("*")[1].split(")")[0]
             )
-            if not file_name:
-                logger.debug(f"No file name provided for {title}")
-                return
-
-            # Ensure proper file extension
-            if not any(file_name.endswith(ext) for ext in file_filter.split("*")[1:]):
-                file_name += file_filter.split("*")[1].split(")")[0]
-
-            self._save_file(file_name, save_function, error_message, success_button)
-
+            
+            if file_path:
+                self._save_file(str(file_path), save_function, error_message, success_button)
         except Exception as e:
             logger.error(f"Failed to handle file save dialog: {e}")
             self.custom_dialog_signal.emit(f"Failed to save file: {str(e)}")
+
+    def _get_default_save_directory(self) -> Path:
+        """Get platform-specific default save directory."""
+        system = platform.system()
+        try:
+            if system == "Windows":
+                return Path(os.path.expandvars("%USERPROFILE%/Documents"))
+            elif system == "Darwin":
+                return Path.home() / "Documents"
+            else:  # Linux and others
+                return Path.home() / "Documents"
+        except Exception as e:
+            logger.error(f"Failed to get default save directory: {e}")
+            return Path.home()
 
     def _generate_txt_content(self, file_name: str) -> None:
         """Generate text file content.
@@ -788,12 +771,12 @@ class MusicErrorWindow(QWidget):
         size_policy: tuple = (QSizePolicy.Expanding, QSizePolicy.Fixed),
     ) -> None:
         """Configure a button with standard settings.
-
+        
         Args:
-            button: The button to configure.
-            text: Button text.
-            tooltip: Button tooltip text.
-            size_policy: Tuple of horizontal and vertical size policies.
+            button: The button to configure
+            text: Button text
+            tooltip: Button tooltip text
+            size_policy: Tuple of horizontal and vertical size policies
         """
         try:
             button.setText(text)
@@ -801,10 +784,9 @@ class MusicErrorWindow(QWidget):
                 button.setToolTip(tooltip)
             button.setSizePolicy(*size_policy)
             button.setObjectName(text.replace(" ", ""))
-
+            
             # Set standard style
-            button.setStyleSheet(
-                """
+            button.setStyleSheet("""
                 QPushButton {
                     background-color: transparent;
                     border: 1px solid black;
@@ -813,72 +795,27 @@ class MusicErrorWindow(QWidget):
                 QPushButton:hover {
                     background-color: rgba(255, 152, 152, 0.3);
                 }
-            """
-            )
+            """)
         except Exception as e:
-            logger.error(f"Failed to setup button {text}: {e}")
+            logger.error(f"Failed to configure button {text}: {e}")
             raise
 
     def _save_file(
         self,
-        file_name: str,
+        file_path: str,
         save_function: callable,
         error_message: str,
-        success_button: QPushButton,
+        success_button: QPushButton
     ) -> None:
-        """Handle file saving operations with consistent error handling.
-
-        Args:
-            file_name: Path to save the file.
-            save_function: Function that performs the actual save operation.
-            error_message: Message to display if save fails.
-            success_button: Button to update on successful save.
-        """
+        """Save file with proper error handling and UI feedback."""
         try:
-            save_function(file_name)
-            self._update_button_success(success_button)
-        except PermissionError:
-            logger.error(f"Permission denied while saving to {file_name}")
-            self.custom_dialog_signal.emit(
-                f"Cannot save file. Please check if the file is open in another program."
-            )
+            save_function(file_path)
+            success_button.setEnabled(False)
+            success_button.setText("Generated")
+            self.custom_dialog_signal.emit(f"File saved successfully: {file_path}")
         except Exception as e:
-            logger.error(f"Failed to save file {file_name}: {e}")
-            self.custom_dialog_signal.emit(error_message)
-
-    def _update_button_success(self, button: QPushButton) -> None:
-        """Update button appearance to show success state.
-
-        Args:
-            button: The button to update.
-        """
-        try:
-            button.setText("Success")
-            button.setStyleSheet(
-                """
-                background-color: rgba(255, 152, 152, 1);
-                color: black;
-            """
-            )
-
-            # Create timer attribute name based on button name
-            timer_attr = f"reset_{button.objectName().lower()}_timer"
-
-            # Stop existing timer if it exists
-            if hasattr(self, timer_attr):
-                getattr(self, timer_attr).stop()
-
-            # Create new timer
-            timer = QTimer(self)
-            setattr(self, timer_attr, timer)
-
-            # Connect to appropriate reset method
-            reset_method = getattr(self, f"reset{button.objectName()}Button")
-            timer.timeout.connect(reset_method)
-            timer.start(1000)
-
-        except Exception as e:
-            logger.error(f"Failed to update button success state: {e}")
+            logger.error(f"Failed to save file: {e}")
+            self.custom_dialog_signal.emit(f"{error_message}: {str(e)}")
 
     def _generate_csv_header(self, max_metadata_fields: int) -> List[str]:
         """Generate CSV file header based on the maximum number of metadata fields.

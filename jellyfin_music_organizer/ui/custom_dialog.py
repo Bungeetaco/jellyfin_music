@@ -6,6 +6,7 @@ import json
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Dict, Optional
+import platform
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
@@ -21,6 +22,10 @@ from PyQt5.QtWidgets import (
 
 # Other classes within files
 from ..core.notification_audio_thread import NotificationAudioThread
+from ..utils.notifications import NotificationManager
+from ..utils.platform_utils import PlatformUI
+from ..utils.config_manager import ConfigManager
+from ..utils.resource_manager import ResourceManager
 
 logger = getLogger(__name__)
 
@@ -36,78 +41,56 @@ class CustomDialog(QDialog):
     """
 
     def __init__(self, custom_message: str) -> None:
-        """
-        Initialize the CustomDialog.
-
-        Args:
-            custom_message: The message to display in the dialog
-        """
+        """Initialize dialog with platform-specific settings."""
         super().__init__()
-        try:
-            self.setWindowFlags(Qt.FramelessWindowHint)
-            self.setup_ui(custom_message)
-        except Exception as e:
-            logger.error(f"Failed to initialize custom dialog: {e}")
-            raise
-
-        # Version Control
-        self.version: str = "3.06"
-
-        # Set notification thread variable
-        self.notification_thread: Optional[NotificationAudioThread] = None
-
-        # Window title, icon, and size
-        self.setWindowTitle(f"Alert v{self.version}")
-        self.setWindowIcon(QIcon(":/Octopus.ico"))
-
-        # Main layout
-        layout: QVBoxLayout = QVBoxLayout()
-
-        # Custom title bar widget
-        title_bar_widget: QWidget = QWidget()
-        layout.addWidget(title_bar_widget)
-
-        # Title bar layout
-        title_layout: QHBoxLayout = QHBoxLayout()
-
-        # Icon top left
-        icon_label: QLabel = QLabel()
-        icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
-        title_layout.addWidget(icon_label)
-
-        title_label: QLabel = QLabel(f"Alert v{self.version}")
-        title_layout.addWidget(title_label)
-
-        title_layout.addStretch()
-
-        close_button: QPushButton = QPushButton("X")
-        close_button.setToolTip("Close window")
-        close_button.setFixedSize(24, 24)
-        close_button.setStyleSheet(
-            "QPushButton { color: white; background-color: transparent; }"
-            "QPushButton:hover { background-color: red; }"
+        self.resource_manager = ResourceManager()
+        self.config_manager = ConfigManager()
+        self.settings = self.config_manager.load()
+        self.notification_manager = NotificationManager()
+        
+        self.resource_manager.register(
+            'notification_manager',
+            self.notification_manager,
+            lambda x: x.deleteLater()
         )
-        title_layout.addWidget(close_button)
-        close_button.clicked.connect(self.reject)
+        
+        self._setup_platform_specific()
+        self.setup_ui(custom_message)
 
-        title_bar_widget.setLayout(title_layout)
+    def _setup_platform_specific(self) -> None:
+        """Configure platform-specific window behavior."""
+        system = platform.system()
+        try:
+            if system == "Darwin":
+                # Use native window decorations on macOS
+                self.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint)
+                self.setAttribute(Qt.WA_MacAlwaysShowToolWindow)
+            elif system == "Windows":
+                # Custom window frame on Windows
+                self.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)
+            else:
+                # Default behavior for Linux
+                self.setWindowFlags(Qt.Dialog)
 
-        # Error message label
-        error_label: QLabel = QLabel(custom_message)
-        error_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(error_label)
-        self.setLayout(layout)
+            # Set platform-specific style
+            if system == "Windows":
+                self.setStyleSheet(
+                    "QDialog { border: 2px solid rgba(255, 152, 152, 1); }"
+                )
+            elif system == "Darwin":
+                # macOS specific styling
+                self.setStyleSheet(
+                    "QDialog { background-color: rgba(255, 255, 255, 0.95); }"
+                )
 
-        # Apply stylesheet for red border
-        self.setStyleSheet("QDialog { border: 2px solid rgba(255, 152, 152, 1); }")
+        except Exception as e:
+            logger.error(f"Failed to setup platform-specific settings: {e}")
+            # Fall back to basic window flags
+            self.setWindowFlags(Qt.Dialog)
 
     def center_window(self) -> None:
         """Center the dialog window on the screen."""
-        screen = QApplication.desktop().screenGeometry()
-        window_size = self.geometry()
-        x = (screen.width() - window_size.width()) // 2
-        y = (screen.height() - window_size.height()) // 2
-        self.move(x, y)
+        PlatformUI.center_window(self)
 
     def showEvent(self, event: Any) -> None:
         """
@@ -118,28 +101,23 @@ class CustomDialog(QDialog):
         2. Plays notification sound if enabled
         3. Centers the window
         """
-        # Load settings from file if it exists
-        self.load_settings()
-        if not self.settings.get("mute_sound", False):
-            self.notification_thread = NotificationAudioThread("audio_ding")  # (name of file)
-            self.notification_thread.start()
-        super().showEvent(event)
-        self.center_window()
+        try:
+            self.load_settings()
+            if not self.settings.get("mute_sound", False):
+                self.notification_manager.play_notification("default")
+            super().showEvent(event)
+            self.center_window()
+        except Exception as e:
+            logger.error(f"Show event error: {e}")
 
     def closeEvent(self, event: Any) -> None:
         """Handle dialog close with proper cleanup."""
         try:
-            if hasattr(self, "notification_thread"):
-                if self.notification_thread and self.notification_thread.isRunning():
-                    self.notification_thread.requestInterruption()
-                    self.notification_thread.wait(1000)  # Wait up to 1 second
-                    if self.notification_thread.isRunning():
-                        self.notification_thread.terminate()
-
+            self.resource_manager.cleanup()
             super().closeEvent(event)
         except Exception as e:
-            logger.error(f"Error during dialog close: {e}")
-            event.accept()  # Ensure the dialog closes
+            logger.error(f"Close event error: {e}")
+            event.accept()
 
     def load_settings(self) -> Dict[str, Any]:
         """Load and validate settings from file.
@@ -163,9 +141,60 @@ class CustomDialog(QDialog):
             return self._get_default_settings()
 
     def setup_ui(self, custom_message: str) -> None:
-        """Set up the dialog's user interface."""
-        # Remove unused variable and its assignment
-        # Lines 156-159 should be removed since the style is already set in __init__
+        """Set up the dialog UI with platform-specific styling."""
+        try:
+            self.setWindowTitle(f"Alert v{self.settings['version']}")
+            self.setWindowIcon(QIcon(":/Octopus.ico"))
+
+            layout = QVBoxLayout()
+            self._setup_title_bar(layout)
+            self._setup_message_area(layout, custom_message)
+            self.setLayout(layout)
+
+        except Exception as e:
+            logger.error(f"Failed to setup dialog UI: {e}")
+            raise
+
+    def _setup_title_bar(self, layout: QVBoxLayout) -> None:
+        """Set up custom title bar with platform-specific behavior."""
+        try:
+            if platform.system() != "Darwin":  # Skip on macOS
+                title_bar = QWidget()
+                title_layout = QHBoxLayout()
+                
+                icon_label = QLabel()
+                icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
+                title_layout.addWidget(icon_label)
+                
+                title_label = QLabel(f"Alert v{self.settings['version']}")
+                title_layout.addWidget(title_label)
+                title_layout.addStretch()
+                
+                close_button = self._create_close_button()
+                title_layout.addWidget(close_button)
+                
+                title_bar.setLayout(title_layout)
+                layout.addWidget(title_bar)
+        except Exception as e:
+            logger.error(f"Failed to setup title bar: {e}")
+
+    def _create_close_button(self) -> QPushButton:
+        """Create a close button with platform-specific styling."""
+        close_button = QPushButton("X")
+        close_button.setToolTip("Close window")
+        close_button.setFixedSize(24, 24)
+        close_button.setStyleSheet(
+            "QPushButton { color: white; background-color: transparent; }"
+            "QPushButton:hover { background-color: red; }"
+        )
+        close_button.clicked.connect(self.reject)
+        return close_button
+
+    def _setup_message_area(self, layout: QVBoxLayout, custom_message: str) -> None:
+        """Set up the message area of the dialog."""
+        error_label = QLabel(custom_message)
+        error_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(error_label)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Handle mouse press events for window dragging."""
@@ -175,3 +204,8 @@ class CustomDialog(QDialog):
                 event.accept()
         except Exception as e:
             logger.error(f"Mouse press event error: {e}")
+
+    def _handle_notification_error(self, error_msg: str) -> None:
+        """Handle notification errors."""
+        logger.warning(f"Notification error: {error_msg}")
+        # Don't show error dialog for notification failures

@@ -5,7 +5,9 @@ Configuration management for the Jellyfin Music Organizer application.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+from .platform_utils import PlatformPaths
+import platform
 
 
 class ConfigManager:
@@ -23,42 +25,75 @@ class ConfigManager:
         "destination_folder_path": "",
         "mute_sound": False,
         "version": "3.06",
+        "window_state": {},
+        "platform_specific": {}
     }
 
-    def __init__(self, config_path: str = "settings_jmo.json") -> None:
-        """
-        Initialize the configuration manager.
+    def __init__(self) -> None:
+        self.config_path = PlatformPaths.get_app_data_dir() / "config.json"
+        self.settings: Dict[str, Any] = {
+            "music_folder_path": "",
+            "destination_folder_path": "",
+            "mute_sound": False,
+            "version": "3.06",
+            "window_state": {},
+            "platform_specific": self._get_platform_defaults()
+        }
+        self.load()
 
-        Args:
-            config_path: Path to the configuration file
-        """
-        self.config_path = Path(config_path)
-        self.config: Dict[str, Any] = self.DEFAULT_CONFIG.copy()
-        self.logger = logging.getLogger(__name__)
+    def _get_platform_defaults(self) -> Dict[str, Any]:
+        """Get platform-specific default settings."""
+        system = platform.system().lower()
+        if system == "windows":
+            return {
+                "use_native_dialogs": False,
+                "dpi_scaling": True
+            }
+        elif system == "darwin":
+            return {
+                "use_native_dialogs": True,
+                "use_native_titlebar": True
+            }
+        else:  # Linux
+            return {
+                "use_native_dialogs": True,
+                "style": "fusion"
+            }
+
+    def validate_config(self, config: Dict[str, Any]) -> bool:
+        """Validate configuration values."""
+        try:
+            required_keys = {"music_folder_path", "destination_folder_path", "version"}
+            if not all(key in config for key in required_keys):
+                return False
+                
+            if not isinstance(config.get("mute_sound"), bool):
+                return False
+                
+            return True
+        except Exception as e:
+            self.logger.error(f"Config validation failed: {e}")
+            return False
 
     def load(self) -> None:
-        """Load configuration from file."""
+        """Load configuration with validation."""
         try:
             if self.config_path.exists():
                 with open(self.config_path, "r") as f:
                     loaded_config = json.load(f)
-                    # Update only valid keys
-                    for key in self.DEFAULT_CONFIG:
-                        if key in loaded_config:
-                            self.config[key] = loaded_config[key]
-                self.logger.info("Configuration loaded successfully")
-            else:
-                self.logger.info("No configuration file found, using defaults")
+                    if self.validate_config(loaded_config):
+                        self.settings.update(loaded_config)
+                    else:
+                        self.logger.warning("Invalid configuration, using defaults")
         except Exception as e:
             self.logger.error(f"Error loading configuration: {e}")
-            # Keep default configuration on error
 
     def save(self) -> None:
         """Save current configuration to file."""
         try:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.config_path, "w") as f:
-                json.dump(self.config, f, indent=4)
+                json.dump(self.settings, f, indent=4)
             self.logger.info("Configuration saved successfully")
         except Exception as e:
             self.logger.error(f"Error saving configuration: {e}")
@@ -74,7 +109,7 @@ class ConfigManager:
         Returns:
             Configuration value or default
         """
-        return self.config.get(key, default)
+        return self.settings.get(key, default)
 
     def set(self, key: str, value: Any) -> None:
         """
@@ -85,11 +120,21 @@ class ConfigManager:
             value: Value to set
         """
         if key in self.DEFAULT_CONFIG:
-            self.config[key] = value
+            self.settings[key] = value
         else:
             self.logger.warning(f"Attempted to set unknown configuration key: {key}")
 
     def reset(self) -> None:
         """Reset configuration to defaults."""
-        self.config = self.DEFAULT_CONFIG.copy()
+        self.settings = self.DEFAULT_CONFIG.copy()
         self.save()
+
+    def get_log_path(self) -> Path:
+        """Get platform-specific log file path."""
+        try:
+            log_dir = PlatformPaths.get_app_data_dir() / "logs"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            return log_dir / "app.log"
+        except Exception as e:
+            self.logger.error(f"Failed to get log path: {e}")
+            raise

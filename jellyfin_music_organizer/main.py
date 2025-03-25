@@ -7,51 +7,48 @@ from logging import Logger
 from typing import Optional
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import Qt
 
 from .ui.music_organizer import MusicOrganizer
 from .utils.config import ConfigManager
 from .utils.constants import CONFIG_FILE, LOG_FILE
 from .utils.logger import setup_logger
+from .utils.platform_utils import PlatformPaths
+from .utils.platform_utils import platform
 
 
 def main() -> None:
-    """
-    Main entry point for the application.
-
-    This function:
-    1. Sets up logging
-    2. Initializes configuration
-    3. Creates and shows the main window
-    """
+    """Main entry point with proper platform initialization."""
     logger: Optional[Logger] = None
 
     try:
-        # Set up logging
-        logger = setup_logger(log_file=LOG_FILE)
+        # Set up logging with platform-specific paths
+        log_path = PlatformPaths.get_app_data_dir() / "logs" / "app.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        logger = setup_logger(log_file=log_path)
         logger.info("Starting Jellyfin Music Organizer")
 
-        # Initialize configuration
-        config = ConfigManager(CONFIG_FILE)
+        # Initialize configuration with platform-specific paths
+        config_path = PlatformPaths.get_app_data_dir() / "config.json"
+        config = ConfigManager(config_path)
         config.load()
 
-        # Create Qt application
+        # Set up platform-specific UI settings
         app = QApplication(sys.argv)
+        if platform.system() == "Windows":
+            app.setAttribute(Qt.AA_EnableHighDpiScaling)
+            app.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-        # Create and show main window
         window = MusicOrganizer()
         window.show()
 
-        # Start event loop
         sys.exit(app.exec_())
-
     except Exception as e:
         error_msg = f"Application error: {str(e)}"
         if logger:
             logger.error(error_msg)
         else:
-            print(error_msg)  # Fallback if logger setup failed
-
-        # Show error dialog to user
+            print(error_msg)
         QMessageBox.critical(None, "Error", error_msg)
         sys.exit(1)
 

@@ -3,9 +3,12 @@ Main window for the Jellyfin Music Organizer application.
 """
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from logging import getLogger
+from pathlib import Path
+import platform
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QFont
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -28,7 +31,12 @@ from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
 from .replace_skip_window import ReplaceSkipWindow
 from .settings_window import SettingsWindow
+from ..utils.platform_utils import PlatformUI
+from ..utils.config import ConfigManager
+from ..utils.notifications import NotificationManager
+from ..utils.window_manager import WindowManager
 
+logger = getLogger(__name__)
 
 class MusicOrganizer(QWidget):
     """
@@ -44,6 +52,11 @@ class MusicOrganizer(QWidget):
     def __init__(self) -> None:
         """Initialize the MusicOrganizer window."""
         super().__init__()
+        self.window_manager = WindowManager()
+        self.notification_manager = NotificationManager()
+        self.config_manager = ConfigManager()
+        self.settings = self.config_manager.load()
+        self._setup_platform_specific()
 
         # Version Control
         self.version: str = "3.06"
@@ -247,11 +260,7 @@ class MusicOrganizer(QWidget):
 
     def center_window(self) -> None:
         """Center the window on the screen."""
-        screen = QApplication.desktop().screenGeometry()
-        window_size = self.geometry()
-        x = (screen.width() - window_size.width()) // 2
-        y = (screen.height() - window_size.height()) // 2
-        self.move(x, y)
+        PlatformUI.center_window(self)
 
     def select_music_folder(self) -> None:
         """
@@ -445,25 +454,20 @@ class MusicOrganizer(QWidget):
             custom_dialog.exec_()
 
     def organize_finish(self, recall_files: Dict[str, List[Dict[str, Any]]]) -> None:
-        """
-        Handle completion of the organization process.
+        """Handle completion of the organization process."""
+        try:
+            self.kill_thread("organize")
+            self.recall_files = recall_files
 
-        Args:
-            recall_files: Dictionary containing error and replace/skip file information
-        """
-        self.kill_thread("organize")
-        # Save recall_files for other functions
-        self.recall_files = recall_files
-        # Replace or Skip Files
-        if recall_files["replace_skip_files"]:
-            if not self.settings.get("mute_sound", False):
-                # Play ding sound (name of file)
-                self.notification_thread = NotificationAudioThread("audio_ding")
-                self.notification_thread.kill_thread_signal.connect(self.kill_thread)
-                self.notification_thread.start()
-            self.organize_replace_skip()
-        else:
-            self.replace_skip_finish()
+            if recall_files["replace_skip_files"]:
+                if not self.settings.get("mute_sound", False):
+                    self.notification_manager.play_notification("alert")
+                self.organize_replace_skip()
+            else:
+                self.replace_skip_finish()
+        except Exception as e:
+            logger.error(f"Organization completion failed: {e}")
+            self.custom_dialog_function("Failed to complete organization")
 
     def organize_replace_skip(self) -> None:
         """Show the replace/skip window for files that already exist."""
@@ -477,30 +481,21 @@ class MusicOrganizer(QWidget):
             self.music_replace_skip_window.show()
 
     def replace_skip_finish(self) -> None:
-        """
-        Handle completion of the replace/skip process.
+        """Handle completion of replace/skip process."""
+        try:
+            self.user_interface(True)
+            self.music_progress(self.music_progress_bar.maximum())
 
-        This method:
-        1. Re-enables UI elements
-        2. Updates progress bar
-        3. Shows error window if needed
-        4. Plays completion sound
-        """
-        self.user_interface(True)
-        # Set progress bar to maximum
-        self.music_progress(self.music_progress_bar.maximum())
-        if self.recall_files["error_files"]:
-            if not self.settings.get("mute_sound", False):
-                # Play ding sound (name of file)
-                self.notification_thread = NotificationAudioThread("audio_ding")
-                self.notification_thread.kill_thread_signal.connect(self.kill_thread)
-                self.notification_thread.start()
-            self.organize_error()
-        else:
-            if not self.settings.get("mute_sound", False):
-                self.notification_thread = NotificationAudioThread("audio_complete")
-                self.notification_thread.kill_thread_signal.connect(self.kill_thread)
-                self.notification_thread.start()
+            if self.recall_files["error_files"]:
+                if not self.settings.get("mute_sound", False):
+                    self.notification_manager.play_notification("error")
+                self.organize_error()
+            else:
+                if not self.settings.get("mute_sound", False):
+                    self.notification_manager.play_notification("complete")
+        except Exception as e:
+            logger.error(f"Replace/skip completion failed: {e}")
+            self.custom_dialog_function("Failed to complete file processing")
 
     def organize_error(self) -> None:
         """Show the error window for files with errors."""
@@ -509,11 +504,17 @@ class MusicOrganizer(QWidget):
                 logger.warning("No error files to display")
                 return
 
-            self.music_error_window = MusicErrorWindow(self.recall_files["error_files"])
-            self.music_error_window.windowClosed.connect(self.user_interface)
-            self.music_error_window.windowOpened.connect(self.user_interface)
-            self.music_error_window.custom_dialog_signal.connect(self.custom_dialog_function)
-            self.music_error_window.show()
+            error_window = self.window_manager.create_window(
+                MusicErrorWindow,
+                "error_window",
+                self.recall_files["error_files"]
+            )
+            if error_window:
+                error_window.windowClosed.connect(self.user_interface)
+                error_window.windowOpened.connect(self.user_interface)
+                error_window.custom_dialog_signal.connect(self.custom_dialog_function)
+                error_window.show()
+                
         except Exception as e:
             logger.error(f"Failed to show error window: {e}")
             self.custom_dialog_function("Failed to display error window")
@@ -522,24 +523,47 @@ class MusicOrganizer(QWidget):
         """Show the settings window."""
         try:
             settings_data = self.get_current_settings()
-            self.settings_window_instance = SettingsWindow(settings_data)
-            self.settings_window_instance.windowClosed.connect(self.settings_finish)
-            self.settings_window_instance.windowOpened.connect(self.user_interface)
-            self.settings_window_instance.show()
+            settings_window = self.window_manager.create_window(
+                SettingsWindow,
+                "settings_window",
+                settings_data
+            )
+            if settings_window:
+                settings_window.windowClosed.connect(self.settings_finish)
+                settings_window.windowOpened.connect(self.user_interface)
+                settings_window.show()
+                
         except Exception as e:
             logger.error(f"Failed to show settings window: {e}")
             self.custom_dialog_function("Failed to open settings")
 
     def settings_finish(self) -> None:
-        """
-        Handle completion of settings changes.
+        """Handle completion of settings changes."""
+        try:
+            self.user_interface(True)
+            self.load_settings()
+            self.reset_progress_songs_label()
+        except Exception as e:
+            logger.error(f"Failed to finish settings update: {e}")
+            self.custom_dialog_function("Failed to apply settings changes")
 
-        This method:
-        1. Re-enables UI elements
-        2. Reloads settings
-        3. Resets progress indicators
-        """
-        self.user_interface(True)
-        # Load settings from file if it exists
-        self.load_settings()
-        self.reset_progress_songs_label()
+    def _setup_platform_specific(self) -> None:
+        """Configure platform-specific window behavior."""
+        try:
+            system = platform.system()
+            if system == "Windows":
+                self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+                QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+            elif system == "Darwin":
+                self.setWindowFlags(Qt.Window)
+                self.setAttribute(Qt.WA_MacShowFocusRect, False)
+            else:  # Linux
+                self.setWindowFlags(Qt.Window)
+                self.setStyle(QStyleFactory.create("Fusion"))
+        except Exception as e:
+            logger.error(f"Failed to setup platform-specific window: {e}")
+            self.setWindowFlags(Qt.Window)  # Fallback
+
+        # Apply platform-specific font settings
+        font_settings = PlatformUI.get_font_settings()
+        self.setFont(QFont(font_settings["family"], font_settings["size"]))

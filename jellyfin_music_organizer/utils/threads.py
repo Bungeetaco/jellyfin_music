@@ -6,8 +6,11 @@ import threading
 from logging import getLogger
 from queue import Queue
 from typing import Any, Callable, Dict, Optional
+from pathlib import Path
 
 from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtCore import QUrl
 
 from .logger import setup_logger
 
@@ -153,17 +156,77 @@ class NotificationAudioThread(QThread):
     """Thread for playing notification sounds."""
 
     kill_thread_signal = pyqtSignal()
+    error_signal = pyqtSignal(str)
 
     def __init__(self, audio_file_name: str) -> None:
-        """Initialize the notification thread."""
+        """Initialize notification thread with resource validation.
+        
+        Args:
+            audio_file_name: Name of the audio file to play
+        """
         super().__init__()
-        self.audio_file_name: str = audio_file_name
-        self.is_running: bool = True
+        self.audio_file_name = audio_file_name
+        self.player: Optional[QMediaPlayer] = None
+        self.is_running = True
 
     def run(self) -> None:
-        """Run the notification thread."""
+        """Run the notification thread with proper cleanup."""
         try:
-            # Thread execution code
-            pass
+            self.player = QMediaPlayer()
+            self.player.setMedia(self._get_media_content())
+            self.player.mediaStatusChanged.connect(self.on_media_status_changed)
+            self.player.error.connect(self._handle_player_error)
+            
+            self.player.play()
+            
+            # Wait for playback to complete
+            while self.is_running and self.player.state() == QMediaPlayer.PlayingState:
+                self.msleep(100)
+                
         except Exception as e:
             logger.error(f"Audio notification error: {e}")
+            self.error_signal.emit(f"Audio playback failed: {str(e)}")
+        finally:
+            self._cleanup()
+
+    def _get_media_content(self) -> QMediaContent:
+        """Get media content with resource validation.
+        
+        Returns:
+            QMediaContent object for the audio file
+            
+        Raises:
+            RuntimeError: If audio file not found
+        """
+        resource_path = f":/sounds/{self.audio_file_name}.wav"
+        if not Path(resource_path).exists():
+            logger.error(f"Audio file not found: {resource_path}")
+            raise RuntimeError(f"Audio file not found: {self.audio_file_name}")
+            
+        return QMediaContent(QUrl.fromLocalFile(resource_path))
+
+    def _handle_player_error(self, error: QMediaPlayer.Error) -> None:
+        """Handle media player errors.
+        
+        Args:
+            error: Media player error code
+        """
+        error_msg = f"Media player error: {self.player.errorString()}"
+        logger.error(error_msg)
+        self.error_signal.emit(error_msg)
+        self.stop()
+
+    def _cleanup(self) -> None:
+        """Clean up resources."""
+        try:
+            if self.player:
+                self.player.stop()
+                self.player.deleteLater()
+                self.player = None
+        except Exception as e:
+            logger.error(f"Cleanup error: {e}")
+
+    def stop(self) -> None:
+        """Stop the notification thread safely."""
+        self.is_running = False
+        self._cleanup()
