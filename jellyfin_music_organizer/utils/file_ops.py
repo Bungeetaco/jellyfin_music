@@ -4,9 +4,9 @@ File operations utility functions for the Jellyfin Music Organizer application.
 
 import os
 import shutil
+from logging import getLogger
 from pathlib import Path
 from typing import List, Optional
-from logging import getLogger
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
 from .exceptions import FileOperationError
@@ -100,7 +100,7 @@ def sanitize_filename(filename: str) -> str:
         # Input validation
         if not isinstance(filename, str):
             raise FileOperationError(f"Expected string, got {type(filename)}")
-        
+
         if not filename.strip():
             raise FileOperationError("Empty filename provided")
 

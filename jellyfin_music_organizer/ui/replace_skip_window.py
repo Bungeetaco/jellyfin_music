@@ -1,7 +1,7 @@
 import shutil
-from pathlib import Path
-from typing import Dict, List, Optional
 from logging import getLogger
+from pathlib import Path
+from typing import Dict, List
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -19,9 +19,10 @@ from PyQt5.QtWidgets import (
 
 logger = getLogger(__name__)
 
+
 class ReplaceSkipWindow(QWidget):
     """Window for handling file replace/skip decisions."""
-    
+
     windowOpened = pyqtSignal(bool)
     windowClosed = pyqtSignal()
 
@@ -184,8 +185,8 @@ class ReplaceSkipWindow(QWidget):
                 selected_file = selected_item.text()
                 selected_entry = next(
                     (
-                        entry 
-                        for entry in self.replace_skip_files 
+                        entry
+                        for entry in self.replace_skip_files
                         if entry["file_name"] == selected_file
                     ),
                     None,

@@ -2,8 +2,8 @@
 Metadata operations utility functions for the Jellyfin Music Organizer application.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
 from logging import getLogger
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
@@ -66,7 +66,7 @@ def get_artist_album(metadata: Dict[str, Any]) -> Tuple[str, str]:
         for key, value in metadata.items():
             if not isinstance(key, str):
                 continue
-                
+
             lowercase_key = key.lower()
             if lowercase_key in METADATA_TAGS["artist"]:
                 artist_data = value

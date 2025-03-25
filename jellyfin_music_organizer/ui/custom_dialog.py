@@ -3,9 +3,10 @@ Custom dialog window for displaying messages to the user.
 """
 
 import json
+from logging import getLogger
 from typing import Any, Dict, Optional
 
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import (
     QApplication,
@@ -16,12 +17,12 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from logging import getLogger
 
 # Other classes within files
 from ..core.notification_audio_thread import NotificationAudioThread
 
 logger = getLogger(__name__)
+
 
 class CustomDialog(QDialog):
     """

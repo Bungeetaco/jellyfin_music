@@ -2,8 +2,8 @@
 Constants used throughout the Jellyfin Music Organizer application.
 """
 
-from typing import Dict, List
 from pathlib import Path
+from typing import Dict, List
 
 # Application metadata
 APP_NAME: str = "Jellyfin Music Organizer"

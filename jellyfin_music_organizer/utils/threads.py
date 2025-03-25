@@ -5,6 +5,7 @@ Thread management for the Jellyfin Music Organizer application.
 import threading
 from queue import Queue
 from typing import Any, Callable, Dict, Optional
+
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from .logger import setup_logger
@@ -147,7 +148,7 @@ class ThreadManager:
 
 class NotificationAudioThread(QThread):
     """Thread for playing notification sounds."""
-    
+
     kill_thread_signal = pyqtSignal()
 
     def __init__(self, audio_file_name: str) -> None:
