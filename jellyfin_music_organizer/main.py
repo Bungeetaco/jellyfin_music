@@ -6,15 +6,13 @@ import sys
 from logging import Logger
 from typing import Optional
 
-from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from .ui.music_organizer import MusicOrganizer
 from .utils.config import ConfigManager
-from .utils.constants import CONFIG_FILE, LOG_FILE
 from .utils.logger import setup_logger
-from .utils.platform_utils import PlatformPaths
-from .utils.platform_utils import platform
+from .utils.platform_utils import PlatformPaths, platform
 
 
 def main() -> None:

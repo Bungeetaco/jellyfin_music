@@ -3,22 +3,25 @@ Configuration management for the Jellyfin Music Organizer.
 """
 
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class AppConfig:
     """Application configuration data structure."""
+
     music_folder_path: str = ""
     destination_folder_path: str = ""
     mute_sound: bool = False
     version: str = "3.06"
     remove_illegal_chars: bool = True
     window_state: Dict[str, Any] = None
+
 
 class ConfigManager:
     """Manages application configuration and settings."""
@@ -35,10 +38,10 @@ class ConfigManager:
 
     def _validate_config_path(self, config_path: Optional[Path]) -> Path:
         """Validate and prepare configuration path.
-        
+
         Args:
             config_path: Optional configuration file path
-            
+
         Returns:
             Validated Path object
         """
@@ -62,14 +65,14 @@ class ConfigManager:
 
     def save(self) -> None:
         """Save current configuration to file with backup."""
-        backup_path = self.config_path.with_suffix('.json.bak')
+        backup_path = self.config_path.with_suffix(".json.bak")
         try:
             # Create backup of existing config
             if self.config_path.exists():
                 self.config_path.rename(backup_path)
 
             # Save new config
-            with open(self.config_path, "w", encoding='utf-8') as f:
+            with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(self.config.__dict__, f, indent=4, ensure_ascii=False)
 
             # Remove backup on successful save

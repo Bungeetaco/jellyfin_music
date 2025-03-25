@@ -1,23 +1,18 @@
 import json
 import os
+import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Dict, Any
-import platform
+from typing import Any, Dict
 
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
-    QCheckBox,
     QFileDialog,
-    QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QSizeGrip,
-    QSizePolicy,
-    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
@@ -74,8 +69,7 @@ class SettingsWindow(QWidget):
     def _settings_changed(self) -> bool:
         """Check if settings have been modified."""
         return any(
-            self.settings.get(key) != self._original_settings.get(key)
-            for key in self.settings
+            self.settings.get(key) != self._original_settings.get(key) for key in self.settings
         )
 
     def setup_titlebar(self):
@@ -132,11 +126,9 @@ class SettingsWindow(QWidget):
         try:
             # Platform-specific adjustments
             is_mac = platform.system() == "Darwin"
-            
+
             main_layout = QVBoxLayout()
-            main_layout.setContentsMargins(
-                *(20,) * 4 if is_mac else (10,) * 4
-            )
+            main_layout.setContentsMargins(*(20,) * 4 if is_mac else (10,) * 4)
 
             # Title bar (skip on macOS to use native window decorations)
             if not is_mac:
@@ -146,17 +138,17 @@ class SettingsWindow(QWidget):
             # Folder selection section with platform-specific spacing
             folder_section = QVBoxLayout()
             folder_section.setSpacing(10 if is_mac else 5)
-            
+
             # Music folder selection
             music_folder_layout = QHBoxLayout()
             self.music_folder_label = QLabel()
             self.music_folder_label.setWordWrap(True)
             music_folder_layout.addWidget(self.music_folder_label)
-            
+
             select_music_btn = QPushButton("Select Music Folder")
             select_music_btn.clicked.connect(self.select_music_folder)
             music_folder_layout.addWidget(select_music_btn)
-            
+
             folder_section.addLayout(music_folder_layout)
             main_layout.addLayout(folder_section)
 
@@ -185,9 +177,9 @@ class SettingsWindow(QWidget):
             folder_path = self.dialog_manager.get_folder_dialog(
                 self,
                 "Select Music Folder",
-                Path(self.music_folder_path) if self.music_folder_path else Path.home() / "Music"
+                Path(self.music_folder_path) if self.music_folder_path else Path.home() / "Music",
             )
-            
+
             if not folder_path:
                 logger.debug("Music folder selection cancelled")
                 return
@@ -206,10 +198,10 @@ class SettingsWindow(QWidget):
 
     def _validate_folder_path(self, path: str) -> bool:
         """Validate folder path exists and is accessible.
-        
+
         Args:
             path: Folder path to validate
-            
+
         Returns:
             bool: True if valid, False otherwise
         """

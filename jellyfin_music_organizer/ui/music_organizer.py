@@ -3,12 +3,11 @@ Main window for the Jellyfin Music Organizer application.
 """
 
 import json
-from typing import Any, Dict, List, Optional
-from logging import getLogger
-from pathlib import Path
 import platform
+from logging import getLogger
+from typing import Any, Dict, List
 
-from PyQt5.QtCore import Qt, QFont
+from PyQt5.QtCore import QFont, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -25,18 +24,18 @@ from PyQt5.QtWidgets import (
 )
 
 # Other classes within files
-from ..core.notification_audio_thread import NotificationAudioThread
 from ..core.organize_thread import OrganizeThread
+from ..utils.config import ConfigManager
+from ..utils.notifications import NotificationManager
+from ..utils.platform_utils import PlatformUI
+from ..utils.window_manager import WindowManager
 from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
 from .replace_skip_window import ReplaceSkipWindow
 from .settings_window import SettingsWindow
-from ..utils.platform_utils import PlatformUI
-from ..utils.config import ConfigManager
-from ..utils.notifications import NotificationManager
-from ..utils.window_manager import WindowManager
 
 logger = getLogger(__name__)
+
 
 class MusicOrganizer(QWidget):
     """
@@ -505,16 +504,14 @@ class MusicOrganizer(QWidget):
                 return
 
             error_window = self.window_manager.create_window(
-                MusicErrorWindow,
-                "error_window",
-                self.recall_files["error_files"]
+                MusicErrorWindow, "error_window", self.recall_files["error_files"]
             )
             if error_window:
                 error_window.windowClosed.connect(self.user_interface)
                 error_window.windowOpened.connect(self.user_interface)
                 error_window.custom_dialog_signal.connect(self.custom_dialog_function)
                 error_window.show()
-                
+
         except Exception as e:
             logger.error(f"Failed to show error window: {e}")
             self.custom_dialog_function("Failed to display error window")
@@ -524,15 +521,13 @@ class MusicOrganizer(QWidget):
         try:
             settings_data = self.get_current_settings()
             settings_window = self.window_manager.create_window(
-                SettingsWindow,
-                "settings_window",
-                settings_data
+                SettingsWindow, "settings_window", settings_data
             )
             if settings_window:
                 settings_window.windowClosed.connect(self.settings_finish)
                 settings_window.windowOpened.connect(self.user_interface)
                 settings_window.show()
-                
+
         except Exception as e:
             logger.error(f"Failed to show settings window: {e}")
             self.custom_dialog_function("Failed to open settings")

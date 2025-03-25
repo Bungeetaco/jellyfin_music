@@ -7,7 +7,7 @@ from typing import Optional
 
 class JellyfinMusicOrganizerError(Exception):
     """Base exception for all application errors."""
-    pass
+
 
 
 class ConfigurationError(JellyfinMusicOrganizerError):
@@ -15,7 +15,7 @@ class ConfigurationError(JellyfinMusicOrganizerError):
 
     def __init__(self, message: str, config_key: Optional[str] = None) -> None:
         """Initialize configuration error.
-        
+
         Args:
             message: Error message
             config_key: Optional configuration key that caused the error
@@ -40,7 +40,7 @@ class FileOperationError(JellyfinMusicOrganizerError):
 
     def __init__(self, message: str, file_path: Optional[str] = None) -> None:
         """Initialize file operation error.
-        
+
         Args:
             message: Error message
             file_path: Optional path to file that caused the error

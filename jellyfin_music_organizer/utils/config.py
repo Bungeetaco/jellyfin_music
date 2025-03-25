@@ -3,11 +3,11 @@ Configuration management for the Jellyfin Music Organizer application.
 """
 
 import json
-import logging
-from pathlib import Path
-from typing import Any, Dict, Optional
-from .platform_utils import PlatformPaths
 import platform
+from pathlib import Path
+from typing import Any, Dict
+
+from .platform_utils import PlatformPaths
 
 
 class ConfigManager:
@@ -26,7 +26,7 @@ class ConfigManager:
         "mute_sound": False,
         "version": "3.06",
         "window_state": {},
-        "platform_specific": {}
+        "platform_specific": {},
     }
 
     def __init__(self) -> None:
@@ -37,7 +37,7 @@ class ConfigManager:
             "mute_sound": False,
             "version": "3.06",
             "window_state": {},
-            "platform_specific": self._get_platform_defaults()
+            "platform_specific": self._get_platform_defaults(),
         }
         self.load()
 
@@ -45,20 +45,11 @@ class ConfigManager:
         """Get platform-specific default settings."""
         system = platform.system().lower()
         if system == "windows":
-            return {
-                "use_native_dialogs": False,
-                "dpi_scaling": True
-            }
+            return {"use_native_dialogs": False, "dpi_scaling": True}
         elif system == "darwin":
-            return {
-                "use_native_dialogs": True,
-                "use_native_titlebar": True
-            }
+            return {"use_native_dialogs": True, "use_native_titlebar": True}
         else:  # Linux
-            return {
-                "use_native_dialogs": True,
-                "style": "fusion"
-            }
+            return {"use_native_dialogs": True, "style": "fusion"}
 
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """Validate configuration values."""
@@ -66,10 +57,10 @@ class ConfigManager:
             required_keys = {"music_folder_path", "destination_folder_path", "version"}
             if not all(key in config for key in required_keys):
                 return False
-                
+
             if not isinstance(config.get("mute_sound"), bool):
                 return False
-                
+
             return True
         except Exception as e:
             self.logger.error(f"Config validation failed: {e}")

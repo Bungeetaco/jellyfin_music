@@ -1,31 +1,32 @@
 """Platform-specific utilities and abstractions."""
 
-import os
-import sys
-import platform
-import logging
-from pathlib import Path
-from typing import Optional, Dict, Any
 import json
-from PyQt5.QtWidgets import QApplication
+import logging
+import os
+import platform
+import sys
+from pathlib import Path
+from typing import Any, Dict
+
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QStyleFactory
+from PyQt5.QtWidgets import QApplication, QStyleFactory
 
 logger = logging.getLogger(__name__)
 
+
 class PlatformPaths:
     """Platform-specific path handling."""
-    
+
     @staticmethod
     def get_app_data_dir() -> Path:
         """Get platform-specific application data directory.
-        
+
         Returns:
             Path to application data directory
         """
         system = platform.system().lower()
         app_name = "jellyfin_music_organizer"
-        
+
         try:
             if system == "windows":
                 base_dir = os.environ.get("APPDATA")
@@ -46,34 +47,35 @@ class PlatformPaths:
     @staticmethod
     def get_resource_path(resource_name: str) -> Path:
         """Get platform-specific resource path.
-        
+
         Args:
             resource_name: Name of the resource
-            
+
         Returns:
             Path to resource
         """
         try:
-            if getattr(sys, 'frozen', False):
+            if getattr(sys, "frozen", False):
                 # Running in a bundle
                 base_path = Path(sys._MEIPASS)
             else:
                 # Running in normal Python environment
                 base_path = Path(__file__).parent.parent / "resources"
-            
+
             return base_path / resource_name
         except Exception as e:
             logger.error(f"Failed to get resource path: {e}")
             raise
 
+
 class PlatformUI:
     """Platform-specific UI adjustments."""
-    
+
     @staticmethod
     def get_font_settings() -> Dict[str, Any]:
         """Get platform-specific font settings."""
         system = platform.system().lower()
-        
+
         if system == "windows":
             return {"family": "Segoe UI", "size": 9}
         elif system == "darwin":
@@ -82,10 +84,10 @@ class PlatformUI:
             return {"family": "Ubuntu", "size": 10}
 
     @staticmethod
-    def adjust_widget_style(widget: 'QWidget') -> None:
+    def adjust_widget_style(widget: "QWidget") -> None:
         """Apply platform-specific widget styling."""
         system = platform.system().lower()
-        
+
         if system == "darwin":
             # macOS specific adjustments
             widget.setAttribute(Qt.WA_MacShowFocusRect, False)
@@ -94,7 +96,7 @@ class PlatformUI:
             pass
         else:
             # Linux specific adjustments
-            pass 
+            pass
 
     @staticmethod
     def center_window(window: QWidget) -> None:
@@ -121,9 +123,9 @@ class PlatformUI:
                 window.setAttribute(Qt.WA_MacShowFocusRect, False)
             else:  # Linux
                 window.setWindowFlags(Qt.Window)
-                
+
             PlatformUI._apply_platform_style(window)
-            
+
         except Exception as e:
             logger.error(f"Failed to setup window: {e}")
             window.setWindowFlags(Qt.Window)  # Fallback
@@ -134,31 +136,36 @@ class PlatformUI:
         try:
             system = platform.system()
             if system == "Windows":
-                window.setStyleSheet("""
+                window.setStyleSheet(
+                    """
                     QWidget {
                         background-color: white;
                         border: 1px solid #cccccc;
                     }
-                """)
+                """
+                )
             elif system == "Darwin":
-                window.setStyleSheet("""
+                window.setStyleSheet(
+                    """
                     QWidget {
                         background-color: rgba(255, 255, 255, 0.98);
                     }
-                """)
+                """
+                )
             else:  # Linux
                 window.setStyle(QStyleFactory.create("Fusion"))
         except Exception as e:
             logger.error(f"Failed to apply style: {e}")
+
 
 class SettingsWindow(QWidget):
     def _save_settings(self) -> None:
         try:
             settings_path = PlatformPaths.get_app_data_dir() / "settings.json"
             settings_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(settings_path, "w", encoding="utf-8") as f:
                 json.dump(self.settings, f, indent=4)
         except Exception as e:
             logger.error(f"Failed to save settings: {e}")
-            raise 
+            raise
