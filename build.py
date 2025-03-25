@@ -102,15 +102,7 @@ def create_spec_file(
     icon_path: str,
     additional_data: List[Tuple[str, str]]
 ) -> None:
-    """
-    Create a PyInstaller spec file.
-
-    Args:
-        entry_point: Path to the main script
-        name: Name of the output executable
-        icon_path: Path to the icon file
-        additional_data: List of (source, dest) tuples for additional files
-    """
+    """Create a PyInstaller spec file."""
     try:
         # Validate inputs
         if not all([entry_point, name, icon_path]):

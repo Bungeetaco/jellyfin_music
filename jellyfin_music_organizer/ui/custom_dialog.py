@@ -152,11 +152,8 @@ class CustomDialog(QDialog):
 
     def setup_ui(self, custom_message: str) -> None:
         """Set up the dialog's user interface."""
-        # Break long line for button style
-        button_style = (
-            "QPushButton { color: white; background-color: transparent; }"
-            "QPushButton:hover { background-color: red; }"
-        )
+        # Remove unused variable and its assignment
+        # Lines 156-159 should be removed since the style is already set in __init__
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Handle mouse press events for window dragging."""
