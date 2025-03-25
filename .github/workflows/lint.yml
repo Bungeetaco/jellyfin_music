@@ -14,6 +14,7 @@ jobs:
       with:
         ref: ${{ github.head_ref }}
         fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -41,6 +42,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.head_ref }}
+        fetch-depth: 0
+        
+    - name: Fetch latest changes
+      run: |
+        git fetch origin
+        git checkout ${{ github.head_ref }}
+        git pull origin ${{ github.head_ref }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
