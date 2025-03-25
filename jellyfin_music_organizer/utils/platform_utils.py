@@ -6,10 +6,11 @@ import os
 import platform
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget
+
 from .qt_compat import QtCompat, QtWindowFlags
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class PlatformPaths:
     @staticmethod
     def get_resource_path(resource_name: str) -> Path:
         """Get path to a resource file."""
-        if hasattr(sys, '_MEIPASS'):  # PyInstaller bundle
+        if hasattr(sys, "_MEIPASS"):  # PyInstaller bundle
             return Path(sys._MEIPASS) / "resources" / resource_name
         return Path(__file__).parent.parent / "resources" / resource_name
 
@@ -88,9 +89,7 @@ class PlatformUI:
         """Configure platform-specific window settings."""
         try:
             system = platform.system()
-            flags: QtWindowFlags = QtCompat.get_window_flags(
-                frameless=(system == "Windows")
-            )
+            flags: QtWindowFlags = QtCompat.get_window_flags(frameless=(system == "Windows"))
             window.setWindowFlags(flags)
 
             if system == "Windows":

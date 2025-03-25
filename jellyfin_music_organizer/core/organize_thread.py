@@ -13,8 +13,8 @@ from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from ..utils.file_ops import FileOperations
+from ..utils.metadata_types import MutagenFile
 from .exceptions import FileOperationError
-from ..utils.metadata_types import MutagenFile, MetadataValue, MetadataDict
 
 logger = logging.getLogger(__name__)
 

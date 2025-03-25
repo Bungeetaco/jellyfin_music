@@ -1,14 +1,14 @@
 """Window state management utilities."""
 
 import logging
-from typing import Optional, TypeVar, Type
+from typing import TypeVar
 
 from PyQt5.QtCore import QByteArray, QSettings
 from PyQt5.QtWidgets import QWidget
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T', bound=QWidget)
+T = TypeVar("T", bound=QWidget)
 
 
 class WindowStateManager:
@@ -32,17 +32,11 @@ class WindowStateManager:
         try:
             geometry = window.saveGeometry()
             if isinstance(geometry, QByteArray):
-                self.settings.setValue(
-                    f"{self.window_name}/geometry",
-                    geometry
-                )
+                self.settings.setValue(f"{self.window_name}/geometry", geometry)
             if hasattr(window, "saveState"):
                 state = window.saveState()
                 if isinstance(state, QByteArray):
-                    self.settings.setValue(
-                        f"{self.window_name}/windowState",
-                        state
-                    )
+                    self.settings.setValue(f"{self.window_name}/windowState", state)
         except Exception as e:
             logger.error(f"Failed to save window state: {e}")
 

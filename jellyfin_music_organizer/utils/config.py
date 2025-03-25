@@ -3,10 +3,10 @@ Configuration management for the Jellyfin Music Organizer application.
 """
 
 import json
+import logging
 import platform
 from pathlib import Path
 from typing import Any, Dict, Optional
-import logging
 
 from .platform_utils import PlatformPaths
 

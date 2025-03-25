@@ -2,11 +2,12 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Optional, TypeVar, Generator
+from typing import Any, Callable, Dict, Generator, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ResourceManager:
     """Manage application resources and cleanup."""
@@ -47,10 +48,7 @@ class ResourceManager:
 
     @contextmanager
     def managed_resource(
-        self,
-        resource_id: str,
-        resource: T,
-        cleanup_handler: Optional[Callable[[T], None]] = None
+        self, resource_id: str, resource: T, cleanup_handler: Optional[Callable[[T], None]] = None
     ) -> Generator[T, None, None]:
         """Context manager for temporary resources."""
         try:

@@ -3,7 +3,7 @@
 import logging
 import platform
 from abc import ABC, abstractmethod
-from typing import Optional, Protocol
+from typing import Optional
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
