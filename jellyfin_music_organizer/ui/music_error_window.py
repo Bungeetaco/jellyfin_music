@@ -585,6 +585,7 @@ class MusicErrorWindow(QWidget):
         self.update_current_error()
 
     def update_current_error(self):
+        """Update the current error display."""
         if self.current_error_index < len(self.error_list):
             error = self.error_list[self.current_error_index]
             self.error_text.setText(error["error"])
