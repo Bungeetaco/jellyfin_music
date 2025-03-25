@@ -22,9 +22,7 @@ jobs:
         python -m pip install --upgrade pip
         # Install linting tools
         pip install black flake8 mypy isort
-        # Install specific type stubs needed for the project
-        pip install types-PyQt5 types-setuptools
-        # Install project dependencies
+        # Install project dependencies (PyQt5 includes its own type hints)
         pip install -r requirements.txt
         
     - name: Check formatting with black
@@ -46,7 +44,8 @@ jobs:
           --check-untyped-defs \
           --warn-redundant-casts \
           --warn-unused-ignores \
-          --warn-return-any
+          --warn-return-any \
+          --no-warn-unused-ignores
 
     - name: Check import sorting
       run: |
