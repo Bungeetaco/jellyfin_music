@@ -20,7 +20,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black flake8 mypy types-all
+        # Install linting tools
+        pip install black flake8 mypy isort
+        # Install specific type stubs needed for the project
+        pip install types-PyQt5 types-setuptools
+        # Install project dependencies
         pip install -r requirements.txt
         
     - name: Check formatting with black
@@ -32,16 +36,18 @@ jobs:
           --count \
           --max-line-length=100 \
           --statistics \
-          --exclude=.git,__pycache__,build,dist
+          --exclude=.git,__pycache__,build,dist,*.egg-info
       
     - name: Type check with mypy
       run: |
         mypy jellyfin_music_organizer \
           --ignore-missing-imports \
           --disallow-untyped-defs \
-          --check-untyped-defs
+          --check-untyped-defs \
+          --warn-redundant-casts \
+          --warn-unused-ignores \
+          --warn-return-any
 
     - name: Check import sorting
       run: |
-        pip install isort
         isort --check-only --diff .
