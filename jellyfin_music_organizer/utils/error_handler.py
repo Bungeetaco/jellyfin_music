@@ -13,26 +13,16 @@ T = TypeVar("T")
 P = ParamSpec("P")
 
 
-def handle_errors(
-    logger: Optional[Logger] = None, default_return: Optional[T] = None, reraise: bool = False
-) -> Callable[[Callable[P, T]], Callable[P, Union[T, None]]]:
-    """Decorator for consistent error handling with proper type hints."""
-
-    def decorator(func: Callable[P, T]) -> Callable[P, Union[T, None]]:
-        @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Union[T, None]:
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                if logger:
-                    logger.error(f"Error in {func.__name__}: {str(e)}")
-                if reraise:
-                    raise
-                return default_return
-
-        return wrapper
-
-    return decorator
+def handle_errors(func: Callable[P, T]) -> Callable[P, T]:
+    """Decorator to handle errors in functions."""
+    @wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in {func.__name__}: {e}")
+            raise
+    return wrapper
 
 
 class ResourceManager:

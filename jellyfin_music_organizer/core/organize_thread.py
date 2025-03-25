@@ -318,6 +318,15 @@ class OrganizeThread(QThread):
     def process_metadata(self, file_path: Path) -> Dict[str, str]:
         """Process metadata from file."""
         try:
+            # Direct return without intermediate variable
             return self.metadata_handler.extract_metadata(file_path)
         except Exception as e:
             raise MetadataError(f"Failed to process metadata: {e}")
+
+    def process_file(self, file_path: Path) -> Dict[str, str]:
+        """Process a single file."""
+        try:
+            # Direct return without intermediate variable
+            return self.metadata_handler.extract_metadata(file_path)
+        except Exception as e:
+            raise MetadataError(f"Failed to process file: {e}")
