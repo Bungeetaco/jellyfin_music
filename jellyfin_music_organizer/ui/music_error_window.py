@@ -1,6 +1,6 @@
 import csv
 import json
-from typing import List, Dict, Union
+from typing import Dict, List, Union
 
 import openpyxl
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
@@ -571,7 +571,9 @@ class MusicErrorWindow(QWidget):
         self.json_button.setText("Generate JSON File")
         self.json_button.setStyleSheet("")
 
-    def update_error_list(self, error_list: List[Dict[str, Union[str, List[str], Dict[str, str]]]]) -> None:
+    def update_error_list(
+        self, error_list: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
+    ) -> None:
         """Update the error list widget with new errors."""
         self.error_list = error_list
         self.current_error_index = 0
