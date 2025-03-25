@@ -45,7 +45,7 @@ class CustomDialog(QDialog):
         self.resource_manager.register(
             resource_id="notification_manager",
             resource=self.notification_manager,
-            cleanup_handler=lambda x: x.deleteLater()
+            cleanup_handler=lambda x: x.deleteLater(),
         )
 
         self._setup_platform_specific()

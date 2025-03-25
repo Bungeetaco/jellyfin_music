@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import Qt, pyqtSignal, QEvent
+from PyQt5.QtCore import QEvent, Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from ..utils.qt_types import QtConstants, AlignmentFlag, MouseButton
+from ..utils.qt_types import AlignmentFlag, MouseButton, QtConstants
 
 logger = getLogger(__name__)
 
@@ -160,9 +160,7 @@ class ReplaceSkipWindow(QWidget):
         self.bottom_right_grip = QSizeGrip(self)
         self.bottom_right_grip.setToolTip("Resize window")
         hbox_progress_grip_layout.addWidget(
-            self.bottom_right_grip,
-            0,
-            AlignmentFlag.AlignBottom | AlignmentFlag.AlignRight
+            self.bottom_right_grip, 0, AlignmentFlag.AlignBottom | AlignmentFlag.AlignRight
         )
 
         # Populate QListWidget
@@ -180,7 +178,7 @@ class ReplaceSkipWindow(QWidget):
         if desktop is None:
             logger.warning("Could not get desktop widget")
             return
-            
+
         screen = desktop.screenGeometry()
         window_size = self.geometry()
         x = (screen.width() - window_size.width()) // 2

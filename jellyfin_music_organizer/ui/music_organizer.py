@@ -7,7 +7,7 @@ import platform
 from logging import getLogger
 from typing import Any, Dict, List, Union
 
-from PyQt5.QtCore import QFont, Qt, QCoreApplication
+from PyQt5.QtCore import QCoreApplication, QFont, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -30,13 +30,7 @@ from ..utils.config import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
 from ..utils.qt_compat import QtCompat
-from ..utils.qt_types import (
-    QtConstants,
-    WindowFlags,
-    WindowType,
-    AlignmentFlag,
-    MouseButton,
-)
+from ..utils.qt_types import AlignmentFlag, MouseButton, QtConstants, WindowFlags, WindowType
 from ..utils.window_manager import WindowManager
 from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
@@ -560,11 +554,11 @@ class MusicOrganizer(QWidget):
                     QtConstants.Window | QtConstants.FramelessWindowHint
                 )
                 self.setWindowFlags(flags)
-                
+
                 app = QApplication.instance()
                 if isinstance(app, QApplication):
                     QtCompat.set_high_dpi_scaling(app)
-                    
+
             elif system == "Darwin":
                 self.setWindowFlags(QtConstants.Window)
                 self.setAttribute(QtConstants.WA_MacShowFocusRect, False)

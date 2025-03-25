@@ -18,7 +18,7 @@ class Event(Generic[T]):
 
     def connect(self, handler: Callable[[T], None]) -> None:
         """Connect an event handler.
-        
+
         Args:
             handler: Callback function to handle the event
         """
@@ -26,7 +26,7 @@ class Event(Generic[T]):
 
     def disconnect(self, handler: Callable[[T], None]) -> None:
         """Disconnect an event handler.
-        
+
         Args:
             handler: Callback function to remove
         """
@@ -35,7 +35,7 @@ class Event(Generic[T]):
 
     def emit(self, data: T) -> None:
         """Emit event to all handlers.
-        
+
         Args:
             data: Event data to pass to handlers
         """
@@ -60,7 +60,7 @@ class EventManager(QObject):
 
     def register_event(self, event_name: str) -> None:
         """Register a new event type.
-        
+
         Args:
             event_name: Name of the event to register
         """
@@ -69,7 +69,7 @@ class EventManager(QObject):
 
     def emit_event(self, event_name: str, data: Any) -> None:
         """Emit an event with data.
-        
+
         Args:
             event_name: Name of the event to emit
             data: Data to pass to event handlers
@@ -81,7 +81,7 @@ class EventManager(QObject):
 
     def connect_event(self, event_name: str, handler: Callable[[Any], None]) -> None:
         """Connect a handler to an event.
-        
+
         Args:
             event_name: Name of the event to connect to
             handler: Callback function to handle the event

@@ -175,7 +175,7 @@ class SettingsWindow(QWidget):
         if desktop is None:
             logger.warning("Could not get desktop widget")
             return
-            
+
         screen = desktop.screenGeometry()
         window_size = self.geometry()
         x = (screen.width() - window_size.width()) // 2
@@ -188,8 +188,12 @@ class SettingsWindow(QWidget):
             folder_path = QFileDialog.getExistingDirectory(
                 self,
                 "Select Music Folder",
-                str(Path.home() / "Music") if not self.music_folder_path else self.music_folder_path,
-                QFileDialog.ShowDirsOnly
+                (
+                    str(Path.home() / "Music")
+                    if not self.music_folder_path
+                    else self.music_folder_path
+                ),
+                QFileDialog.ShowDirsOnly,
             )
 
             if not folder_path:

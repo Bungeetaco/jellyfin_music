@@ -4,8 +4,7 @@ import os
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict, List, Union, Callable
-from typing_extensions import TypeAlias
+from typing import Any, Callable, Dict, List, Union
 
 import openpyxl
 from PyQt5.QtCore import QSettings, Qt, QTimer, pyqtSignal
@@ -23,12 +22,13 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import TypeAlias
 
 from ..utils.dialogs import DialogManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
-from ..utils.window_state import WindowStateManager
 from ..utils.qt_types import QtConstants
+from ..utils.window_state import WindowStateManager
 
 logger = getLogger(__name__)
 
@@ -242,7 +242,7 @@ class MusicErrorWindow(QWidget):
             desktop = QApplication.desktop()
             if desktop is None:
                 raise RuntimeError("Failed to get desktop")
-                
+
             screen = desktop.screenGeometry()
             window_size = self.geometry()
             x = (screen.width() - window_size.width()) // 2
@@ -350,7 +350,7 @@ class MusicErrorWindow(QWidget):
             clipboard = QApplication.clipboard()
             if clipboard is None:
                 raise RuntimeError("Failed to get clipboard")
-                
+
             text = self.details_display.toPlainText()
             if not text:
                 logger.warning("No text to copy to clipboard")
@@ -422,10 +422,7 @@ class MusicErrorWindow(QWidget):
         """Handle file saving with dialog manager."""
         try:
             file_path = DialogManager.get_save_file(
-                self, 
-                title, 
-                file_filter, 
-                Path(file_filter.split("*")[1].split(")")[0])
+                self, title, file_filter, Path(file_filter.split("*")[1].split(")")[0])
             )
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)

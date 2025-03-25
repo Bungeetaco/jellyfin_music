@@ -131,9 +131,10 @@ def document_class(cls: Type[T]) -> Type[T]:
 
 def validate_docstrings() -> None:
     """Validate docstrings across the codebase."""
-    import jellyfin_music_organizer
     from importlib import import_module
     from pathlib import Path
+
+    import jellyfin_music_organizer
 
     def validate_module(module: Any) -> None:
         for name, obj in inspect.getmembers(module):
@@ -148,11 +149,11 @@ def validate_docstrings() -> None:
     for py_file in package_path.rglob("*.py"):
         if py_file.stem == "__init__":
             continue
-        
+
         # Convert file path to module path
         relative_path = py_file.relative_to(package_path.parent)
         module_path = str(relative_path.with_suffix("")).replace("/", ".")
-        
+
         try:
             module = import_module(module_path)
             validate_module(module)

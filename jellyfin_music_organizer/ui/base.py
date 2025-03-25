@@ -1,12 +1,11 @@
 import platform
 from typing import Any, Dict, Optional, Union
 
-from PyQt5.QtCore import QPoint
+from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import QDialog, QWidget
-from PyQt5.QtCore import Qt
 
-from ..utils.qt_types import QtConstants, WindowFlags, WindowType, WidgetAttribute
+from ..utils.qt_types import QtConstants, WidgetAttribute, WindowFlags, WindowType
 from ..utils.window_state import WindowStateManager
 
 

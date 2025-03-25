@@ -4,10 +4,10 @@ File operations utility functions for the Jellyfin Music Organizer application.
 
 import os
 import shutil
+from functools import wraps
 from logging import getLogger
 from pathlib import Path
-from typing import List, Optional, Callable, TypeVar
-from functools import wraps
+from typing import Callable, List, Optional, TypeVar
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
 from .error_handler import handle_errors
@@ -15,17 +15,19 @@ from .exceptions import FileOperationError
 
 logger = getLogger(__name__)
 
-T = TypeVar('T')  # For generic return type
+T = TypeVar("T")  # For generic return type
+
 
 def with_error_handling(func: Callable[..., T]) -> Callable[..., T]:
     """Decorator for handling file operation errors.
-    
+
     Args:
         func: Function to wrap with error handling
-        
+
     Returns:
         Wrapped function
     """
+
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> T:
         try:
@@ -33,7 +35,9 @@ def with_error_handling(func: Callable[..., T]) -> Callable[..., T]:
         except Exception as e:
             logger.error(f"File operation failed: {e}")
             raise FileOperationError(f"Operation failed: {str(e)}")
+
     return wrapper
+
 
 def get_music_files(directory: str) -> List[Path]:
     """
@@ -211,10 +215,10 @@ class FileOperations:
     @with_error_handling
     def ensure_writable(path: Path) -> bool:
         """Ensure a path is writable.
-        
+
         Args:
             path: Path to check/make writable
-            
+
         Returns:
             True if path is or was made writable, False otherwise
         """
@@ -232,22 +236,19 @@ class FileOperations:
     @staticmethod
     @with_error_handling
     def safe_copy(
-        source: Path, 
-        destination: Path, 
-        overwrite: bool = False, 
-        preserve_metadata: bool = True
+        source: Path, destination: Path, overwrite: bool = False, preserve_metadata: bool = True
     ) -> bool:
         """Safely copy a file with metadata preservation.
-        
+
         Args:
             source: Source file path
             destination: Destination file path
             overwrite: Whether to overwrite existing files
             preserve_metadata: Whether to preserve file metadata
-            
+
         Returns:
             True if copy was successful
-            
+
         Raises:
             FileOperationError: If copy operation fails
             FileNotFoundError: If source file doesn't exist
@@ -279,10 +280,10 @@ class FileOperations:
     @staticmethod
     def is_audio_file(path: Path) -> bool:
         """Check if a file is a supported audio file.
-        
+
         Args:
             path: Path to check
-            
+
         Returns:
             True if file is a supported audio file
         """
@@ -291,11 +292,11 @@ class FileOperations:
     @staticmethod
     def get_legal_filename(filename: str, max_length: int = 255) -> str:
         """Generate a legal filename.
-        
+
         Args:
             filename: Original filename
             max_length: Maximum length for filename
-            
+
         Returns:
             Legal filename
         """

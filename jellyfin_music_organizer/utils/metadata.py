@@ -41,10 +41,10 @@ def extract_metadata(file_path: str) -> Dict[str, MetadataValue]:
 
 def _convert_to_string(value: Union[str, List[str], ASFUnicodeAttribute]) -> str:
     """Convert metadata value to string safely.
-    
+
     Args:
         value: Metadata value to convert
-        
+
     Returns:
         String representation of the value
     """

@@ -270,14 +270,14 @@ class OrganizeThread(QThread):
             FileOperationError: If required metadata is missing
         """
         try:
-            artist = self.clean_filename(metadata.get('artist', ''))
-            album = self.clean_filename(metadata.get('album', ''))
-            filename = self.clean_filename(metadata.get('filename', ''))
+            artist = self.clean_filename(metadata.get("artist", ""))
+            album = self.clean_filename(metadata.get("album", ""))
+            filename = self.clean_filename(metadata.get("filename", ""))
 
             if not all([artist, album, filename]):
                 raise FileOperationError("Missing required metadata")
 
-            return Path(self.info['selected_destination_folder_path']) / artist / album / filename
+            return Path(self.info["selected_destination_folder_path"]) / artist / album / filename
         except Exception as e:
             raise FileOperationError(f"Failed to create destination path: {e}")
 
@@ -342,7 +342,7 @@ class OrganizeThread(QThread):
 
     def process_metadata(self, file_path: Path) -> Dict[str, str]:
         """Process metadata from file.
-        
+
         Args:
             file_path: Path to the music file
 
@@ -358,7 +358,7 @@ class OrganizeThread(QThread):
             metadata = extract_metadata(file_path)
             if not metadata:
                 raise MetadataError("No metadata found")
-            
+
             # Convert metadata to Dict[str, str]
             processed_metadata: Dict[str, str] = {}
             for key, value in metadata.items():

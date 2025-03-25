@@ -38,7 +38,7 @@ class MigrationManager:
 
     def get_current_version(self) -> int:
         """Get current database version.
-        
+
         Returns:
             int: Current database version number, defaults to 0 if not found
         """
