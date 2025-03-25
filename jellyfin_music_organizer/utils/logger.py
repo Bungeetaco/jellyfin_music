@@ -5,8 +5,8 @@ Logging configuration for the Jellyfin Music Organizer application.
 import logging
 import logging.handlers
 import sys
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class LoggerConfig:
@@ -74,15 +74,16 @@ class LoggerConfig:
             },
         }
 
-def setup_logger(name: str = "jellyfin_music_organizer", log_file: Optional[Path] = None) -> logging.Logger:
+
+def setup_logger(
+    name: str = "jellyfin_music_organizer", log_file: Optional[Path] = None
+) -> logging.Logger:
     """Set up and configure logger."""
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
     if not logger.handlers:
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         # Add console handler
         console_handler = logging.StreamHandler()

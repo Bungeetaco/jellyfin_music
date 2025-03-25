@@ -1,11 +1,12 @@
 """Type stubs for Qt-related attributes."""
 
-from typing import Union, TypeVar, Type
-from typing_extensions import TypeAlias
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtMultimedia import QMediaPlayer
+from typing import Type, TypeVar, Union
+
+from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QFont
+from PyQt5.QtMultimedia import QMediaPlayer
+from PyQt5.QtWidgets import QApplication, QWidget
+from typing_extensions import TypeAlias
 
 # Type aliases
 WindowFlags: TypeAlias = Union[Qt.WindowFlags, Qt.WindowType]
@@ -13,6 +14,7 @@ WindowType: TypeAlias = Qt.WindowType
 KeyboardModifier: TypeAlias = Union[Qt.KeyboardModifier, Qt.KeyboardModifiers]
 ApplicationAttribute: TypeAlias = Qt.ApplicationAttribute
 WidgetAttribute: TypeAlias = Qt.WidgetAttribute
+
 
 # Qt constants wrapper
 class QtConstants:

@@ -317,8 +317,9 @@ class OrganizeThread(QThread):
     def process_metadata(self, file_path: Path) -> Dict[str, str]:
         """Process metadata from file."""
         try:
-            if not hasattr(self, 'metadata_handler'):
+            if not hasattr(self, "metadata_handler"):
                 from ..utils.metadata import MetadataHandler
+
                 self.metadata_handler = MetadataHandler()
             metadata = self.metadata_handler.extract_metadata(file_path)
             if not metadata:

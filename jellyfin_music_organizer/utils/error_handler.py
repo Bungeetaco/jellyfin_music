@@ -2,7 +2,9 @@
 
 import logging
 from functools import wraps
-from typing import Any, Callable, Dict, List, TypeVar, ParamSpec, Optional
+from typing import Any, Callable, Dict, List, TypeVar
+from typing_extensions import ParamSpec  # Single import
+
 from typing_extensions import ParamSpec
 
 from .typing_compat import P  # Use shared ParamSpec
@@ -13,10 +15,7 @@ T = TypeVar("T")  # Local TypeVar is fine
 P = ParamSpec("P")
 
 
-def handle_errors(
-    func: Callable[P, T],
-    logger: Optional[logging.Logger] = None
-) -> Callable[P, T]:
+def handle_errors(func: Callable[P, T], logger: Optional[logging.Logger] = None) -> Callable[P, T]:
     """Decorator to handle errors in functions."""
 
     @wraps(func)
