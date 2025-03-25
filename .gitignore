@@ -1,3 +1,8 @@
+# Explicitly allow GitHub Actions
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
+
 # Python
 __pycache__/
 *.py[cod]
