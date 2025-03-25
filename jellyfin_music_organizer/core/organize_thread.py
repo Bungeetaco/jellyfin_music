@@ -13,6 +13,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from ..utils.file_ops import FileOperations
 from .exceptions import FileOperationError
+from ..utils.exceptions import MetadataError
 
 logger = logging.getLogger(__name__)
 

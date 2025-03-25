@@ -4,8 +4,7 @@ import logging
 from functools import wraps
 from logging import Logger
 from typing import Any, Callable, Dict, List, Optional, ParamSpec, TypeVar, Union
-
-from .typing_compat import P
+from typing_extensions import ParamSpec as P
 
 logger = logging.getLogger(__name__)
 

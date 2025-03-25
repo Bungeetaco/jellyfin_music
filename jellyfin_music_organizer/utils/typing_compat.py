@@ -1,6 +1,7 @@
 from typing import Any, List, TypeVar, Union
 
 from typing_extensions import TypeAlias
+from PyQt5.QtCore import Qt
 
 try:
     from typing import ParamSpec
@@ -9,8 +10,8 @@ except ImportError:
 
 # Qt-specific type aliases
 WindowFlags: TypeAlias = Union[Qt.WindowFlags, Qt.WindowType]
-KeyboardModifier: TypeAlias = int
-Alignment: TypeAlias = int
+KeyboardModifier: TypeAlias = Union[Qt.KeyboardModifier, Qt.KeyboardModifiers]
+Alignment: TypeAlias = Union[Qt.Alignment, Qt.AlignmentFlag]
 WindowType: TypeAlias = int
 MetadataValue: TypeAlias = Union[str, List[str], Any]
 

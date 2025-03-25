@@ -2,9 +2,11 @@
 
 import inspect
 import logging
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar('T')  # Add TypeVar definition
 
 
 def validate_docstring(func: Callable[..., Any]) -> None:

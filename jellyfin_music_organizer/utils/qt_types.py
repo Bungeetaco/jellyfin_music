@@ -1,17 +1,14 @@
 """Type stubs for Qt-related attributes."""
 
 from typing import Union
-
+from typing_extensions import TypeAlias
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaPlayer
-from typing_extensions import TypeAlias
 
-from .typing_compat import Alignment, KeyboardModifier, WindowFlags
-
-# Single definitions for each type alias
-WindowFlags: TypeAlias = Union[Qt.WindowFlags, Qt.WindowType]
-KeyboardModifier: TypeAlias = Union[Qt.KeyboardModifier, Qt.KeyboardModifiers]
-Alignment: TypeAlias = Union[Qt.Alignment, Qt.AlignmentFlag]
+# Define each type alias only once and remove duplicates
+WindowFlags = Union[Qt.WindowFlags, Qt.WindowType]
+KeyboardModifier = Union[Qt.KeyboardModifier, Qt.KeyboardModifiers]
+Alignment = Union[Qt.Alignment, Qt.AlignmentFlag]
 MouseButton = Qt.MouseButton
 
 
