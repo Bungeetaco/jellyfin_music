@@ -3,15 +3,15 @@ Thread for organizing music files based on their metadata.
 """
 
 import json
+import logging
+import os
 import shutil
 from pathlib import Path
 from typing import Any, Dict, List
-import os
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +206,9 @@ class OrganizeThread(QThread):
                         self._copy_file(path_in_str, f"{new_location}/{file_name}")
 
                 except Exception as e:
-                    file_info = self._create_error_info(file_name, artist_data, album_data, metadata_dict, str(e))
+                    file_info = self._create_error_info(
+                        file_name, artist_data, album_data, metadata_dict, str(e)
+                    )
 
                     recall_files["error_files"].append(file_info)
 
@@ -229,18 +231,15 @@ class OrganizeThread(QThread):
             self.kill_thread_signal.emit("organize")
 
     def _handle_existing_file(
-        self, 
-        file_name: str, 
-        new_location: str, 
-        path_in_str: str
+        self, file_name: str, new_location: str, path_in_str: str
     ) -> Dict[str, str]:
         """Handle case when file already exists in destination.
-        
+
         Args:
             file_name: Name of the file
             new_location: Destination path
             path_in_str: Source path
-            
+
         Returns:
             Dictionary with file information
         """
@@ -251,55 +250,50 @@ class OrganizeThread(QThread):
             "error": "File already exists in the destination folder",
         }
 
-    def _copy_file(
-        self, 
-        source_path: str, 
-        destination_path: str, 
-        create_dirs: bool = True
-    ) -> None:
+    def _copy_file(self, source_path: str, destination_path: str, create_dirs: bool = True) -> None:
         """Copy file with proper error handling.
-        
+
         Args:
             source_path: Source file path
             destination_path: Destination file path
             create_dirs: Whether to create destination directories
-        
+
         Raises:
             OSError: If file copy fails
         """
         try:
             if create_dirs:
                 Path(destination_path).parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Verify source file exists and is readable
             source = Path(source_path)
             if not source.exists():
                 raise FileNotFoundError(f"Source file not found: {source_path}")
             if not os.access(source, os.R_OK):
                 raise PermissionError(f"Cannot read source file: {source_path}")
-            
+
             # Check destination path
             dest = Path(destination_path)
             if dest.exists():
                 raise FileExistsError(f"Destination file already exists: {destination_path}")
-            
+
             # Copy file with metadata
             shutil.copy2(source_path, destination_path)
-            
+
             # Verify copy was successful
             if not dest.exists():
                 raise RuntimeError(f"File copy failed: {destination_path}")
-            
+
         except Exception as e:
             logger.error(f"Failed to copy file from {source_path} to {destination_path}: {e}")
             raise OSError(f"Copy failed: {str(e)}")
 
     def _validate_path(self, path: str) -> bool:
         """Validate path exists and is accessible.
-        
+
         Args:
             path: Path to validate
-            
+
         Returns:
             bool: True if valid, False otherwise
         """
@@ -316,17 +310,17 @@ class OrganizeThread(QThread):
         artist_data: List[str],
         album_data: List[str],
         metadata_dict: Dict[str, Any],
-        error: str
+        error: str,
     ) -> Dict[str, Any]:
         """Create standardized error information dictionary.
-        
+
         Args:
             file_name: Name of the file
             artist_data: Artist information
             album_data: Album information
             metadata_dict: File metadata
             error: Error message
-            
+
         Returns:
             Dictionary with error information
         """
