@@ -6,6 +6,7 @@ import logging
 import logging.handlers
 import sys
 from typing import Any, Dict, Optional
+from pathlib import Path
 
 
 class LoggerConfig:
@@ -72,3 +73,26 @@ class LoggerConfig:
                 }
             },
         }
+
+def setup_logger(name: str = "jellyfin_music_organizer", log_file: Optional[Path] = None) -> logging.Logger:
+    """Set up and configure logger."""
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+
+    if not logger.handlers:
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+
+        # Add console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+        # Add file handler if log_file is specified
+        if log_file:
+            file_handler = logging.FileHandler(str(log_file))
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+
+    return logger

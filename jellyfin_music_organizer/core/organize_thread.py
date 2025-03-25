@@ -317,8 +317,13 @@ class OrganizeThread(QThread):
     def process_metadata(self, file_path: Path) -> Dict[str, str]:
         """Process metadata from file."""
         try:
-            # Direct return without intermediate variable
-            return self.metadata_handler.extract_metadata(file_path)
+            if not hasattr(self, 'metadata_handler'):
+                from ..utils.metadata import MetadataHandler
+                self.metadata_handler = MetadataHandler()
+            metadata = self.metadata_handler.extract_metadata(file_path)
+            if not metadata:
+                raise MetadataError("No metadata found")
+            return metadata
         except Exception as e:
             raise MetadataError(f"Failed to process metadata: {e}")
 

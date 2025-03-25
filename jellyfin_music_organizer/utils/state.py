@@ -3,7 +3,8 @@ import logging
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, Optional, TypeVar
+from typing import Any, Callable, Dict, Generic, Optional, TypeVar, List
+from threading import RLock
 
 T = TypeVar("T")
 
@@ -17,14 +18,14 @@ class StateChange(Generic[T]):
     new_value: T
 
 
-class StateManager:
+class StateManager(Generic[T]):
     """Thread-safe application state management."""
 
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-        self._state: Dict[str, Any] = {}
-        self._lock = threading.RLock()
-        self._observers: Dict[str, list[Callable[[StateChange[Any]], None]]] = {}
+        self._state: Dict[str, T] = {}
+        self._lock = RLock()
+        self._observers: Dict[str, List[Callable[[T], None]]] = {}
 
     def set(self, key: str, value: Any) -> None:
         """Set a state value."""
@@ -46,14 +47,14 @@ class StateManager:
                 del self._state[key]
                 self._notify_observers(StateChange(key, old_value, None))
 
-    def observe(self, key: str, callback: Callable[[StateChange[Any]], None]) -> None:
+    def observe(self, key: str, callback: Callable[[StateChange[T]], None]) -> None:
         """Register a state change observer."""
         with self._lock:
             if key not in self._observers:
                 self._observers[key] = []
             self._observers[key].append(callback)
 
-    def _notify_observers(self, change: StateChange[Any]) -> None:
+    def _notify_observers(self, change: StateChange[T]) -> None:
         """Notify observers of state changes."""
         observers = self._observers.get(change.key, [])
         for observer in observers:
