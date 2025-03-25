@@ -43,10 +43,12 @@ jobs:
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         
     - name: Commit changes
+      id: commit
+      continue-on-error: true
       run: |
         git add .
-        git diff --quiet && git diff --staged --quiet || git commit -m "style: auto-format with black and isort"
-        git push
+        git diff --quiet && git diff --staged --quiet || (git commit -m "style: auto-format with black and isort" && git push)
+        echo "changes_made=$?" >> $GITHUB_OUTPUT
 
   lint:
     needs: format
@@ -57,8 +59,10 @@ jobs:
         ref: ${{ github.head_ref }}
         fetch-depth: 0
         
-    - name: Pull latest changes
+    - name: Wait for format changes
       run: |
+        # Wait for potential format changes to be available
+        sleep 10
         git pull origin ${{ github.head_ref || 'main' }} --rebase
     
     - name: Set up Python
