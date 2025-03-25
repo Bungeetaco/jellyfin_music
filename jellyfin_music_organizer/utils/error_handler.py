@@ -3,6 +3,7 @@
 import logging
 from functools import wraps
 from typing import Any, Callable, Dict, List, TypeVar
+
 from .typing_compat import P  # Use shared ParamSpec
 
 logger = logging.getLogger(__name__)
