@@ -3,8 +3,9 @@ Main entry point for the Jellyfin Music Organizer application.
 """
 
 import sys
-
-from PyQt5.QtWidgets import QApplication
+from typing import Optional
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from logging import Logger
 
 from .ui.music_organizer import MusicOrganizer
 from .utils.config import ConfigManager
@@ -21,11 +22,13 @@ def main() -> None:
     2. Initializes configuration
     3. Creates and shows the main window
     """
-    # Set up logging
-    logger = setup_logger(log_file=LOG_FILE)
-    logger.info("Starting Jellyfin Music Organizer")
-
+    logger: Optional[Logger] = None
+    
     try:
+        # Set up logging
+        logger = setup_logger(log_file=LOG_FILE)
+        logger.info("Starting Jellyfin Music Organizer")
+
         # Initialize configuration
         config = ConfigManager(CONFIG_FILE)
         config.load()
@@ -41,7 +44,14 @@ def main() -> None:
         sys.exit(app.exec_())
 
     except Exception as e:
-        logger.error(f"Application error: {e}")
+        error_msg = f"Application error: {str(e)}"
+        if logger:
+            logger.error(error_msg)
+        else:
+            print(error_msg)  # Fallback if logger setup failed
+            
+        # Show error dialog to user
+        QMessageBox.critical(None, "Error", error_msg)
         sys.exit(1)
 
 

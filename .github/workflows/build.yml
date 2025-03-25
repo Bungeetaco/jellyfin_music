@@ -30,30 +30,38 @@ jobs:
     - name: Install Qt dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ${{ matrix.qt-deps }}
+        sudo apt-get update || exit 1
+        sudo apt-get install -y ${{ matrix.qt-deps }} || exit 1
+        # Verify installation
+        dpkg -l | grep -q "python3-qt5" || exit 1
         
     - name: Install Qt dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install ${{ matrix.qt-deps }}
+        brew install ${{ matrix.qt-deps }} || exit 1
+        # Verify installation
+        brew list | grep -q "qt@5" || exit 1
         
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+        python -m pip install --upgrade pip || exit 1
+        # Verify pip upgrade
+        pip --version || exit 1
+        # Install requirements with verbose output
+        pip install -v -r requirements.txt || exit 1
+        pip install -v pyinstaller || exit 1
         
     - name: Build with PyInstaller
-      run: python build.py
+      run: |
+        python build.py || exit 1
         
     - name: Generate SHA256 checksums
       run: |
-        cd dist
+        cd dist || exit 1
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          Get-FileHash -Algorithm SHA256 * | ForEach-Object { $_.Hash + " " + $_.Path } > SHA256SUMS
+          Get-FileHash -Algorithm SHA256 * | ForEach-Object { $_.Hash + " " + $_.Path } > SHA256SUMS || exit 1
         else
-          shasum -a 256 * > SHA256SUMS
+          shasum -a 256 * > SHA256SUMS || exit 1
         fi
       shell: pwsh
         

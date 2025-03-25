@@ -1,4 +1,6 @@
 import json
+from typing import Dict, Optional
+from logging import getLogger
 
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -17,26 +19,32 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+logger = getLogger(__name__)
 
 class SettingsWindow(QWidget):
+    """Window for managing application settings."""
+    
     windowOpened = pyqtSignal(bool)
     windowClosed = pyqtSignal(bool)
 
-    def __init__(self):
+    def __init__(self, settings: Dict[str, bool]) -> None:
+        """Initialize settings window."""
         super().__init__()
+        self.settings = settings
+        self.version = self.settings.get("version", "unknown")
+        try:
+            # Initialize attributes
+            self.music_folder_path = ""
+            self.destination_folder_path = ""
 
-        # Version Control
-        self.version = "3.06"
+            # Setup and show user interface
+            self.setup_ui()
 
-        # Initialize attributes
-        self.music_folder_path = ""
-        self.destination_folder_path = ""
-
-        # Setup and show user interface
-        self.setup_ui()
-
-        # Load settings from file if it exists
-        self.load_settings()
+            # Load settings from file if it exists
+            self.load_settings()
+        except Exception as e:
+            logger.error(f"Failed to initialize settings window: {e}")
+            raise
 
     def showEvent(self, event):
         self.windowOpened.emit(False)
@@ -96,126 +104,146 @@ class SettingsWindow(QWidget):
         if event.button() == Qt.LeftButton:
             self.draggable = False
 
-    def setup_ui(self):
-        # Window setup
-        self.setWindowTitle(f"Settings Window v{self.version}")
-        self.setWindowIcon(QIcon(":/Octopus.ico"))
-        self.setGeometry(100, 100, 400, 300)  # Set initial size of window (x, y, width, height)
+    def setup_ui(self) -> None:
+        """Set up the settings window UI."""
+        try:
+            # Break long line for window title
+            self.setWindowTitle(
+                f"Settings Window v{self.version}"
+            )
+            
+            # Break long line for geometry
+            self.setGeometry(
+                100,  # x
+                100,  # y
+                400,  # width
+                300   # height
+            )
 
-        # Main layout
-        main_layout = QVBoxLayout(self)
+            # Window setup
+            self.setWindowIcon(QIcon(":/Octopus.ico"))
 
-        # Custom title bar
-        self.setup_titlebar()
-        main_layout.addWidget(self.title_bar)
+            # Main layout
+            main_layout = QVBoxLayout(self)
 
-        # Central widget
-        self.central_widget = QWidget(self)
-        main_layout.addWidget(self.central_widget)
+            # Custom title bar
+            self.setup_titlebar()
+            main_layout.addWidget(self.title_bar)
 
-        # QVBoxLayout for central widget
-        vbox_main_layout = QVBoxLayout(self.central_widget)
+            # Central widget
+            self.central_widget = QWidget(self)
+            main_layout.addWidget(self.central_widget)
 
-        # QLabel for sound
-        self.sound_label = QLabel(self)
-        self.sound_label.setText("Sound:")
-        vbox_main_layout.addWidget(self.sound_label)
+            # QVBoxLayout for central widget
+            vbox_main_layout = QVBoxLayout(self.central_widget)
 
-        # Create the sound checkbox
-        self.sound_checkbox = QCheckBox("Mute all sound")
-        self.sound_checkbox.setChecked(False)
-        vbox_main_layout.addWidget(self.sound_checkbox)
+            # QLabel for sound
+            self.sound_label = QLabel(self)
+            self.sound_label.setText("Sound:")
+            vbox_main_layout.addWidget(self.sound_label)
 
-        # Add a spacer item to create an empty line
-        spacer_item = QSpacerItem(30, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        vbox_main_layout.addItem(spacer_item)
+            # Create the sound checkbox
+            self.sound_checkbox = QCheckBox("Mute all sound")
+            self.sound_checkbox.setChecked(False)
+            vbox_main_layout.addWidget(self.sound_checkbox)
 
-        # QLabel for file handling
-        self.file_handling_label = QLabel(self)
-        self.file_handling_label.setText("File Handling:")
-        vbox_main_layout.addWidget(self.file_handling_label)
+            # Add a spacer item to create an empty line
+            spacer_item = QSpacerItem(30, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            vbox_main_layout.addItem(spacer_item)
 
-        # Create the illegal characters checkbox
-        self.illegal_chars_checkbox = QCheckBox("Remove illegal characters from filenames")
-        self.illegal_chars_checkbox.setChecked(True)  # Enabled by default
-        self.illegal_chars_checkbox.setToolTip(
-            "Remove characters that are not allowed in filenames (e.g., :*?<>|)"
-        )
-        vbox_main_layout.addWidget(self.illegal_chars_checkbox)
+            # QLabel for file handling
+            self.file_handling_label = QLabel(self)
+            self.file_handling_label.setText("File Handling:")
+            vbox_main_layout.addWidget(self.file_handling_label)
 
-        # Add a spacer item to create an empty line
-        spacer_item = QSpacerItem(30, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        vbox_main_layout.addItem(spacer_item)
+            # Create the illegal characters checkbox
+            self.illegal_chars_checkbox = QCheckBox("Remove illegal characters from filenames")
+            self.illegal_chars_checkbox.setChecked(True)  # Enabled by default
+            self.illegal_chars_checkbox.setToolTip(
+                "Remove characters that are not allowed in filenames (e.g., :*?<>|)"
+            )
+            vbox_main_layout.addWidget(self.illegal_chars_checkbox)
 
-        # QLabel for music library
-        self.music_label = QLabel(self)
-        self.music_label.setText("Folders:")
-        vbox_main_layout.addWidget(self.music_label)
+            # Add a spacer item to create an empty line
+            spacer_item = QSpacerItem(30, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            vbox_main_layout.addItem(spacer_item)
 
-        # QHBoxLayout setup for music select and music clear
-        hbox_music_clear_layout = QHBoxLayout()
-        vbox_main_layout.addLayout(hbox_music_clear_layout)
+            # QLabel for music library
+            self.music_label = QLabel(self)
+            self.music_label.setText("Folders:")
+            vbox_main_layout.addWidget(self.music_label)
 
-        # Create music folder select button
-        self.music_folder_select_button = QPushButton("Set Default Music Folder")
-        hbox_music_clear_layout.addWidget(self.music_folder_select_button, 1)
-        self.music_folder_select_button.clicked.connect(self.select_music_folder)
+            # QHBoxLayout setup for music select and music clear
+            hbox_music_clear_layout = QHBoxLayout()
+            vbox_main_layout.addLayout(hbox_music_clear_layout)
 
-        # Create music folder clear button
-        self.music_folder_clear_button = QPushButton("Clear")
-        hbox_music_clear_layout.addWidget(self.music_folder_clear_button)
-        self.music_folder_clear_button.clicked.connect(self.clear_music_folder)
+            # Create music folder select button
+            self.music_folder_select_button = QPushButton("Set Default Music Folder")
+            hbox_music_clear_layout.addWidget(self.music_folder_select_button, 1)
+            self.music_folder_select_button.clicked.connect(self.select_music_folder)
 
-        # Create music folder label
-        self.music_folder_label = QLabel(self.music_folder_path)
-        vbox_main_layout.addWidget(self.music_folder_label)
+            # Create music folder clear button
+            self.music_folder_clear_button = QPushButton("Clear")
+            hbox_music_clear_layout.addWidget(self.music_folder_clear_button)
+            self.music_folder_clear_button.clicked.connect(self.clear_music_folder)
 
-        # QHBoxLayout setup for destination select and destination clear
-        hbox_destination_clear_layout = QHBoxLayout()
-        vbox_main_layout.addLayout(hbox_destination_clear_layout)
+            # Create music folder label
+            self.music_folder_label = QLabel(self.music_folder_path)
+            vbox_main_layout.addWidget(self.music_folder_label)
 
-        # Create destination folder select button
-        self.destination_folder_select_button = QPushButton("Set Default Destination Folder")
-        hbox_destination_clear_layout.addWidget(self.destination_folder_select_button, 1)
-        self.destination_folder_select_button.clicked.connect(self.select_destination_folder)
+            # QHBoxLayout setup for destination select and destination clear
+            hbox_destination_clear_layout = QHBoxLayout()
+            vbox_main_layout.addLayout(hbox_destination_clear_layout)
 
-        # Create destination folder clear button
-        self.destination_folder_clear_button = QPushButton("Clear")
-        hbox_destination_clear_layout.addWidget(self.destination_folder_clear_button)
-        self.destination_folder_clear_button.clicked.connect(self.clear_destination_folder)
+            # Create destination folder select button
+            self.destination_folder_select_button = QPushButton("Set Default Destination Folder")
+            hbox_destination_clear_layout.addWidget(self.destination_folder_select_button, 1)
+            self.destination_folder_select_button.clicked.connect(self.select_destination_folder)
 
-        # Create destination folder label
-        self.destination_folder_label = QLabel(self.destination_folder_path)
-        vbox_main_layout.addWidget(self.destination_folder_label)
+            # Create destination folder clear button
+            self.destination_folder_clear_button = QPushButton("Clear")
+            hbox_destination_clear_layout.addWidget(self.destination_folder_clear_button)
+            self.destination_folder_clear_button.clicked.connect(self.clear_destination_folder)
 
-        # Add a spacer item to create an empty line
-        spacer_item = QSpacerItem(30, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        vbox_main_layout.addItem(spacer_item)
+            # Create destination folder label
+            self.destination_folder_label = QLabel(self.destination_folder_path)
+            vbox_main_layout.addWidget(self.destination_folder_label)
 
-        # QHBoxLayout setup for save and reset settings
-        hbox_save_reset_layout = QHBoxLayout()
-        vbox_main_layout.addLayout(hbox_save_reset_layout)
+            # Add a spacer item to create an empty line
+            spacer_item = QSpacerItem(30, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            vbox_main_layout.addItem(spacer_item)
 
-        # Create save settings button
-        self.save_button = QPushButton("Save Settings")
-        hbox_save_reset_layout.addWidget(self.save_button, 1)
-        self.save_button.clicked.connect(self.save_settings)
+            # QHBoxLayout setup for save and reset settings
+            hbox_save_reset_layout = QHBoxLayout()
+            vbox_main_layout.addLayout(hbox_save_reset_layout)
 
-        # Create a line between the save and reset button
-        line_save_reset = QFrame()
-        line_save_reset.setFrameShape(QFrame.VLine)
-        line_save_reset.setFrameShadow(QFrame.Sunken)
-        hbox_save_reset_layout.addWidget(line_save_reset)
+            # Create save settings button
+            self.save_button = QPushButton("Save Settings")
+            hbox_save_reset_layout.addWidget(self.save_button, 1)
+            self.save_button.clicked.connect(self.save_settings)
 
-        # Create reset settings button
-        self.reset_button = QPushButton("Reset && Save All Settings")
-        hbox_save_reset_layout.addWidget(self.reset_button, 1)
-        self.reset_button.clicked.connect(self.reset_settings)
+            # Create a line between the save and reset button
+            line_save_reset = QFrame()
+            line_save_reset.setFrameShape(QFrame.VLine)
+            line_save_reset.setFrameShadow(QFrame.Sunken)
+            hbox_save_reset_layout.addWidget(line_save_reset)
 
-        # Add resizing handles
-        self.bottom_right_grip = QSizeGrip(self)
-        self.bottom_right_grip.setToolTip("Resize window")
-        hbox_save_reset_layout.addWidget(self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight)
+            # Create reset settings button
+            self.reset_button = QPushButton("Reset && Save All Settings")
+            hbox_save_reset_layout.addWidget(self.reset_button, 1)
+            self.reset_button.clicked.connect(self.reset_settings)
+
+            # Add resizing handles
+            self.bottom_right_grip = QSizeGrip(self)
+            self.bottom_right_grip.setToolTip("Resize window")
+            hbox_save_reset_layout.addWidget(self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight)
+
+            # Apply layout
+            self.setLayout(main_layout)
+            
+        except Exception as e:
+            logger.error(f"Failed to set up settings UI: {e}")
+            raise
 
     def center_window(self):
         screen = QApplication.desktop().screenGeometry()

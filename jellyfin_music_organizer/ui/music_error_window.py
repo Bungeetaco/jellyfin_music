@@ -1,6 +1,7 @@
 import csv
 import json
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any, Optional
+from logging import getLogger
 
 import openpyxl
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
@@ -19,19 +20,20 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+logger = getLogger(__name__)
 
 class MusicErrorWindow(QWidget):
-    windowOpened = pyqtSignal(bool)
-    windowClosed = pyqtSignal(bool)
-    custom_dialog_signal = pyqtSignal(str)
-
-    def __init__(self, error_files):
+    """Widget for displaying and managing music file errors."""
+    
+    def __init__(self, error_files: List[Dict[str, Any]]) -> None:
+        """Initialize the error window."""
         super().__init__()
 
         # Version Control
         self.version = "3.06"
 
-        self.error_files = error_files
+        self.error_files: List[Dict[str, Any]] = error_files
+        self.current_error_index: int = 0
 
         # Setup and show user interface
         self.setup_ui()
@@ -484,8 +486,9 @@ class MusicErrorWindow(QWidget):
                         try:
                             if len(str(cell.value)) > max_length:
                                 max_length = len(cell.value)
-                        except:
-                            pass
+                        except Exception:
+                            # Log the error and continue
+                            logger.warning("Failed to process cell value")
                     adjusted_width = max_length + 2
                     ws.column_dimensions[column[0].column_letter].width = adjusted_width
 
@@ -571,11 +574,23 @@ class MusicErrorWindow(QWidget):
         self.json_button.setText("Generate JSON File")
         self.json_button.setStyleSheet("")
 
-    def update_error_list(self, error_list: List[Dict[str, Union[str, List[str], Dict[str, str]]]]) -> None:
-        """Update the error list widget with new errors."""
-        self.error_list = error_list
-        self.current_error_index = 0
-        self.update_current_error()
+    def update_error_list(
+        self,
+        error_list: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
+    ) -> None:
+        """
+        Update the error list widget with new errors.
+        
+        Args:
+            error_list: List of error dictionaries containing file information
+        """
+        try:
+            self.error_list = error_list
+            self.current_error_index = 0
+            self.update_current_error()
+        except Exception as e:
+            logger.error(f"Failed to update error list: {e}")
+            self.show_error_message("Error", "Failed to update error list")
 
     def update_current_error(self):
         if self.current_error_index < len(self.error_list):
@@ -595,3 +610,11 @@ class MusicErrorWindow(QWidget):
             pass
         except Exception:
             self.show_error_message("Error", "Failed to process the selected action.")
+
+    def clear_error_text(self) -> None:
+        """Clear the error text display."""
+        try:
+            self.error_text.setText("")
+            self.error_details.setText("")
+        except Exception as e:
+            logger.error(f"Failed to clear error text: {e}")

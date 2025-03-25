@@ -1,5 +1,7 @@
 import shutil
 from pathlib import Path
+from typing import Dict, List, Optional
+from logging import getLogger
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -15,12 +17,16 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+logger = getLogger(__name__)
 
 class ReplaceSkipWindow(QWidget):
+    """Window for handling file replace/skip decisions."""
+    
     windowOpened = pyqtSignal(bool)
-    windowClosed = pyqtSignal(bool)
+    windowClosed = pyqtSignal()
 
-    def __init__(self, replace_skip_files):
+    def __init__(self, replace_skip_files: List[Dict[str, str]]) -> None:
+        """Initialize the replace/skip window."""
         super().__init__()
 
         # Version Control
@@ -38,7 +44,7 @@ class ReplaceSkipWindow(QWidget):
         self.center_window()
 
     def closeEvent(self, event):
-        self.windowClosed.emit(True)
+        self.windowClosed.emit()
         super().closeEvent(event)
 
     def setup_titlebar(self):
@@ -170,20 +176,30 @@ class ReplaceSkipWindow(QWidget):
         # Set the initial selected item in QListWidget
         self.list_widget.setCurrentRow(0)
 
-    def update_label(self):
-        selected_item = self.list_widget.currentItem()
-        if selected_item:
-            selected_file = selected_item.text()
-            selected_entry = next(
-                (entry for entry in self.replace_skip_files if entry["file_name"] == selected_file),
-                None,
-            )
-            if selected_entry:
-                self.label.setText(
-                    f"The destination:\n{selected_entry['new_location']}\nAlready has a file named:\n{selected_entry['file_name']}"
+    def update_label(self) -> None:
+        """Update the information label with current file details."""
+        try:
+            selected_item = self.list_widget.currentItem()
+            if selected_item:
+                selected_file = selected_item.text()
+                selected_entry = next(
+                    (
+                        entry 
+                        for entry in self.replace_skip_files 
+                        if entry["file_name"] == selected_file
+                    ),
+                    None,
                 )
-        else:
-            self.label.clear()
+                if selected_entry:
+                    message = (
+                        f"The destination:\n"
+                        f"{selected_entry['new_location']}\n"
+                        f"Already has a file named:\n"
+                        f"{selected_entry['file_name']}"
+                    )
+                    self.label.setText(message)
+        except Exception as e:
+            logger.error(f"Failed to update label: {e}")
 
     def skip_file(self):
         selected_file = self.list_widget.currentItem().text()

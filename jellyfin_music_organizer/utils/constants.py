@@ -3,6 +3,7 @@ Constants used throughout the Jellyfin Music Organizer application.
 """
 
 from typing import Dict, List
+from pathlib import Path
 
 # Application metadata
 APP_NAME: str = "Jellyfin Music Organizer"
@@ -44,9 +45,12 @@ ICON_SIZE: int = 24
 # Notification sounds
 NOTIFICATION_SOUNDS: Dict[str, str] = {"ding": "audio_ding", "complete": "audio_complete"}
 
-# File paths
-CONFIG_FILE: str = "settings_jmo.json"
-LOG_FILE: str = "logs/app.log"
+# File paths with proper Path objects
+CONFIG_FILE: Path = Path("settings_jmo.json")
+LOG_FILE: Path = Path("logs/app.log")
+
+# Ensure log directory exists
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # UI styles
 STYLES: Dict[str, str] = {
@@ -72,8 +76,8 @@ STYLES: Dict[str, str] = {
     """,
 }
 
-# Error messages
-ERROR_MESSAGES = {
+# Error messages without trailing whitespace
+ERROR_MESSAGES: Dict[str, str] = {
     "NO_METADATA": "No metadata found",
     "INVALID_FORMAT": "Invalid file format",
     "MISSING_REQUIRED": "Missing required metadata",

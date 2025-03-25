@@ -4,7 +4,10 @@ Build script for creating the Jellyfin Music Organizer executable.
 
 import os
 import shutil
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from pathlib import Path
+import sys
+import logging
 
 import PyInstaller.__main__
 
@@ -12,6 +15,8 @@ import PyInstaller.__main__
 ICON_PATH = os.path.join("jellyfin_music_organizer", "resources", "Octopus.ico")
 NOTIFICATION_AUDIO_DIR = "notification_audio"
 BUILD_DIR = "dist"
+
+logger = logging.getLogger(__name__)
 
 
 def ensure_resources_exist():
@@ -98,8 +103,46 @@ def create_spec_file(
     icon_path: str,
     additional_data: List[Tuple[str, str]]
 ) -> None:
-    """Create a PyInstaller spec file with the given parameters."""
-    # ... rest of the function
+    """
+    Create a PyInstaller spec file.
+
+    Args:
+        entry_point: Path to the main script
+        name: Name of the output executable
+        icon_path: Path to the icon file
+        additional_data: List of (source, dest) tuples for additional files
+    """
+    try:
+        # Validate inputs
+        if not all([entry_point, name, icon_path]):
+            raise ValueError("Missing required parameters")
+
+        # Create spec file content
+        spec_content = (
+            f"# -*- mode: python ; coding: utf-8 -*-\n\n"
+            f"block_cipher = None\n\n"
+            f"a = Analysis(['{entry_point}'],\n"
+            f"    pathex=[],\n"
+            f"    binaries=[],\n"
+            f"    datas={additional_data},\n"
+            f"    hiddenimports=[],\n"
+            f"    hookspath=[],\n"
+            f"    runtime_hooks=[],\n"
+            f"    excludes=[],\n"
+            f"    win_no_prefer_redirects=False,\n"
+            f"    win_private_assemblies=False,\n"
+            f"    cipher=block_cipher,\n"
+            f"    noarchive=False)\n"
+        )
+
+        # Write spec file
+        spec_path = Path(f"{name}.spec")
+        spec_path.write_text(spec_content, encoding='utf-8')
+        logger.info(f"Created spec file: {spec_path}")
+
+    except Exception as e:
+        logger.error(f"Failed to create spec file: {e}")
+        raise
 
 
 if __name__ == "__main__":

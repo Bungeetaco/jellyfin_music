@@ -6,9 +6,12 @@ import os
 import shutil
 from pathlib import Path
 from typing import List, Optional
+from logging import getLogger
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
 from .exceptions import FileOperationError
+
+logger = getLogger(__name__)
 
 
 def get_music_files(directory: str) -> List[Path]:
@@ -89,18 +92,37 @@ def sanitize_filename(filename: str) -> str:
 
     Returns:
         Sanitized filename
+
+    Raises:
+        FileOperationError: If filename is invalid or would be empty after sanitization
     """
-    # Remove invalid characters
-    invalid_chars = ":*?<>|"
-    sanitized = filename.translate(str.maketrans("", "", invalid_chars))
+    try:
+        # Input validation
+        if not isinstance(filename, str):
+            raise FileOperationError(f"Expected string, got {type(filename)}")
+        
+        if not filename.strip():
+            raise FileOperationError("Empty filename provided")
 
-    # Replace problematic characters
-    sanitized = sanitized.replace("/", "").replace("\\", "")
-    sanitized = sanitized.replace('"', "").replace("'", "")
-    sanitized = sanitized.replace("...", "")
+        # Remove invalid characters
+        invalid_chars: str = ":*?<>|"
+        translation_table = str.maketrans("", "", invalid_chars)
+        sanitized = filename.translate(translation_table)
 
-    # Strip whitespace
-    return sanitized.strip()
+        # Additional sanitization
+        sanitized = sanitized.replace("/", "").replace("\\", "")
+        sanitized = sanitized.replace('"', "").replace("'", "")
+        sanitized = sanitized.replace("...", "").strip()
+
+        # Validate result
+        if not sanitized:
+            raise FileOperationError("Filename would be empty after sanitization")
+
+        return sanitized
+
+    except Exception as e:
+        logger.error(f"Failed to sanitize filename '{filename}': {e}")
+        raise FileOperationError(f"Failed to sanitize filename: {str(e)}")
 
 
 def get_file_size(path: str) -> Optional[int]:

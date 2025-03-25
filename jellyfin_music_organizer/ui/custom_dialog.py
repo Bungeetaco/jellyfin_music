@@ -5,8 +5,8 @@ Custom dialog window for displaying messages to the user.
 import json
 from typing import Any, Dict, Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import (
     QApplication,
     QDialog,
@@ -16,10 +16,12 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from logging import getLogger
 
 # Other classes within files
 from ..core.notification_audio_thread import NotificationAudioThread
 
+logger = getLogger(__name__)
 
 class CustomDialog(QDialog):
     """
@@ -39,15 +41,18 @@ class CustomDialog(QDialog):
             custom_message: The message to display in the dialog
         """
         super().__init__()
+        try:
+            self.setWindowFlags(Qt.FramelessWindowHint)
+            self.setup_ui(custom_message)
+        except Exception as e:
+            logger.error(f"Failed to initialize custom dialog: {e}")
+            raise
 
         # Version Control
         self.version: str = "3.06"
 
         # Set notification thread variable
         self.notification_thread: Optional[NotificationAudioThread] = None
-
-        # Hides the default titlebar
-        self.setWindowFlag(Qt.FramelessWindowHint)
 
         # Window title, icon, and size
         self.setWindowTitle(f"Alert v{self.version}")
@@ -143,3 +148,20 @@ class CustomDialog(QDialog):
         except FileNotFoundError:
             # Initialize self.settings dictionary
             self.settings = {}
+
+    def setup_ui(self, custom_message: str) -> None:
+        """Set up the dialog's user interface."""
+        # Break long line for button style
+        button_style = (
+            "QPushButton { color: white; background-color: transparent; }"
+            "QPushButton:hover { background-color: red; }"
+        )
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Handle mouse press events for window dragging."""
+        try:
+            if event.button() == Qt.LeftButton:
+                self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+                event.accept()
+        except Exception as e:
+            logger.error(f"Mouse press event error: {e}")

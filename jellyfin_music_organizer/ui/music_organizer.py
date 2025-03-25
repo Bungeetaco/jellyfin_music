@@ -496,11 +496,11 @@ class MusicOrganizer(QWidget):
                 self.notification_thread.kill_thread_signal.connect(self.kill_thread)
                 self.notification_thread.start()
             self.organize_error()
-        elif not self.settings.get("mute_sound", False):
-            # Play complete sound (name of file)
-            self.notification_thread = NotificationAudioThread("audio_complete")
-            self.notification_thread.kill_thread_signal.connect(self.kill_thread)
-            self.notification_thread.start()
+        else:
+            if not self.settings.get("mute_sound", False):
+                self.notification_thread = NotificationAudioThread("audio_complete")
+                self.notification_thread.kill_thread_signal.connect(self.kill_thread)
+                self.notification_thread.start()
 
     def organize_error(self) -> None:
         """Show the error window for files with errors."""

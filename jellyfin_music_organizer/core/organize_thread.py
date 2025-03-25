@@ -125,7 +125,7 @@ class OrganizeThread(QThread):
 
         # Define the artist and album values to search for
         artist_values: List[str] = ["©art", "artist", "author", "tpe1"]
-        album_values: List[str] = ["©alb", "album", "talb", "wm/albumtitle"]
+        album_values: List[str] = ["©alb", "album", "talb"]
 
         # Check if folder has any songs
         if total_number_of_songs:
