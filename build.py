@@ -97,10 +97,7 @@ def copy_additional_files():
 
 
 def create_spec_file(
-    entry_point: str,
-    name: str,
-    icon_path: str,
-    additional_data: List[Tuple[str, str]]
+    entry_point: str, name: str, icon_path: str, additional_data: List[Tuple[str, str]]
 ) -> None:
     """
     Create a PyInstaller spec file.
