@@ -6,8 +6,11 @@ import threading
 from queue import Queue
 from typing import Any, Callable, Dict, Optional
 from PyQt5.QtCore import QThread, pyqtSignal
+from logging import getLogger
 
 from .logger import setup_logger
+
+logger = getLogger(__name__)
 
 
 class ThreadManager:
