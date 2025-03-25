@@ -54,34 +54,34 @@ LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # UI styles
 STYLES: Dict[str, str] = {
-    "title_bar_button": """
-        QPushButton { 
-            color: white; 
-            background-color: transparent; 
-        }
-        QPushButton:hover { 
-            background-color: {color}; 
-        }
-    """,
-    "progress_bar_complete": """
-        QProgressBar {
-            border: 1px solid black;
-            text-align: center;
-            color: black;
-            background-color: rgba(255, 152, 152, 1);
-        }
-        QProgressBar::chunk {
-            background-color: rgba(255, 152, 152, 1);
-        }
-    """,
+    "title_bar_button": (
+        "QPushButton { "
+        "color: white; "
+        "background-color: transparent; "
+        "} "
+        "QPushButton:hover { "
+        "background-color: {color}; "
+        "}"
+    ),
+    "progress_bar_complete": (
+        "QProgressBar {"
+        "border: 1px solid black; "
+        "text-align: center; "
+        "color: black; "
+        "background-color: rgba(255, 152, 152, 1); "
+        "} "
+        "QProgressBar::chunk {"
+        "background-color: rgba(255, 152, 152, 1); "
+        "}"
+    ),
 }
 
-# Error messages without trailing whitespace
-ERROR_MESSAGES = {
+# Error messages
+ERROR_MESSAGES: Dict[str, str] = {
     "NO_METADATA": "No metadata found",
     "INVALID_FORMAT": "Invalid file format",
     "MISSING_REQUIRED": "Missing required metadata",
     "NETWORK_ERROR": "Network connection error",
     "PERMISSION_ERROR": "Permission denied",
-    "UNKNOWN_ERROR": "Unknown error occurred",
+    "UNKNOWN_ERROR": "Unknown error occurred"
 }
