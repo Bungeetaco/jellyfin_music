@@ -7,7 +7,7 @@ import shutil
 from functools import wraps
 from logging import getLogger
 from pathlib import Path
-from typing import Callable, List, Optional, TypeVar
+from typing import Any, Callable, List, Optional, TypeVar
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
 from .error_handler import handle_errors

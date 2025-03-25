@@ -8,8 +8,6 @@ import sys
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
-from ..utils.qt_types import QtConstants  # Import our Qt constants wrapper
-
 
 class NotificationAudioThread(QThread):
     """
@@ -61,7 +59,7 @@ class NotificationAudioThread(QThread):
         Args:
             status: Current status of the media player
         """
-        if status == QMediaPlayer.MediaStatus.EndOfMedia:  # Use correct enum value
+        if status == QMediaPlayer.MediaStatus.EndOfMedia:
             self.media_player.stop()
             self.media_player.deleteLater()
             self.kill_thread_signal.emit("notification")

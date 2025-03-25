@@ -6,14 +6,13 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from ..utils.exceptions import MetadataError
 from ..utils.file_ops import FileOperations
-from ..utils.metadata import MetadataValue  # Import the correct type
 from .exceptions import FileOperationError
 
 logger = logging.getLogger(__name__)

@@ -1,16 +1,15 @@
 import shutil
 from logging import getLogger
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-from PyQt5.QtCore import QEvent, Qt, pyqtSignal
+from PyQt5.QtCore import QEvent, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
     QListWidget,
-    QListWidgetItem,
     QProgressBar,
     QPushButton,
     QSizeGrip,

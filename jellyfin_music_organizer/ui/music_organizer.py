@@ -7,7 +7,7 @@ import platform
 from logging import getLogger
 from typing import Any, Dict, List, Union
 
-from PyQt5.QtCore import QCoreApplication, QFont, Qt
+from PyQt5.QtCore import QFont
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,

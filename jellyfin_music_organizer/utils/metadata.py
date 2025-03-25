@@ -3,7 +3,7 @@ Metadata operations utility functions for the Jellyfin Music Organizer applicati
 """
 
 from logging import getLogger
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
