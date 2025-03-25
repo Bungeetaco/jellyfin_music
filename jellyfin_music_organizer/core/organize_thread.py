@@ -155,7 +155,6 @@ class OrganizeThread(QThread):
                     # Reset variables
                     artist_data: Any = ""
                     album_data: Any = ""
-                    metadata_dict: Dict[str, Any] = {}
                     file_info: Dict[str, Any] = {}
 
                     try:
