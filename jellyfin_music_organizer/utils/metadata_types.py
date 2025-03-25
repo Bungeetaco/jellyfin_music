@@ -2,7 +2,6 @@
 
 from typing import Any, Dict, Protocol, TypeVar, Union
 
-
 T = TypeVar("T")
 
 

@@ -1,7 +1,7 @@
 from typing import Any, List, TypeVar, Union
 
-from typing_extensions import TypeAlias
 from PyQt5.QtCore import Qt
+from typing_extensions import TypeAlias
 
 try:
     from typing import ParamSpec

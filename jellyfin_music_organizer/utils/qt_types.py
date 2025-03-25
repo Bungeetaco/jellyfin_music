@@ -1,7 +1,7 @@
 """Type stubs for Qt-related attributes."""
 
 from typing import Union
-from typing_extensions import TypeAlias
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaPlayer
 
