@@ -3,12 +3,14 @@
 import logging
 import platform
 from abc import ABC, abstractmethod
+from typing import Dict, Any
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 from .config import ConfigManager
 from .platform_utils import PlatformPaths
+from .notification_config import NotificationConfig
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,28 @@ class WindowsNotificationStrategy(NotificationStrategy):
             return True
         except Exception:
             return False
+
+
+class MacNotificationStrategy(NotificationStrategy):
+    """macOS notification implementation."""
+    def play_sound(self, sound_name: str) -> bool:
+        # Implementation
+        pass
+
+    def is_available(self) -> bool:
+        # Implementation
+        pass
+
+
+class LinuxNotificationStrategy(NotificationStrategy):
+    """Linux notification implementation."""
+    def play_sound(self, sound_name: str) -> bool:
+        # Implementation
+        pass
+
+    def is_available(self) -> bool:
+        # Implementation
+        pass
 
 
 class NotificationManager(QObject):

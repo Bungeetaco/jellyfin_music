@@ -17,6 +17,9 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ..utils.config import ConfigManager
+from ..utils.dialogs import DialogManager
+
 logger = getLogger(__name__)
 
 

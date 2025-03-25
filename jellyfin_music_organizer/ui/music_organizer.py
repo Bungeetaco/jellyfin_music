@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem,
     QVBoxLayout,
     QWidget,
+    QStyleFactory,
 )
 
 # Other classes within files

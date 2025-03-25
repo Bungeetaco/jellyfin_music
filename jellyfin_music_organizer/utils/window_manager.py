@@ -1,11 +1,14 @@
 """Window management utilities."""
 
-from typing import Optional, Type
+from typing import Dict, Optional, Type
+import logging
 
 from PyQt5.QtWidgets import QWidget
 
 from .config import ConfigManager
 from .platform_utils import PlatformUI
+
+logger = logging.getLogger(__name__)
 
 
 class WindowManager:

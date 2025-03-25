@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (
 from ..utils.dialogs import DialogManager
 from ..utils.notifications import NotificationManager
 from ..utils.window_state import WindowStateManager
+from ..utils.platform_utils import PlatformUI
 
 logger = getLogger(__name__)
 
@@ -833,29 +834,3 @@ class MusicErrorWindow(QWidget):
             ]
         )
         return header
-
-    def _validate_metadata_dict(self, metadata_dict: Dict[str, Any]) -> bool:
-        """Validate metadata dictionary structure.
-
-        Args:
-            metadata_dict: Dictionary containing metadata.
-
-        Returns:
-            True if valid, False otherwise.
-        """
-        try:
-            if not isinstance(metadata_dict, dict):
-                return False
-
-            # Check all values can be converted to strings
-            for value in metadata_dict.values():
-                try:
-                    str(value)
-                except Exception:
-                    return False
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Metadata validation error: {e}")
-            return False

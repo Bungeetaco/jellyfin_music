@@ -7,6 +7,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple
+import subprocess
 
 import PyInstaller.__main__
 
@@ -82,7 +83,13 @@ def build_executable():
 
     # Run PyInstaller
     print("Starting PyInstaller build...")
-    PyInstaller.__main__.run(args)
+    subprocess.run([
+        "pyinstaller",
+        "--onefile",
+        "--windowed",
+        "--icon=resources/icons/Octopus.ico",
+        "main.py"
+    ])
 
 
 def copy_additional_files():

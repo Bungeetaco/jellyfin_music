@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QStyleFactory
+from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget
 
 logger = logging.getLogger(__name__)
 
