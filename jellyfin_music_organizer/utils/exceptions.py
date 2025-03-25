@@ -61,4 +61,3 @@ class AudioPlaybackError(JellyfinMusicOrganizerError):
 
 class ResourceError(JellyfinMusicOrganizerError):
     """Exception raised for resource loading or management errors."""
-
