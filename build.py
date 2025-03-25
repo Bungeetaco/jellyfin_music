@@ -9,7 +9,6 @@ import subprocess
 from pathlib import Path
 from typing import List, Tuple
 
-
 # Define resource paths
 ICON_PATH = os.path.join("jellyfin_music_organizer", "resources", "Octopus.ico")
 NOTIFICATION_AUDIO_DIR = "notification_audio"
@@ -82,13 +81,9 @@ def build_executable():
 
     # Run PyInstaller
     print("Starting PyInstaller build...")
-    subprocess.run([
-        "pyinstaller",
-        "--onefile",
-        "--windowed",
-        "--icon=resources/icons/Octopus.ico",
-        "main.py"
-    ])
+    subprocess.run(
+        ["pyinstaller", "--onefile", "--windowed", "--icon=resources/icons/Octopus.ico", "main.py"]
+    )
 
 
 def copy_additional_files():

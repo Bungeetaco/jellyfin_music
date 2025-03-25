@@ -3,7 +3,7 @@
 import logging
 import traceback
 from functools import wraps
-from typing import Any, Callable, Optional, List
+from typing import Any, Callable, List, Optional
 
 logger = logging.getLogger(__name__)
 
