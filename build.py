@@ -77,13 +77,12 @@ def build_executable():
         return
 
     # Get PyInstaller arguments
-    get_pyinstaller_args()
+    args = get_pyinstaller_args()
 
     # Run PyInstaller
     print("Starting PyInstaller build...")
-    cmd = ["pyinstaller", "--onefile", "--windowed"]
-    cmd.extend(["--icon=resources/icons/Octopus.ico", "main.py"])
-    subprocess.run(cmd)
+    pyinstaller_cmd = ["pyinstaller", "--onefile", "--windowed", "--icon=resources/icons/Octopus.ico"]
+    subprocess.run(pyinstaller_cmd + ["main.py"])
 
 
 def copy_additional_files():
