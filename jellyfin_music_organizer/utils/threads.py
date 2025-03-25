@@ -4,13 +4,12 @@ Thread management for the Jellyfin Music Organizer application.
 
 import threading
 from logging import getLogger
+from pathlib import Path
 from queue import Queue
 from typing import Any, Callable, Dict, Optional
-from pathlib import Path
 
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QThread, QUrl, pyqtSignal
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 from .logger import setup_logger
 
@@ -160,7 +159,7 @@ class NotificationAudioThread(QThread):
 
     def __init__(self, audio_file_name: str) -> None:
         """Initialize notification thread with resource validation.
-        
+
         Args:
             audio_file_name: Name of the audio file to play
         """
@@ -176,13 +175,13 @@ class NotificationAudioThread(QThread):
             self.player.setMedia(self._get_media_content())
             self.player.mediaStatusChanged.connect(self.on_media_status_changed)
             self.player.error.connect(self._handle_player_error)
-            
+
             self.player.play()
-            
+
             # Wait for playback to complete
             while self.is_running and self.player.state() == QMediaPlayer.PlayingState:
                 self.msleep(100)
-                
+
         except Exception as e:
             logger.error(f"Audio notification error: {e}")
             self.error_signal.emit(f"Audio playback failed: {str(e)}")
@@ -191,10 +190,10 @@ class NotificationAudioThread(QThread):
 
     def _get_media_content(self) -> QMediaContent:
         """Get media content with resource validation.
-        
+
         Returns:
             QMediaContent object for the audio file
-            
+
         Raises:
             RuntimeError: If audio file not found
         """
@@ -202,12 +201,12 @@ class NotificationAudioThread(QThread):
         if not Path(resource_path).exists():
             logger.error(f"Audio file not found: {resource_path}")
             raise RuntimeError(f"Audio file not found: {self.audio_file_name}")
-            
+
         return QMediaContent(QUrl.fromLocalFile(resource_path))
 
     def _handle_player_error(self, error: QMediaPlayer.Error) -> None:
         """Handle media player errors.
-        
+
         Args:
             error: Media player error code
         """

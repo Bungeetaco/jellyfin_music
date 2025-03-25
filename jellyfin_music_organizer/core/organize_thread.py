@@ -5,7 +5,6 @@ Thread for organizing music files based on their metadata.
 import json
 import logging
 import os
-import shutil
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -202,7 +201,9 @@ class OrganizeThread(QThread):
 
                         # Check if the file already exists in the new location
                         if Path(f"{new_location}/{file_name}").exists():
-                            file_info = self._handle_existing_file(file_name, new_location, path_in_str)
+                            file_info = self._handle_existing_file(
+                                file_name, new_location, path_in_str
+                            )
 
                             recall_files["replace_skip_files"].append(file_info)
                         else:
@@ -220,7 +221,8 @@ class OrganizeThread(QThread):
                         # Update progress bar if no error or 'File already exists'
                         if (
                             not file_info.get("error")
-                            or file_info.get("error") != "File already exists in the destination folder"
+                            or file_info.get("error")
+                            != "File already exists in the destination folder"
                         ):
                             i += 1
                             self.music_progress_signal.emit(int(i / len(pathlist) * 100))
@@ -263,10 +265,10 @@ class OrganizeThread(QThread):
             # Ensure legal filename
             dest_name = FileOperations.get_legal_filename(destination.name)
             final_dest = destination.parent / dest_name
-            
+
             # Perform safe copy
             FileOperations.safe_copy(source, final_dest)
-            
+
         except FileOperationError as e:
             logger.error(f"File copy error: {e}")
             raise
@@ -296,17 +298,17 @@ class OrganizeThread(QThread):
         artist_data: List[str],
         album_data: List[str],
         metadata_dict: Dict[str, Any],
-        error: str
+        error: str,
     ) -> Dict[str, Any]:
         """Create error information dictionary.
-        
+
         Args:
             file_name: Name of the file
             artist_data: Artist information
             album_data: Album information
             metadata_dict: File metadata
             error: Error message
-            
+
         Returns:
             Dictionary containing error information
         """

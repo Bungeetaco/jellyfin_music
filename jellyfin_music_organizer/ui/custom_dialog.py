@@ -3,15 +3,14 @@ Custom dialog window for displaying messages to the user.
 """
 
 import json
+import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict, Optional
-import platform
+from typing import Any, Dict
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import (
-    QApplication,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -21,10 +20,9 @@ from PyQt5.QtWidgets import (
 )
 
 # Other classes within files
-from ..core.notification_audio_thread import NotificationAudioThread
+from ..utils.config_manager import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
-from ..utils.config_manager import ConfigManager
 from ..utils.resource_manager import ResourceManager
 
 logger = getLogger(__name__)
@@ -47,13 +45,11 @@ class CustomDialog(QDialog):
         self.config_manager = ConfigManager()
         self.settings = self.config_manager.load()
         self.notification_manager = NotificationManager()
-        
+
         self.resource_manager.register(
-            'notification_manager',
-            self.notification_manager,
-            lambda x: x.deleteLater()
+            "notification_manager", self.notification_manager, lambda x: x.deleteLater()
         )
-        
+
         self._setup_platform_specific()
         self.setup_ui(custom_message)
 
@@ -74,14 +70,10 @@ class CustomDialog(QDialog):
 
             # Set platform-specific style
             if system == "Windows":
-                self.setStyleSheet(
-                    "QDialog { border: 2px solid rgba(255, 152, 152, 1); }"
-                )
+                self.setStyleSheet("QDialog { border: 2px solid rgba(255, 152, 152, 1); }")
             elif system == "Darwin":
                 # macOS specific styling
-                self.setStyleSheet(
-                    "QDialog { background-color: rgba(255, 255, 255, 0.95); }"
-                )
+                self.setStyleSheet("QDialog { background-color: rgba(255, 255, 255, 0.95); }")
 
         except Exception as e:
             logger.error(f"Failed to setup platform-specific settings: {e}")
@@ -161,18 +153,18 @@ class CustomDialog(QDialog):
             if platform.system() != "Darwin":  # Skip on macOS
                 title_bar = QWidget()
                 title_layout = QHBoxLayout()
-                
+
                 icon_label = QLabel()
                 icon_label.setPixmap(QIcon(":/Octopus.ico").pixmap(24, 24))
                 title_layout.addWidget(icon_label)
-                
+
                 title_label = QLabel(f"Alert v{self.settings['version']}")
                 title_layout.addWidget(title_label)
                 title_layout.addStretch()
-                
+
                 close_button = self._create_close_button()
                 title_layout.addWidget(close_button)
-                
+
                 title_bar.setLayout(title_layout)
                 layout.addWidget(title_bar)
         except Exception as e:

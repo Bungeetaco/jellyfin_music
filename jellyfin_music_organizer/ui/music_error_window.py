@@ -49,14 +49,14 @@ class MusicErrorWindow(QWidget):
         super().__init__()
         self.window_state = WindowStateManager("MusicErrorWindow")
         self.notification_manager = NotificationManager()
-        
+
         if not self._validate_error_files(error_files):
             raise ValueError("Invalid error files format")
-            
+
         self.error_files = error_files
         self._setup_platform_specific()
         self.setup_ui()
-        
+
         if not self.window_state.restore_state(self):
             PlatformUI.center_window(self)
 
@@ -410,7 +410,7 @@ class MusicErrorWindow(QWidget):
             file_path, selected_filter = DialogManager.get_save_file(
                 self, title, file_filter, file_filter.split("*")[1].split(")")[0]
             )
-            
+
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)
         except Exception as e:
@@ -575,10 +575,7 @@ class MusicErrorWindow(QWidget):
             logger.error(f"Metadata validation error: {e}")
             return False
 
-    def update_error_list(
-        self,
-        error_list: List[ErrorDict]
-    ) -> None:
+    def update_error_list(self, error_list: List[ErrorDict]) -> None:
         """Update the error list widget with new errors."""
         self.error_list = error_list
         self.current_error_index = 0
@@ -771,7 +768,7 @@ class MusicErrorWindow(QWidget):
         size_policy: tuple = (QSizePolicy.Expanding, QSizePolicy.Fixed),
     ) -> None:
         """Configure a button with standard settings.
-        
+
         Args:
             button: The button to configure
             text: Button text
@@ -784,9 +781,10 @@ class MusicErrorWindow(QWidget):
                 button.setToolTip(tooltip)
             button.setSizePolicy(*size_policy)
             button.setObjectName(text.replace(" ", ""))
-            
+
             # Set standard style
-            button.setStyleSheet("""
+            button.setStyleSheet(
+                """
                 QPushButton {
                     background-color: transparent;
                     border: 1px solid black;
@@ -795,7 +793,8 @@ class MusicErrorWindow(QWidget):
                 QPushButton:hover {
                     background-color: rgba(255, 152, 152, 0.3);
                 }
-            """)
+            """
+            )
         except Exception as e:
             logger.error(f"Failed to configure button {text}: {e}")
             raise
@@ -805,7 +804,7 @@ class MusicErrorWindow(QWidget):
         file_path: str,
         save_function: callable,
         error_message: str,
-        success_button: QPushButton
+        success_button: QPushButton,
     ) -> None:
         """Save file with proper error handling and UI feedback."""
         try:

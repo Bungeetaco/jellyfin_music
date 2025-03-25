@@ -11,7 +11,6 @@ from typing import List, Optional
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
 from .exceptions import FileOperationError
-from .platform_utils import PlatformPaths
 
 logger = getLogger(__name__)
 
@@ -57,12 +56,12 @@ def create_directory(path: str, parents: bool = True) -> None:
 
 def copy_file(source: str, destination: str, preserve_metadata: bool = True) -> None:
     """Copy a file with validation and error handling.
-    
+
     Args:
         source: Source file path
         destination: Destination file path
         preserve_metadata: Whether to preserve file metadata
-        
+
     Raises:
         FileOperationError: If file copy fails
     """
@@ -75,20 +74,20 @@ def copy_file(source: str, destination: str, preserve_metadata: bool = True) -> 
             raise FileOperationError("Source file does not exist", str(source_path))
         if not os.access(source_path, os.R_OK):
             raise FileOperationError("Source file not readable", str(source_path))
-        
+
         # Create destination directory if needed
         dest_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Copy file
         if preserve_metadata:
             shutil.copy2(source_path, dest_path)
         else:
             shutil.copy(source_path, dest_path)
-            
+
         # Verify copy
         if not dest_path.exists():
             raise FileOperationError("Copy verification failed", str(dest_path))
-            
+
     except Exception as e:
         logger.error(f"File copy failed: {e}")
         raise FileOperationError(f"Copy failed: {str(e)}", str(source_path))
@@ -167,10 +166,10 @@ def get_file_size(path: str) -> Optional[int]:
 
 def safe_remove(path: str) -> None:
     """Safely remove a file with validation.
-    
+
     Args:
         path: Path to file to remove
-        
+
     Raises:
         FileOperationError: If file removal fails
     """
@@ -191,15 +190,15 @@ class FileOperations:
     @staticmethod
     def ensure_writable(path: Path) -> None:
         """Ensure path is writable on all platforms.
-        
+
         Args:
             path: Path to make writable
-            
+
         Raises:
             FileOperationError: If path cannot be made writable
         """
         try:
-            if os.name == 'nt':  # Windows
+            if os.name == "nt":  # Windows
                 if path.exists() and not os.access(path, os.W_OK):
                     os.chmod(path, stat.S_IWRITE)
             else:  # Unix-like
@@ -212,12 +211,12 @@ class FileOperations:
     @staticmethod
     def safe_copy(source: Path, destination: Path, overwrite: bool = False) -> None:
         """Copy file safely across platforms.
-        
+
         Args:
             source: Source path
             destination: Destination path
             overwrite: Whether to overwrite existing files
-            
+
         Raises:
             FileOperationError: If copy operation fails
         """
@@ -241,10 +240,10 @@ class FileOperations:
     @staticmethod
     def safe_remove(path: Path) -> None:
         """Remove file safely across platforms.
-        
+
         Args:
             path: Path to remove
-            
+
         Raises:
             FileOperationError: If removal fails
         """
@@ -264,27 +263,27 @@ class FileOperations:
     @staticmethod
     def get_legal_filename(filename: str) -> str:
         """Get legal filename for current platform.
-        
+
         Args:
             filename: Original filename
-            
+
         Returns:
             Legal filename for current platform
         """
-        if os.name == 'nt':  # Windows
+        if os.name == "nt":  # Windows
             illegal_chars = '<>:"/\\|?*'
             max_length = 255
         else:  # Unix-like
-            illegal_chars = '/'
+            illegal_chars = "/"
             max_length = 255
 
         # Replace illegal characters
         for char in illegal_chars:
-            filename = filename.replace(char, '_')
+            filename = filename.replace(char, "_")
 
         # Truncate if too long
         if len(filename) > max_length:
             name, ext = os.path.splitext(filename)
-            filename = name[:max_length-len(ext)] + ext
+            filename = name[: max_length - len(ext)] + ext
 
         return filename.strip()
