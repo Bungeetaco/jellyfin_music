@@ -1,6 +1,5 @@
 import json
 import logging
-import threading
 from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
