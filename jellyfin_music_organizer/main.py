@@ -2,9 +2,7 @@
 Main entry point for the Jellyfin Music Organizer application.
 """
 
-import logging
 import sys
-from typing import Optional
 
 from PyQt5.QtWidgets import QApplication
 

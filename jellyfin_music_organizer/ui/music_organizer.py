@@ -3,7 +3,7 @@ Main window for the Jellyfin Music Organizer application.
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -24,7 +24,6 @@ from PyQt5.QtWidgets import (
 # Other classes within files
 from ..core.notification_audio_thread import NotificationAudioThread
 from ..core.organize_thread import OrganizeThread
-from ..resources import resources_rc
 from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
 from .replace_skip_window import ReplaceSkipWindow

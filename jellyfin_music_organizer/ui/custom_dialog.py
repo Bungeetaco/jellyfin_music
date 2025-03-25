@@ -19,7 +19,6 @@ from PyQt5.QtWidgets import (
 
 # Other classes within files
 from ..core.notification_audio_thread import NotificationAudioThread
-from ..resources import resources_rc
 
 
 class CustomDialog(QDialog):

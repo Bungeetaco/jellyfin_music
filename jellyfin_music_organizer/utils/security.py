@@ -5,8 +5,7 @@ Security utilities for the Jellyfin Music Organizer application.
 import hashlib
 import os
 import secrets
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from .exceptions import FileOperationError
 from .logger import setup_logger

@@ -311,7 +311,7 @@ class MusicErrorWindow(QWidget):
                     self.reset_txt_timer.timeout.connect(self.resetTXTButton)
                     self.reset_txt_timer.start(1000)
 
-            except Exception as e:
+            except Exception:
                 self.custom_dialog_signal.emit("An error occurred while generating the TXT file.")
         else:
             self.custom_dialog_signal.emit("Please provide a valid file name for the TXT file.")
@@ -399,7 +399,7 @@ class MusicErrorWindow(QWidget):
                 self.reset_csv_timer.timeout.connect(self.resetCSVButton)
                 self.reset_csv_timer.start(1000)
 
-            except Exception as e:
+            except Exception:
                 self.custom_dialog_signal.emit("An error occurred while generating the CSV file.")
         else:
             self.custom_dialog_signal.emit("Please provide a valid file name for the CSV.")
@@ -509,7 +509,7 @@ class MusicErrorWindow(QWidget):
                 self.reset_excel_timer.timeout.connect(self.resetExcelButton)
                 self.reset_excel_timer.start(1000)
 
-            except Exception as e:
+            except Exception:
                 self.custom_dialog_signal.emit("An error occurred while generating the Excel file.")
         else:
             self.custom_dialog_signal.emit("Please provide a valid file name for the Excel file.")
@@ -561,7 +561,7 @@ class MusicErrorWindow(QWidget):
                 self.reset_json_timer.timeout.connect(self.resetJSONButton)
                 self.reset_json_timer.start(1000)
 
-            except Exception as e:
+            except Exception:
                 self.custom_dialog_signal.emit("An error occurred while generating the JSON file.")
         else:
             self.custom_dialog_signal.emit("Please provide a valid file name for the JSON file.")

@@ -5,12 +5,11 @@ Unit tests for the Jellyfin Music Organizer utility modules.
 import os
 import tempfile
 import unittest
-from datetime import datetime
 from pathlib import Path
 
 from jellyfin_music_organizer.utils.config import ConfigManager
-from jellyfin_music_organizer.utils.exceptions import ConfigurationError, FileOperationError
-from jellyfin_music_organizer.utils.progress import ProgressInfo, ProgressTracker
+from jellyfin_music_organizer.utils.exceptions import FileOperationError
+from jellyfin_music_organizer.utils.progress import ProgressTracker
 from jellyfin_music_organizer.utils.resources import ResourceManager
 from jellyfin_music_organizer.utils.threads import ThreadManager
 

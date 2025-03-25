@@ -6,7 +6,6 @@ import threading
 from queue import Queue
 from typing import Any, Callable, Dict, Optional
 
-from .exceptions import AudioPlaybackError
 from .logger import setup_logger
 
 

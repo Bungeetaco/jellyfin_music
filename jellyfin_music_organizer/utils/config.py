@@ -5,7 +5,7 @@ Configuration management for the Jellyfin Music Organizer application.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 class ConfigManager:
