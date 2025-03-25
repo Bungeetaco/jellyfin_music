@@ -3,7 +3,7 @@ Metadata operations utility functions for the Jellyfin Music Organizer applicati
 """
 
 from logging import getLogger
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
@@ -34,11 +34,7 @@ def extract_metadata(file_path: str) -> Dict[str, MetadataValue]:
         if metadata is None:
             raise MetadataError("Could not read file metadata")
 
-        return {
-            tag: metadata.get(tag, "") 
-            for tag in METADATA_TAGS 
-            if tag in metadata
-        }
+        return {tag: metadata.get(tag, "") for tag in METADATA_TAGS if tag in metadata}
     except Exception as e:
         raise MetadataError(f"Failed to extract metadata: {e}")
 

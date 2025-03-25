@@ -1,13 +1,13 @@
 """Window management utilities."""
 
 import logging
-from typing import Any, Dict, Optional, Type, TypeVar, cast, Callable
+from typing import Any, Dict, Optional, Type, TypeVar, cast
+
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from .config import ConfigManager
 from .platform_utils import PlatformUI
-from .qt_types import QtConstants
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +26,7 @@ class WindowManager(QObject):
         self.active_windows: Dict[str, QWidget] = {}
 
     def create_window(
-        self,
-        window_class: Type[T],
-        window_id: str,
-        *args: Any,
-        **kwargs: Any
+        self, window_class: Type[T], window_id: str, *args: Any, **kwargs: Any
     ) -> Optional[T]:
         """Create and show a new window."""
         try:

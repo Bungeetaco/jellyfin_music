@@ -4,14 +4,13 @@ File operations utility functions for the Jellyfin Music Organizer application.
 
 import os
 import shutil
-import stat
 from logging import getLogger
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional
 
 from .constants import SUPPORTED_AUDIO_EXTENSIONS
-from .exceptions import FileOperationError
 from .error_handler import handle_errors
+from .exceptions import FileOperationError
 
 logger = getLogger(__name__)
 
@@ -206,10 +205,7 @@ class FileOperations:
     @staticmethod
     @handle_errors(logger=logger)
     def safe_copy(
-        source: Path,
-        destination: Path,
-        overwrite: bool = False,
-        preserve_metadata: bool = True
+        source: Path, destination: Path, overwrite: bool = False, preserve_metadata: bool = True
     ) -> bool:
         """Safely copy a file with metadata preservation."""
         if not source.exists():
@@ -245,15 +241,15 @@ class FileOperations:
         # Replace illegal characters
         illegal_chars = '<>:"/\\|?*'
         for char in illegal_chars:
-            filename = filename.replace(char, '_')
+            filename = filename.replace(char, "_")
 
         # Handle special cases
-        filename = filename.strip('. ')  # Remove leading/trailing dots and spaces
-        
+        filename = filename.strip(". ")  # Remove leading/trailing dots and spaces
+
         # Truncate if necessary
         if len(filename) > max_length:
             name, ext = os.path.splitext(filename)
             max_name_length = max_length - len(ext)
             filename = name[:max_name_length] + ext
 
-        return filename or '_'  # Return '_' if filename would be empty
+        return filename or "_"  # Return '_' if filename would be empty

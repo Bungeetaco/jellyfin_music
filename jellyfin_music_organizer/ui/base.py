@@ -1,13 +1,16 @@
-from typing import Optional, Callable, Dict, Any
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QMouseEvent, QIcon
-from PyQt5.QtWidgets import QWidget, QDialog
+from typing import Any, Dict, Optional
+
+from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtGui import QIcon, QMouseEvent
+from PyQt5.QtWidgets import QDialog, QWidget
+
 from ..utils.qt_types import QtConstants
 from ..utils.window_state import WindowStateManager
 
+
 class DraggableWidget(QWidget):
     """Base class for draggable windows."""
-    
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.drag_position: Optional[QPoint] = None
@@ -30,14 +33,15 @@ class DraggableWidget(QWidget):
             self.move(event.globalPos() - self.drag_position)
             event.accept()
 
+
 class BaseDialog(QDialog):
     """Base class for application dialogs."""
-    
+
     def __init__(
         self,
         parent: Optional[QWidget] = None,
         window_title: str = "",
-        icon_path: Optional[str] = None
+        icon_path: Optional[str] = None,
     ) -> None:
         super().__init__(parent)
         self.window_title = window_title
@@ -58,14 +62,11 @@ class BaseDialog(QDialog):
             flags |= QtConstants.FramelessWindowHint
         self.setWindowFlags(flags)
 
+
 class StatefulWidget(QWidget):
     """Base class for widgets that maintain state."""
-    
-    def __init__(
-        self,
-        parent: Optional[QWidget] = None,
-        state_id: str = ""
-    ) -> None:
+
+    def __init__(self, parent: Optional[QWidget] = None, state_id: str = "") -> None:
         super().__init__(parent)
         self.state_manager = WindowStateManager(state_id or self.__class__.__name__)
         self._state: Dict[str, Any] = {}
@@ -81,4 +82,4 @@ class StatefulWidget(QWidget):
     def closeEvent(self, event: Any) -> None:
         """Handle widget closure."""
         self.save_state()
-        super().closeEvent(event) 
+        super().closeEvent(event)

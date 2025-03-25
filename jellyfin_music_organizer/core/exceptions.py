@@ -1,14 +1,14 @@
 from typing import Optional
 
 class JellyfinMusicOrganizerError(Exception):
-    """Base exception for Jellyfin Music Organizer."""
+    """Base exception for all application errors."""
     
     def __init__(self, message: str, cause: Optional[Exception] = None) -> None:
         super().__init__(message)
         self.cause = cause
 
 class FileOperationError(JellyfinMusicOrganizerError):
-    """Raised when a file operation fails."""
+    """Raised when file operations fail."""
     pass
 
 class MetadataError(JellyfinMusicOrganizerError):
@@ -16,15 +16,15 @@ class MetadataError(JellyfinMusicOrganizerError):
     pass
 
 class ConfigurationError(JellyfinMusicOrganizerError):
-    """Raised when configuration is invalid or missing."""
+    """Raised when configuration operations fail."""
     pass
 
 class ResourceError(JellyfinMusicOrganizerError):
-    """Raised when a resource cannot be loaded."""
+    """Raised when resource operations fail."""
     pass
 
 class UIError(JellyfinMusicOrganizerError):
-    """Raised when a UI operation fails."""
+    """Base class for UI-related errors."""
     pass
 
 class WindowError(UIError):

@@ -29,13 +29,13 @@ from ..core.organize_thread import OrganizeThread
 from ..utils.config import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
+from ..utils.qt_compat import QtCompat
+from ..utils.qt_types import QtConstants
 from ..utils.window_manager import WindowManager
 from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
 from .replace_skip_window import ReplaceSkipWindow
 from .settings_window import SettingsWindow
-from ..utils.qt_compat import QtCompat
-from ..utils.qt_types import QtConstants
 
 logger = getLogger(__name__)
 

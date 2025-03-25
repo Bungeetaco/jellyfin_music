@@ -2,9 +2,9 @@
 Constants used throughout the Jellyfin Music Organizer application.
 """
 
-from pathlib import Path
-from typing import Dict, List, Set, Any, Optional, Final
 from enum import Enum, auto
+from pathlib import Path
+from typing import Any, Dict, Final, List, Optional, Set
 
 
 # Application metadata
@@ -76,18 +76,13 @@ class MetadataTags:
 # UI Configuration
 class UIConstants:
     """UI-related constants."""
-    
-    WINDOW_DIMENSIONS: Final[Dict[str, int]] = {
-        "width": 400,
-        "height": 260,
-        "x": 100,
-        "y": 100
-    }
-    
+
+    WINDOW_DIMENSIONS: Final[Dict[str, int]] = {"width": 400, "height": 260, "x": 100, "y": 100}
+
     TITLE_BAR_HEIGHT: Final[int] = 32
     ICON_SIZE: Final[int] = 24
     BUTTON_SIZE: Final[int] = 24
-    
+
     STYLE_TEMPLATES: Final[Dict[str, str]] = {
         "title_bar": """
             QWidget#TitleBar {
@@ -106,7 +101,7 @@ class UIConstants:
             QPushButton:hover {
                 background-color: %(hover_color)s;
             }
-        """
+        """,
     }
 
 
@@ -199,6 +194,7 @@ class NotificationConfig:
 # Initialize paths
 Paths.ensure_paths()
 
+
 def get_metadata_value(metadata: Dict[str, Any], key: str, default: Optional[str] = None) -> str:
     """Safely get metadata value with proper type handling."""
     value = metadata.get(key, default)
@@ -208,18 +204,23 @@ def get_metadata_value(metadata: Dict[str, Any], key: str, default: Optional[str
 
 
 # Audio file extensions
-SUPPORTED_AUDIO_EXTENSIONS: Set[str] = {
-    ".mp3", ".m4a", ".flac", ".ogg", ".wav", ".wma", ".aac"
-}
+SUPPORTED_AUDIO_EXTENSIONS: Set[str] = {".mp3", ".m4a", ".flac", ".ogg", ".wav", ".wma", ".aac"}
 
 # Metadata tags
 METADATA_TAGS: Set[str] = {
-    "title", "artist", "album", "albumartist", "date", "genre", "tracknumber"
+    "title",
+    "artist",
+    "album",
+    "albumartist",
+    "date",
+    "genre",
+    "tracknumber",
 }
 
 
 class FileType(Enum):
     """Enumeration of supported file types."""
+
     MP3 = auto()
     FLAC = auto()
     M4A = auto()
@@ -228,8 +229,10 @@ class FileType(Enum):
     WMA = auto()
     AAC = auto()
 
+
 class MetadataFields(Enum):
     """Enumeration of metadata fields."""
+
     TITLE = "title"
     ARTIST = "artist"
     ALBUM = "album"
@@ -239,34 +242,42 @@ class MetadataFields(Enum):
     YEAR = "date"
     GENRE = "genre"
 
+
 class FileConstants:
     """File-related constants."""
-    
+
     SUPPORTED_EXTENSIONS: Final[Set[str]] = {
-        ".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma", ".aac"
+        ".mp3",
+        ".flac",
+        ".m4a",
+        ".ogg",
+        ".wav",
+        ".wma",
+        ".aac",
     }
-    
+
     MAX_FILENAME_LENGTH: Final[int] = 255
     BUFFER_SIZE: Final[int] = 8192  # 8KB buffer for file operations
-    
+
     METADATA_ENCODING: Final[str] = "utf-8"
-    
+
     @staticmethod
     def is_supported_extension(ext: str) -> bool:
         """Check if file extension is supported."""
         return ext.lower() in FileConstants.SUPPORTED_EXTENSIONS
 
+
 class ConfigConstants:
     """Configuration-related constants."""
-    
+
     DEFAULT_CONFIG: Final[Dict[str, Any]] = {
         "music_folder_path": "",
         "destination_folder_path": "",
         "mute_sound": False,
         "version": "3.06",
         "window_state": {},
-        "platform_specific": {}
+        "platform_specific": {},
     }
-    
+
     CONFIG_VERSION: Final[str] = "3.06"
     CONFIG_FILENAME: Final[str] = "config.json"

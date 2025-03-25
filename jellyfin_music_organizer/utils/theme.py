@@ -1,12 +1,14 @@
-from typing import Dict, Any, Optional
-from dataclasses import dataclass
 import json
-from pathlib import Path
 import logging
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Optional
+
 
 @dataclass
 class ThemeColors:
     """Theme color definitions."""
+
     primary: str
     secondary: str
     background: str
@@ -15,22 +17,21 @@ class ThemeColors:
     warning: str
     success: str
 
+
 @dataclass
 class ThemeDimensions:
     """Theme dimension definitions."""
+
     padding: int
     margin: int
     border_radius: int
     icon_size: int
 
+
 class Theme:
     """Theme configuration."""
-    
-    def __init__(
-        self,
-        colors: ThemeColors,
-        dimensions: ThemeDimensions
-    ) -> None:
+
+    def __init__(self, colors: ThemeColors, dimensions: ThemeDimensions) -> None:
         self.colors = colors
         self.dimensions = dimensions
 
@@ -54,13 +55,14 @@ class Theme:
                 QPushButton:hover {{
                     background-color: {self.colors.secondary};
                 }}
-            """
+            """,
         }
         return styles.get(widget_type, "")
 
+
 class ThemeManager:
     """Manage application themes."""
-    
+
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self._themes: Dict[str, Theme] = {}
@@ -69,12 +71,12 @@ class ThemeManager:
     def load_theme(self, theme_file: Path) -> bool:
         """Load a theme from a JSON file."""
         try:
-            with open(theme_file, 'r', encoding='utf-8') as f:
+            with open(theme_file, "r", encoding="utf-8") as f:
                 theme_data = json.load(f)
-                
+
             colors = ThemeColors(**theme_data["colors"])
             dimensions = ThemeDimensions(**theme_data["dimensions"])
-            
+
             theme_name = theme_file.stem
             self._themes[theme_name] = Theme(colors, dimensions)
             return True
@@ -86,7 +88,7 @@ class ThemeManager:
         """Apply a theme to the application."""
         if theme_name not in self._themes:
             return False
-        
+
         self._current_theme = theme_name
         return True
 
@@ -94,4 +96,4 @@ class ThemeManager:
         """Get the current theme."""
         if self._current_theme:
             return self._themes.get(self._current_theme)
-        return None 
+        return None

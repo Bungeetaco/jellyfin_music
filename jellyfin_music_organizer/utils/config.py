@@ -64,7 +64,7 @@ class ConfigManager:
         """Load configuration from file."""
         try:
             if self.config_path.exists():
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path, "r") as f:
                     loaded_settings = json.load(f)
                     if self.validate_config(loaded_settings):
                         self.settings.update(loaded_settings)
@@ -80,7 +80,7 @@ class ConfigManager:
                 self.settings.update(settings)
 
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump(self.settings, f, indent=4)
         except Exception as e:
             self.logger.error(f"Failed to save config: {e}")

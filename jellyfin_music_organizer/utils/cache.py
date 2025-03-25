@@ -1,19 +1,16 @@
-from typing import TypeVar, Generic, Dict, Optional, Callable, Any
-from datetime import datetime, timedelta
-import threading
 import logging
+import threading
+from datetime import datetime, timedelta
+from typing import Dict, Generic, Optional, TypeVar
 
-K = TypeVar('K')
-V = TypeVar('V')
+K = TypeVar("K")
+V = TypeVar("V")
+
 
 class CacheEntry(Generic[V]):
     """Type-safe cache entry."""
-    
-    def __init__(
-        self,
-        value: V,
-        ttl: Optional[timedelta] = None
-    ) -> None:
+
+    def __init__(self, value: V, ttl: Optional[timedelta] = None) -> None:
         self.value = value
         self.timestamp = datetime.now()
         self.ttl = ttl
@@ -24,20 +21,17 @@ class CacheEntry(Generic[V]):
             return False
         return datetime.now() - self.timestamp > self.ttl
 
+
 class Cache(Generic[K, V]):
     """Thread-safe cache implementation."""
-    
+
     def __init__(self, default_ttl: Optional[timedelta] = None) -> None:
         self._cache: Dict[K, CacheEntry[V]] = {}
         self._lock = threading.RLock()
         self.default_ttl = default_ttl
         self.logger = logging.getLogger(__name__)
 
-    def get(
-        self,
-        key: K,
-        default: Optional[V] = None
-    ) -> Optional[V]:
+    def get(self, key: K, default: Optional[V] = None) -> Optional[V]:
         """Get a value from the cache."""
         with self._lock:
             entry = self._cache.get(key)
@@ -48,18 +42,10 @@ class Cache(Generic[K, V]):
                 return default
             return entry.value
 
-    def set(
-        self,
-        key: K,
-        value: V,
-        ttl: Optional[timedelta] = None
-    ) -> None:
+    def set(self, key: K, value: V, ttl: Optional[timedelta] = None) -> None:
         """Set a value in the cache."""
         with self._lock:
-            self._cache[key] = CacheEntry(
-                value,
-                ttl or self.default_ttl
-            )
+            self._cache[key] = CacheEntry(value, ttl or self.default_ttl)
 
     def delete(self, key: K) -> None:
         """Delete a value from the cache."""
@@ -74,9 +60,6 @@ class Cache(Generic[K, V]):
     def cleanup(self) -> None:
         """Remove expired entries."""
         with self._lock:
-            expired_keys = [
-                key for key, entry in self._cache.items()
-                if entry.is_expired()
-            ]
+            expired_keys = [key for key, entry in self._cache.items() if entry.is_expired()]
             for key in expired_keys:
-                del self._cache[key] 
+                del self._cache[key]

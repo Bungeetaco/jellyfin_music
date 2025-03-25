@@ -8,7 +8,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -16,8 +16,8 @@ from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayo
 from ..utils.config_manager import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
-from ..utils.resource_manager import ResourceManager
 from ..utils.qt_types import QtConstants
+from ..utils.resource_manager import ResourceManager
 
 logger = getLogger(__name__)
 

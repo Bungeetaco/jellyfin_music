@@ -6,7 +6,6 @@ import sys
 from logging import Logger
 from typing import Optional
 
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from .ui.music_organizer import MusicOrganizer

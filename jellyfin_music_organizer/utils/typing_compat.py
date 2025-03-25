@@ -1,9 +1,9 @@
-import sys
-from typing import Any, Union, List, Dict, Optional, TypeVar, Callable
+from typing import Any, List, TypeVar, Union
+
 try:
-    from typing import TypeAlias, ParamSpec
+    from typing import ParamSpec, TypeAlias
 except ImportError:
-    from typing_extensions import TypeAlias, ParamSpec
+    from typing_extensions import ParamSpec, TypeAlias
 
 # Qt-specific type aliases
 WindowFlags = TypeAlias = int
@@ -13,5 +13,5 @@ WindowType = TypeAlias = int
 MetadataValue = TypeAlias = Union[str, List[str], Any]
 
 # Common type variables
-T = TypeVar('T')
-P = ParamSpec('P') 
+T = TypeVar("T")
+P = ParamSpec("P")

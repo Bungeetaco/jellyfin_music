@@ -1,12 +1,12 @@
 """Type stubs for Qt-related attributes."""
 
-from typing import Union, Optional
-from typing_extensions import TypeAlias
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QFont, QMouseEvent
-from PyQt5.QtWidgets import QWidget
+from typing import Union
+
+from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaPlayer
-from .typing_compat import WindowFlags, KeyboardModifier, Alignment
+from typing_extensions import TypeAlias
+
+from .typing_compat import Alignment, KeyboardModifier, WindowFlags
 
 # Qt type aliases
 WindowFlags = TypeAlias = Union[Qt.WindowFlags, Qt.WindowType]
@@ -14,9 +14,10 @@ KeyboardModifier = TypeAlias = Union[Qt.KeyboardModifier, Qt.KeyboardModifiers]
 Alignment = TypeAlias = Union[Qt.Alignment, Qt.AlignmentFlag]
 MouseButton = TypeAlias = Qt.MouseButton
 
+
 class QtConstants:
     """Qt constants for type-safe access."""
-    
+
     # Window flags
     Window: WindowFlags = Qt.Window
     Dialog: WindowFlags = Qt.Dialog
@@ -44,10 +45,13 @@ class QtConstants:
     MetaModifier: KeyboardModifier = Qt.MetaModifier
     ControlModifier: KeyboardModifier = Qt.ControlModifier
 
+
 class QtMediaConstants:
     """Qt multimedia constants."""
+
     PlayingState: int = QMediaPlayer.PlayingState
     EndOfMedia: int = QMediaPlayer.EndOfMedia
+
 
 # Global instances for easy access
 Qt = QtConstants()
