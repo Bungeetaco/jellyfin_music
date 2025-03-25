@@ -2,8 +2,7 @@
 
 import logging
 from functools import wraps
-from logging import Logger
-from typing import Any, Callable, Dict, List, Optional, ParamSpec, TypeVar, Union
+from typing import Any, Callable, Dict, List, ParamSpec, TypeVar
 
 from typing_extensions import ParamSpec as P
 
@@ -15,6 +14,7 @@ P = ParamSpec("P")
 
 def handle_errors(func: Callable[P, T]) -> Callable[P, T]:
     """Decorator to handle errors in functions."""
+
     @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         try:
@@ -22,6 +22,7 @@ def handle_errors(func: Callable[P, T]) -> Callable[P, T]:
         except Exception as e:
             logger.error(f"Error in {func.__name__}: {e}")
             raise
+
     return wrapper
 
 
