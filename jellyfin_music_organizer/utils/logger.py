@@ -3,10 +3,10 @@ Logging configuration for the Jellyfin Music Organizer application.
 """
 
 import logging
-from typing import Optional, Dict, Any
 import logging.handlers
 import sys
-from pathlib import Path
+from typing import Any, Dict, Optional
+
 
 class LoggerConfig:
     """Logger configuration with proper typing."""
@@ -21,7 +21,7 @@ class LoggerConfig:
         level: int = DEFAULT_LEVEL,
         format_str: str = DEFAULT_FORMAT,
         max_bytes: int = 1024 * 1024,  # 1MB
-        backup_count: int = 5
+        backup_count: int = 5,
     ) -> logging.Logger:
         """Set up a logger with file and console handlers."""
         logger = logging.getLogger(name)
@@ -29,7 +29,7 @@ class LoggerConfig:
 
         # Create formatters and handlers
         formatter = logging.Formatter(format_str)
-        
+
         # Console handler
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
@@ -39,9 +39,7 @@ class LoggerConfig:
         if log_file:
             try:
                 file_handler = logging.handlers.RotatingFileHandler(
-                    log_file,
-                    maxBytes=max_bytes,
-                    backupCount=backup_count
+                    log_file, maxBytes=max_bytes, backupCount=backup_count
                 )
                 file_handler.setFormatter(formatter)
                 logger.addHandler(file_handler)
@@ -54,25 +52,23 @@ class LoggerConfig:
     def get_log_config() -> Dict[str, Any]:
         """Get logging configuration dictionary."""
         return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'standard': {
-                    'format': LoggerConfig.DEFAULT_FORMAT
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "standard": {"format": LoggerConfig.DEFAULT_FORMAT},
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "standard",
+                    "stream": sys.stdout,
                 },
             },
-            'handlers': {
-                'console': {
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'standard',
-                    'stream': sys.stdout
-                },
-            },
-            'loggers': {
-                '': {  # Root logger
-                    'handlers': ['console'],
-                    'level': LoggerConfig.DEFAULT_LEVEL,
-                    'propagate': True
+            "loggers": {
+                "": {  # Root logger
+                    "handlers": ["console"],
+                    "level": LoggerConfig.DEFAULT_LEVEL,
+                    "propagate": True,
                 }
-            }
+            },
         }

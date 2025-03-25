@@ -2,15 +2,13 @@
 
 import logging
 import platform
-from abc import ABC, abstractmethod
-from typing import Optional, cast, Protocol, Dict, Any
 import sys
-from pathlib import Path
+from abc import ABC, abstractmethod
+from typing import Optional
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
-from .config import ConfigManager
 from .notification_config import NotificationConfig
 from .platform_utils import PlatformPaths
 from .qt_types import QtMediaConstants
@@ -18,10 +16,8 @@ from .qt_types import QtMediaConstants
 logger = logging.getLogger(__name__)
 
 if sys.platform == "win32":
-    import winsound
-    import winreg
-    from ctypes import windll
-    
+    pass
+
     # Windows constants
     MB_OK = 0x00000000
     MB_ICONHAND = 0x00000010
@@ -31,21 +27,18 @@ if sys.platform == "win32":
 
 class NotificationStrategy(ABC):
     """Abstract base class for platform-specific notifications."""
-    
+
     @abstractmethod
     def play_sound(self, sound_name: str) -> bool:
         """Play notification sound."""
-        pass
 
     @abstractmethod
     def is_available(self) -> bool:
         """Check if notification system is available."""
-        pass
 
     @abstractmethod
     def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
         """Show notification message."""
-        pass
 
 
 class WindowsNotificationStrategy(NotificationStrategy):
@@ -53,8 +46,9 @@ class WindowsNotificationStrategy(NotificationStrategy):
 
     def __init__(self) -> None:
         if sys.platform == "win32":
-            import winsound
             import winreg
+            import winsound
+
             self.winsound = winsound
             self.winreg = winreg
         else:
@@ -82,6 +76,7 @@ class WindowsNotificationStrategy(NotificationStrategy):
     def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
         try:
             from win32gui import MessageBeep
+
             MessageBeep(icon_type)
             return True
         except Exception:
@@ -122,7 +117,7 @@ class LinuxNotificationStrategy(NotificationStrategy):
 
 class NotificationManager(QObject):
     """Manage application notifications."""
-    
+
     notification_played = pyqtSignal(str)
     error_signal = pyqtSignal(str)
 

@@ -1,20 +1,23 @@
-from typing import Dict, Any, Callable, List, Optional
-from dataclasses import dataclass
 import json
-from pathlib import Path
 import logging
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
 
 @dataclass
 class Migration:
     """Database migration."""
+
     version: int
     description: str
     up: Callable[[Dict[str, Any]], None]
     down: Callable[[Dict[str, Any]], None]
 
+
 class MigrationManager:
     """Manage database migrations."""
-    
+
     def __init__(self, db_path: Path) -> None:
         self.logger = logging.getLogger(__name__)
         self.db_path = db_path
@@ -26,7 +29,7 @@ class MigrationManager:
         version: int,
         description: str,
         up: Callable[[Dict[str, Any]], None],
-        down: Callable[[Dict[str, Any]], None]
+        down: Callable[[Dict[str, Any]], None],
     ) -> None:
         """Register a new migration."""
         migration = Migration(version, description, up, down)
@@ -38,8 +41,8 @@ class MigrationManager:
         try:
             if not self.db_path.exists():
                 return 0
-                
-            with open(self.db_path, 'r', encoding='utf-8') as f:
+
+            with open(self.db_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 return data.get("version", 0)
         except Exception as e:
@@ -55,14 +58,16 @@ class MigrationManager:
             # Load current data
             data: Dict[str, Any] = {}
             if self.db_path.exists():
-                with open(self.db_path, 'r', encoding='utf-8') as f:
+                with open(self.db_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
             if target > current:
                 # Migrate up
                 for migration in self._migrations:
                     if current < migration.version <= target:
-                        self.logger.info(f"Running migration {migration.version}: {migration.description}")
+                        self.logger.info(
+                            f"Running migration {migration.version}: {migration.description}"
+                        )
                         migration.up(data)
                         data["version"] = migration.version
             else:
@@ -74,10 +79,10 @@ class MigrationManager:
                         data["version"] = migration.version - 1
 
             # Save updated data
-            with open(self.db_path, 'w', encoding='utf-8') as f:
+            with open(self.db_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
             return True
         except Exception as e:
             self.logger.error(f"Migration failed: {e}")
-            return False 
+            return False

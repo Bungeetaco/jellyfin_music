@@ -1,11 +1,12 @@
-from typing import Any, Dict, Optional, Type, TypeVar
-from pathlib import Path
-import tempfile
-import shutil
 import contextlib
+import shutil
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, Optional, Type, TypeVar
 from unittest.mock import MagicMock
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class TestUtils:
     """Utilities for testing with proper type safety."""
@@ -30,8 +31,7 @@ class TestUtils:
 
     @staticmethod
     def create_test_config(
-        base_path: Path,
-        settings: Optional[Dict[str, Any]] = None
+        base_path: Path, settings: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Create a test configuration."""
         config = {
@@ -40,8 +40,8 @@ class TestUtils:
             "mute_sound": True,
             "version": "test",
             "window_state": {},
-            "platform_specific": {"use_native_dialogs": False}
+            "platform_specific": {"use_native_dialogs": False},
         }
         if settings:
             config.update(settings)
-        return config 
+        return config

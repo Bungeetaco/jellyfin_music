@@ -3,9 +3,9 @@ import os
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Callable, Dict, Optional
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QPoint
+from PyQt5.QtCore import QPoint, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import (
     QApplication,
@@ -81,7 +81,7 @@ class SettingsWindow(QWidget):
     def setup_titlebar(self) -> None:
         """Set up the custom titlebar."""
         self.setWindowFlag(QtConstants.FramelessWindowHint)
-        
+
         self.title_bar = QWidget(self)
         self.title_bar.setObjectName("TitleBar")
         self.title_bar.setFixedHeight(32)

@@ -4,10 +4,10 @@ Security utilities for the Jellyfin Music Organizer application.
 
 import hashlib
 import os
-import secrets
-from typing import Optional, List, Set
 import re
+import secrets
 from pathlib import Path
+from typing import List, Optional, Set
 
 from .exceptions import FileOperationError
 from .logger import setup_logger
@@ -102,7 +102,7 @@ class SecurityManager:
         """
         # Convert to Path object and resolve
         clean_path = Path(path).resolve()
-        
+
         # Convert back to string and normalize separators
         return str(clean_path).replace("\\", "/")
 
@@ -147,8 +147,8 @@ class SecurityUtils:
 
     UNSAFE_PATTERNS: Set[str] = {
         r"\.\.\/",  # Directory traversal
-        r"^\/",     # Absolute paths
-        r"^\\\\"    # UNC paths
+        r"^\/",  # Absolute paths
+        r"^\\\\",  # UNC paths
     }
 
     @staticmethod
@@ -156,7 +156,7 @@ class SecurityUtils:
         """Sanitize a path string to prevent path traversal."""
         # Convert to Path object and resolve
         clean_path = Path(path).resolve()
-        
+
         # Convert back to string and normalize separators
         return str(clean_path).replace("\\", "/")
 
@@ -168,12 +168,11 @@ class SecurityUtils:
             if base_path:
                 base_path = Path(base_path).resolve()
                 return str(path).startswith(str(base_path))
-            
+
             # Check for unsafe patterns
             path_str = str(path)
             return not any(
-                re.search(pattern, path_str)
-                for pattern in SecurityUtils.UNSAFE_PATTERNS
+                re.search(pattern, path_str) for pattern in SecurityUtils.UNSAFE_PATTERNS
             )
         except Exception:
             return False
@@ -184,9 +183,9 @@ class SecurityUtils:
         filtered_parts: List[str] = []
         for part in parts:
             # Remove or replace unsafe characters
-            safe_part = re.sub(r'[<>:"|?*]', '_', part)
+            safe_part = re.sub(r'[<>:"|?*]', "_", part)
             # Remove leading/trailing spaces and dots
-            safe_part = safe_part.strip('. ')
-            if safe_part and safe_part not in {'.', '..'}:
+            safe_part = safe_part.strip(". ")
+            if safe_part and safe_part not in {".", ".."}:
                 filtered_parts.append(safe_part)
         return filtered_parts

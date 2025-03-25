@@ -6,13 +6,13 @@ import threading
 from logging import getLogger
 from pathlib import Path
 from queue import Queue
-from typing import Any, Callable, Dict, Optional, Tuple, cast
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 from .logger import setup_logger
-from .qt_types import QMediaPlayerConst, QtMediaConstants
+from .qt_types import QtMediaConstants
 
 logger = getLogger(__name__)
 
@@ -154,9 +154,9 @@ class ThreadManager:
 
 class BaseThread(QThread):
     """Base thread class with proper typing."""
-    
+
     error_signal = pyqtSignal(str)
-    
+
     def __init__(self, **kwargs: Dict[str, Any]) -> None:
         super().__init__()
         self.kwargs: Dict[str, Any] = kwargs or {}
@@ -173,9 +173,9 @@ class BaseThread(QThread):
 
 class NotificationAudioThread(BaseThread):
     """Thread for handling audio notifications."""
-    
+
     media_status_changed = pyqtSignal(int)
-    
+
     def __init__(self, audio_file: str) -> None:
         super().__init__(audio_file=audio_file)
         self._player: Optional[QMediaPlayer] = None

@@ -1,22 +1,25 @@
-from typing import Optional, List, Dict, Any, Callable
-from dataclasses import dataclass
+import logging
+import queue
 import subprocess
 import threading
-import queue
-import logging
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
 
 @dataclass
 class ProcessResult:
     """Type-safe process execution result."""
+
     returncode: int
     stdout: str
     stderr: str
     error: Optional[Exception] = None
 
+
 class ProcessManager:
     """Manage external process execution."""
-    
+
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self._active_processes: Dict[int, subprocess.Popen] = {}
@@ -27,7 +30,7 @@ class ProcessManager:
         command: List[str],
         cwd: Optional[Path] = None,
         env: Optional[Dict[str, str]] = None,
-        output_callback: Optional[Callable[[str], None]] = None
+        output_callback: Optional[Callable[[str], None]] = None,
     ) -> ProcessResult:
         """Run a process and capture its output."""
         try:
@@ -38,13 +41,13 @@ class ProcessManager:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1
+                bufsize=1,
             )
-            
+
             # Set up output queues
             stdout_queue: queue.Queue = queue.Queue()
             stderr_queue: queue.Queue = queue.Queue()
-            
+
             # Start output reader threads
             def read_output(pipe: Any, q: queue.Queue) -> None:
                 for line in pipe:
@@ -54,25 +57,21 @@ class ProcessManager:
                 q.put(None)  # Signal EOF
 
             threading.Thread(
-                target=read_output,
-                args=(process.stdout, stdout_queue),
-                daemon=True
+                target=read_output, args=(process.stdout, stdout_queue), daemon=True
             ).start()
-            
+
             threading.Thread(
-                target=read_output,
-                args=(process.stderr, stderr_queue),
-                daemon=True
+                target=read_output, args=(process.stderr, stderr_queue), daemon=True
             ).start()
 
             # Collect output
             stdout_lines: List[str] = []
             stderr_lines: List[str] = []
-            
+
             while True:
                 if process.poll() is not None:
                     break
-                
+
                 try:
                     stdout_line = stdout_queue.get_nowait()
                     if stdout_line is not None:
@@ -90,14 +89,9 @@ class ProcessManager:
             return ProcessResult(
                 returncode=process.returncode,
                 stdout="".join(stdout_lines),
-                stderr="".join(stderr_lines)
+                stderr="".join(stderr_lines),
             )
 
         except Exception as e:
             self.logger.error(f"Process execution failed: {e}")
-            return ProcessResult(
-                returncode=-1,
-                stdout="",
-                stderr="",
-                error=e
-            ) 
+            return ProcessResult(returncode=-1, stdout="", stderr="", error=e)

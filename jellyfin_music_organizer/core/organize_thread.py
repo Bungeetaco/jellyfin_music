@@ -6,14 +6,13 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List
 
-import mutagen
 from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from ..utils.file_ops import FileOperations
-from ..utils.metadata import extract_metadata, get_metadata_value
+from ..utils.metadata import extract_metadata
 from .exceptions import FileOperationError
 
 logger = logging.getLogger(__name__)
@@ -263,10 +262,10 @@ class OrganizeThread(QThread):
         try:
             # Create destination path from metadata
             dest = self._create_destination_path(metadata)
-            
+
             # Ensure destination directory exists
             dest.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Copy file with metadata preservation
             FileOperations.safe_copy(source, dest, preserve_metadata=True)
         except Exception as e:

@@ -1,11 +1,13 @@
-from typing import Dict, Any, Callable, Optional, TypeVar, Generic
+from typing import Any, Callable, Dict, Generic, TypeVar
+
 from PyQt5.QtCore import QObject, pyqtSignal
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class Event(Generic[T]):
     """Type-safe event implementation."""
-    
+
     def __init__(self) -> None:
         self._handlers: List[Callable[[T], None]] = []
 
@@ -26,9 +28,10 @@ class Event(Generic[T]):
             except Exception as e:
                 logger.error(f"Error in event handler: {e}")
 
+
 class EventManager(QObject):
     """Manage application events."""
-    
+
     error_occurred = pyqtSignal(str)
     state_changed = pyqtSignal(dict)
     task_completed = pyqtSignal(str, bool)
@@ -49,13 +52,9 @@ class EventManager(QObject):
         else:
             logger.warning(f"Unknown event: {event_name}")
 
-    def connect_event(
-        self,
-        event_name: str,
-        handler: Callable[[Any], None]
-    ) -> None:
+    def connect_event(self, event_name: str, handler: Callable[[Any], None]) -> None:
         """Connect a handler to an event."""
         if event_name in self._events:
             self._events[event_name].connect(handler)
         else:
-            logger.warning(f"Cannot connect to unknown event: {event_name}") 
+            logger.warning(f"Cannot connect to unknown event: {event_name}")

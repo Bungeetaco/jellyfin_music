@@ -2,12 +2,11 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, Optional, TypeVar, Generic
-from pathlib import Path
+from typing import Callable, Dict, Generator, Generic, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ResourceManager(Generic[T]):
@@ -18,10 +17,7 @@ class ResourceManager(Generic[T]):
         self._cleanup_handlers: Dict[str, Callable[[T], None]] = {}
 
     def register(
-        self,
-        resource_id: str,
-        resource: T,
-        cleanup_handler: Optional[Callable[[T], None]] = None
+        self, resource_id: str, resource: T, cleanup_handler: Optional[Callable[[T], None]] = None
     ) -> None:
         """Register a resource with optional cleanup."""
         if resource_id in self._resources:
@@ -48,10 +44,7 @@ class ResourceManager(Generic[T]):
 
     @contextmanager
     def managed_resource(
-        self,
-        resource_id: str,
-        resource: T,
-        cleanup_handler: Optional[Callable[[T], None]] = None
+        self, resource_id: str, resource: T, cleanup_handler: Optional[Callable[[T], None]] = None
     ) -> Generator[T, None, None]:
         """Context manager for temporary resources."""
         try:

@@ -9,9 +9,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QDesktopWidget, QStyleFactory, QWidget
 
-from .qt_compat import QtCompat, QtWindowFlags
 from .qt_types import QtConstants
 
 logger = logging.getLogger(__name__)

@@ -2,12 +2,11 @@
 Performance optimization utilities for the Jellyfin Music Organizer application.
 """
 
-import time
+import logging
 from functools import lru_cache, wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
-import logging
 from time import perf_counter
+from typing import Any, Callable, Dict, List, Optional
 
 from .logger import setup_logger
 
@@ -177,6 +176,7 @@ class PerformanceMonitor:
     @staticmethod
     def timed(operation_name: str) -> Callable:
         """Decorator for timing function execution."""
+
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -194,5 +194,7 @@ class PerformanceMonitor:
                         f"{operation_name} failed after {duration:.3f} seconds: {e}"
                     )
                     raise
+
             return wrapper
+
         return decorator

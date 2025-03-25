@@ -1,24 +1,23 @@
 """Centralized error handling."""
 
 import logging
-import traceback
 from functools import wraps
-from typing import Any, Callable, List, Optional, ParamSpec, TypeVar, Union, Dict
 from logging import Logger
+from typing import Any, Callable, Dict, List, Optional, ParamSpec, TypeVar, Union
+
 from .typing_compat import P
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
-P = ParamSpec('P')
+P = ParamSpec("P")
 
 
 def handle_errors(
-    logger: Optional[Logger] = None,
-    default_return: Optional[T] = None,
-    reraise: bool = False
+    logger: Optional[Logger] = None, default_return: Optional[T] = None, reraise: bool = False
 ) -> Callable[[Callable[P, T]], Callable[P, Union[T, None]]]:
     """Decorator for consistent error handling with proper type hints."""
+
     def decorator(func: Callable[P, T]) -> Callable[P, Union[T, None]]:
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> Union[T, None]:
@@ -30,7 +29,9 @@ def handle_errors(
                 if reraise:
                     raise
                 return default_return
+
         return wrapper
+
     return decorator
 
 
@@ -60,7 +61,7 @@ class ResourceManager:
 
 class ErrorCollector:
     """Collect and manage errors during processing."""
-    
+
     def __init__(self) -> None:
         self.errors: Dict[str, str] = {}
         self.warnings: Dict[str, str] = {}
