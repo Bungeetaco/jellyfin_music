@@ -1,11 +1,10 @@
 import csv
 import json
-from typing import List, Dict, Union, Any, Optional
 from logging import getLogger
-
+from typing import Any, Dict, List, Union
 
 import openpyxl
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -23,9 +22,10 @@ from PyQt5.QtWidgets import (
 
 logger = getLogger(__name__)
 
+
 class MusicErrorWindow(QWidget):
     """Widget for displaying and managing music file errors."""
-    
+
     def __init__(self, error_files: List[Dict[str, Any]]) -> None:
         """Initialize the error window."""
         super().__init__()

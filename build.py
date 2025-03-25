@@ -2,12 +2,11 @@
 Build script for creating the Jellyfin Music Organizer executable.
 """
 
+import logging
 import os
 import shutil
-from typing import List, Tuple, Optional
 from pathlib import Path
-import sys
-import logging
+from typing import List, Tuple
 
 import PyInstaller.__main__
 
@@ -137,7 +136,7 @@ def create_spec_file(
 
         # Write spec file
         spec_path = Path(f"{name}.spec")
-        spec_path.write_text(spec_content, encoding='utf-8')
+        spec_path.write_text(spec_content, encoding="utf-8")
         logger.info(f"Created spec file: {spec_path}")
 
     except Exception as e:

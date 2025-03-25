@@ -1,6 +1,6 @@
 import json
-from typing import Dict, Optional
 from logging import getLogger
+from typing import Dict
 
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -21,9 +21,10 @@ from PyQt5.QtWidgets import (
 
 logger = getLogger(__name__)
 
+
 class SettingsWindow(QWidget):
     """Window for managing application settings."""
-    
+
     windowOpened = pyqtSignal(bool)
     windowClosed = pyqtSignal(bool)
 
@@ -108,17 +109,10 @@ class SettingsWindow(QWidget):
         """Set up the settings window UI."""
         try:
             # Break long line for window title
-            self.setWindowTitle(
-                f"Settings Window v{self.version}"
-            )
-            
+            self.setWindowTitle(f"Settings Window v{self.version}")
+
             # Break long line for geometry
-            self.setGeometry(
-                100,  # x
-                100,  # y
-                400,  # width
-                300   # height
-            )
+            self.setGeometry(100, 100, 400, 300)  # x  # y  # width  # height
 
             # Window setup
             self.setWindowIcon(QIcon(":/Octopus.ico"))
@@ -236,11 +230,13 @@ class SettingsWindow(QWidget):
             # Add resizing handles
             self.bottom_right_grip = QSizeGrip(self)
             self.bottom_right_grip.setToolTip("Resize window")
-            hbox_save_reset_layout.addWidget(self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight)
+            hbox_save_reset_layout.addWidget(
+                self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+            )
 
             # Apply layout
             self.setLayout(main_layout)
-            
+
         except Exception as e:
             logger.error(f"Failed to set up settings UI: {e}")
             raise
