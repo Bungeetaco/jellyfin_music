@@ -77,11 +77,16 @@ def build_executable():
         return
 
     # Get PyInstaller arguments
-    args = get_pyinstaller_args()
+    get_pyinstaller_args()
 
     # Run PyInstaller
     print("Starting PyInstaller build...")
-    pyinstaller_cmd = ["pyinstaller", "--onefile", "--windowed", "--icon=resources/icons/Octopus.ico"]
+    pyinstaller_cmd = [
+        "pyinstaller",
+        "--onefile",
+        "--windowed",
+        "--icon=resources/icons/Octopus.ico",
+    ]
     subprocess.run(pyinstaller_cmd + ["main.py"])
 
 
