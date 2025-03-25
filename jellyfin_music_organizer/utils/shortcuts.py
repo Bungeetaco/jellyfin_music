@@ -3,7 +3,6 @@
 import platform
 from typing import Dict
 
-
 from .qt_types import KeyboardModifier, QtConst
 
 

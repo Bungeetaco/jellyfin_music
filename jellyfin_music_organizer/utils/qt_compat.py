@@ -1,9 +1,10 @@
 """Qt compatibility layer for type checking."""
 
-from typing import Optional
-from PyQt5.QtCore import Qt
+
 from PyQt5.QtWidgets import QApplication, QWidget
-from .qt_types import WindowFlags, QtConstants
+
+from .qt_types import QtConstants, WindowFlags
+
 
 class QtCompat:
     """Compatibility layer for Qt attributes."""
