@@ -24,17 +24,21 @@ jobs:
     - name: Install formatting tools
       run: |
         python -m pip install --upgrade pip
-        pip install black isort
+        pip install black isort autoflake
         
     - name: Format with black and isort
       run: |
         black .
         isort .
         
+    - name: Remove unused imports and variables
+      run: |
+        find . -type f -name "*.py" -not -path "./venv/*" -not -path "./.git/*" -exec autoflake --in-place --remove-all-unused-imports --remove-unused-variables {} +
+        
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: "style: auto-format with black and isort"
+        commit_message: "style: auto-format and clean imports"
         branch: ${{ github.head_ref }}
 
   lint:
@@ -60,9 +64,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install linting tools
         pip install black flake8 mypy isort
-        # Install project dependencies (PyQt5 includes its own type hints)
         pip install -r requirements.txt
         
     - name: Check formatting with black
@@ -74,7 +76,9 @@ jobs:
           --count \
           --max-line-length=100 \
           --statistics \
-          --exclude=.git,__pycache__,build,dist,*.egg-info
+          --exclude=.git,__pycache__,build,dist,*.egg-info \
+          --extend-ignore=E203,W503 \
+          --per-file-ignores="__init__.py:F401"
       
     - name: Type check with mypy
       run: |
