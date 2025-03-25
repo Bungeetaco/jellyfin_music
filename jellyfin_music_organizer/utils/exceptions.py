@@ -58,3 +58,9 @@ class FileOperationError(JellyfinMusicOrganizerError):
 
 class AudioPlaybackError(JellyfinMusicOrganizerError):
     """Raised when there's an error playing audio."""
+
+
+class ResourceError(JellyfinMusicOrganizerError):
+    """Exception raised for resource loading or management errors."""
+
+    pass
