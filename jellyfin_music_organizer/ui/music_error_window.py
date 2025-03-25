@@ -576,7 +576,10 @@ class MusicErrorWindow(QWidget):
         self.json_button.setStyleSheet("")
 
     def update_error_list(
-        self, error_list: List[Dict[str, Union[str, List[str], Dict[str, str]]]]
+        self,
+        error_list: List[
+            Dict[str, Union[str, List[str], Dict[str, str]]]
+        ]
     ) -> None:
         """Update the error list widget with new errors."""
         self.error_list = error_list
