@@ -9,6 +9,8 @@ on:
 jobs:
   format:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v3
       with:
@@ -31,15 +33,20 @@ jobs:
         black .
         isort .
         
-    - name: Remove unused imports and variables
+    - name: Remove unused imports
       run: |
         find . -type f -name "*.py" -not -path "./venv/*" -not -path "./.git/*" -exec autoflake --in-place --remove-all-unused-imports --remove-unused-variables {} +
         
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        
     - name: Commit changes
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "style: auto-format and clean imports"
-        branch: ${{ github.head_ref }}
+      run: |
+        git add .
+        git diff --quiet && git diff --staged --quiet || git commit -m "style: auto-format with black and isort"
+        git push
 
   lint:
     needs: format
@@ -50,11 +57,9 @@ jobs:
         ref: ${{ github.head_ref }}
         fetch-depth: 0
         
-    - name: Fetch latest changes
+    - name: Pull latest changes
       run: |
-        git fetch origin
-        git checkout ${{ github.head_ref }}
-        git pull origin ${{ github.head_ref }}
+        git pull origin ${{ github.head_ref || 'main' }} --rebase
     
     - name: Set up Python
       uses: actions/setup-python@v4
