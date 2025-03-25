@@ -19,9 +19,9 @@ from PyQt5.QtWidgets import (
     QSizeGrip,
     QSizePolicy,
     QSpacerItem,
+    QStyleFactory,
     QVBoxLayout,
     QWidget,
-    QStyleFactory,
 )
 
 # Other classes within files

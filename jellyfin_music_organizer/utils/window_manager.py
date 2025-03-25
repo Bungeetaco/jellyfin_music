@@ -1,7 +1,7 @@
 """Window management utilities."""
 
-from typing import Dict, Optional, Type
 import logging
+from typing import Dict, Optional, Type
 
 from PyQt5.QtWidgets import QWidget
 

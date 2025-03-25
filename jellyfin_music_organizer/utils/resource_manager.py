@@ -2,7 +2,7 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Dict, Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

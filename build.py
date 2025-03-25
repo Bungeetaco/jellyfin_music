@@ -5,11 +5,10 @@ Build script for creating the Jellyfin Music Organizer executable.
 import logging
 import os
 import shutil
+import subprocess
 from pathlib import Path
 from typing import List, Tuple
-import subprocess
 
-import PyInstaller.__main__
 
 # Define resource paths
 ICON_PATH = os.path.join("jellyfin_music_organizer", "resources", "Octopus.ico")
@@ -79,17 +78,13 @@ def build_executable():
         return
 
     # Get PyInstaller arguments
-    args = get_pyinstaller_args()
+    get_pyinstaller_args()
 
     # Run PyInstaller
     print("Starting PyInstaller build...")
-    subprocess.run([
-        "pyinstaller",
-        "--onefile",
-        "--windowed",
-        "--icon=resources/icons/Octopus.ico",
-        "main.py"
-    ])
+    subprocess.run(
+        ["pyinstaller", "--onefile", "--windowed", "--icon=resources/icons/Octopus.ico", "main.py"]
+    )
 
 
 def copy_additional_files():

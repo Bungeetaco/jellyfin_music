@@ -25,8 +25,8 @@ from PyQt5.QtWidgets import (
 
 from ..utils.dialogs import DialogManager
 from ..utils.notifications import NotificationManager
-from ..utils.window_state import WindowStateManager
 from ..utils.platform_utils import PlatformUI
+from ..utils.window_state import WindowStateManager
 
 logger = getLogger(__name__)
 

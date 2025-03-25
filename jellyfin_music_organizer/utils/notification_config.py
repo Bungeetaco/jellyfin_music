@@ -1,5 +1,6 @@
 """Configuration for notification sounds."""
 
+
 class NotificationConfig:
     """Manages notification sound configurations."""
 
@@ -21,6 +22,6 @@ class NotificationConfig:
                 "alert": "dialog-warning",
                 "error": "dialog-error",
                 "complete": "complete",
-            }
+            },
         }
-        return sounds.get(platform, {}).get(sound_type, "") 
+        return sounds.get(platform, {}).get(sound_type, "")
