@@ -4,7 +4,6 @@ Build script for creating the Jellyfin Music Organizer executable.
 
 import os
 import shutil
-import sys
 
 import PyInstaller.__main__
 

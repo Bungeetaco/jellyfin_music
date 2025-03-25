@@ -3,7 +3,6 @@ Logging configuration for the Jellyfin Music Organizer application.
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Optional
 

@@ -2,13 +2,11 @@
 Performance optimization utilities for the Jellyfin Music Organizer application.
 """
 
-import os
 import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from .exceptions import FileOperationError
 from .logger import setup_logger
 
 

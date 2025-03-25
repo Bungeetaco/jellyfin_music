@@ -5,13 +5,12 @@ Thread for organizing music files based on their metadata.
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import mutagen
 from mutagen.asf import ASFUnicodeAttribute
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from ..resources import resources_rc
 
 
 class OrganizeThread(QThread):

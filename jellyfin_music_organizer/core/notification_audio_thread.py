@@ -4,7 +4,6 @@ Thread for playing notification sounds.
 
 import os
 import sys
-from typing import Optional
 
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
