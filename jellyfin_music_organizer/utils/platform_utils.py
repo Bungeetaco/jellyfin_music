@@ -6,10 +6,11 @@ import os
 import platform
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget
+from .qt_compat import QtCompat, QtWindowFlags
 
 logger = logging.getLogger(__name__)
 
@@ -25,47 +26,19 @@ class PlatformPaths:
             Path to application data directory
         """
         system = platform.system().lower()
-        app_name = "jellyfin_music_organizer"
-
-        try:
-            if system == "windows":
-                base_dir = os.environ.get("APPDATA")
-                if not base_dir:
-                    raise ValueError("APPDATA environment variable not found")
-                return Path(base_dir) / app_name
-            elif system == "darwin":
-                return Path.home() / "Library" / "Application Support" / app_name
-            else:  # Linux and others
-                xdg_config = os.environ.get("XDG_CONFIG_HOME")
-                if xdg_config:
-                    return Path(xdg_config) / app_name
-                return Path.home() / ".config" / app_name
-        except Exception as e:
-            logger.error(f"Failed to get app data directory: {e}")
-            return Path.home() / f".{app_name}"
+        if system == "windows":
+            return Path(os.getenv("APPDATA", "")) / "jellyfin_music_organizer"
+        elif system == "darwin":
+            return Path.home() / "Library" / "Application Support" / "jellyfin_music_organizer"
+        else:
+            return Path.home() / ".jellyfin_music_organizer"
 
     @staticmethod
     def get_resource_path(resource_name: str) -> Path:
-        """Get platform-specific resource path.
-
-        Args:
-            resource_name: Name of the resource
-
-        Returns:
-            Path to resource
-        """
-        try:
-            if getattr(sys, "frozen", False):
-                # Running in a bundle
-                base_path = Path(sys._MEIPASS)
-            else:
-                # Running in normal Python environment
-                base_path = Path(__file__).parent.parent / "resources"
-
-            return base_path / resource_name
-        except Exception as e:
-            logger.error(f"Failed to get resource path: {e}")
-            raise
+        """Get path to a resource file."""
+        if hasattr(sys, '_MEIPASS'):  # PyInstaller bundle
+            return Path(sys._MEIPASS) / "resources" / resource_name
+        return Path(__file__).parent.parent / "resources" / resource_name
 
 
 class PlatformUI:
@@ -115,20 +88,20 @@ class PlatformUI:
         """Configure platform-specific window settings."""
         try:
             system = platform.system()
+            flags: QtWindowFlags = QtCompat.get_window_flags(
+                frameless=(system == "Windows")
+            )
+            window.setWindowFlags(flags)
+
             if system == "Windows":
-                window.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
                 window.setAttribute(Qt.WA_TranslucentBackground)
             elif system == "Darwin":
-                window.setWindowFlags(Qt.Window)
                 window.setAttribute(Qt.WA_MacShowFocusRect, False)
-            else:  # Linux
-                window.setWindowFlags(Qt.Window)
 
             PlatformUI._apply_platform_style(window)
-
         except Exception as e:
             logger.error(f"Failed to setup window: {e}")
-            window.setWindowFlags(Qt.Window)  # Fallback
+            window.setWindowFlags(Qt.Window)
 
     @staticmethod
     def _apply_platform_style(window: QWidget) -> None:

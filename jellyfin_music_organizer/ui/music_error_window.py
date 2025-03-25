@@ -41,7 +41,7 @@ class MusicErrorWindow(QWidget):
     windowClosed = pyqtSignal(bool)
     custom_dialog_signal = pyqtSignal(str)
 
-    def __init__(self, error_files: List[Dict[str, Any]]) -> None:
+    def __init__(self, error_files: List[ErrorDict]) -> None:
         """Initialize the error window.
 
         Args:
@@ -724,7 +724,7 @@ class MusicErrorWindow(QWidget):
             logger.error(f"Failed to restore window state: {e}")
             self.center_window()  # Fallback to centered position
 
-    def _validate_error_files(self, error_files: List[Dict[str, Any]]) -> bool:
+    def _validate_error_files(self, error_files: List[ErrorDict]) -> bool:
         """Validate the error files data structure.
 
         Args:

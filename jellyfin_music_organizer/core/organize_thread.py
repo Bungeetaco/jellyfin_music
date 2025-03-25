@@ -14,6 +14,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from ..utils.file_ops import FileOperations
 from .exceptions import FileOperationError
+from ..utils.metadata_types import MutagenFile, MetadataValue, MetadataDict
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,9 @@ class OrganizeThread(QThread):
 
                     try:
                         # Load and extract metadata from the music file
-                        metadata: mutagen.File = mutagen.File(path_in_str)
+                        metadata: MutagenFile = mutagen.File(path_in_str)
+                        if metadata is None:
+                            raise ValueError(f"Could not load metadata from {path_in_str}")
 
                         # Iterate over the metadata items and add them to the dictionary
                         for key, value in metadata.items():

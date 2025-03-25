@@ -5,7 +5,8 @@ Configuration management for the Jellyfin Music Organizer application.
 import json
 import platform
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+import logging
 
 from .platform_utils import PlatformPaths
 
@@ -29,17 +30,10 @@ class ConfigManager:
         "platform_specific": {},
     }
 
-    def __init__(self) -> None:
-        self.config_path = PlatformPaths.get_app_data_dir() / "config.json"
-        self.settings: Dict[str, Any] = {
-            "music_folder_path": "",
-            "destination_folder_path": "",
-            "mute_sound": False,
-            "version": "3.06",
-            "window_state": {},
-            "platform_specific": self._get_platform_defaults(),
-        }
-        self.load()
+    def __init__(self, config_path: Optional[str] = None) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.config_path = config_path
+        self.settings: Dict[str, Any] = {}
 
     def _get_platform_defaults(self) -> Dict[str, Any]:
         """Get platform-specific default settings."""
@@ -66,18 +60,20 @@ class ConfigManager:
             self.logger.error(f"Config validation failed: {e}")
             return False
 
-    def load(self) -> None:
+    def load(self) -> Dict[str, Any]:
         """Load configuration with validation."""
         try:
-            if self.config_path.exists():
+            if self.config_path and Path(self.config_path).exists():
                 with open(self.config_path, "r") as f:
                     loaded_config = json.load(f)
                     if self.validate_config(loaded_config):
                         self.settings.update(loaded_config)
                     else:
                         self.logger.warning("Invalid configuration, using defaults")
+            return self.settings
         except Exception as e:
             self.logger.error(f"Error loading configuration: {e}")
+            return self.settings
 
     def save(self) -> None:
         """Save current configuration to file."""

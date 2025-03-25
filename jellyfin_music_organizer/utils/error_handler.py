@@ -3,27 +3,32 @@
 import logging
 import traceback
 from functools import wraps
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, TypeVar, ParamSpec
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar('T')
+P = ParamSpec('P')
 
-def handle_errors(error_message: str, callback: Optional[Callable[[Exception], Any]] = None):
+def handle_errors(
+    error_message: str,
+    callback: Optional[Callable[[Exception], Any]] = None
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Decorator for consistent error handling."""
-
-    def decorator(func):
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logger.error(f"{error_message}: {str(e)}\n" f"Traceback:\n{traceback.format_exc()}")
+                logger.error(
+                    f"{error_message}: {str(e)}\n"
+                    f"Traceback:\n{traceback.format_exc()}"
+                )
                 if callback:
                     return callback(e)
                 raise
-
         return wrapper
-
     return decorator
 
 

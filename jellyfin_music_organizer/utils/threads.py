@@ -6,7 +6,7 @@ import threading
 from logging import getLogger
 from pathlib import Path
 from queue import Queue
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -156,6 +156,7 @@ class NotificationAudioThread(QThread):
 
     kill_thread_signal = pyqtSignal()
     error_signal = pyqtSignal(str)
+    media_status_changed = pyqtSignal(QMediaPlayer.MediaStatus)
 
     def __init__(self, audio_file_name: str) -> None:
         """Initialize notification thread with resource validation.
@@ -204,16 +205,17 @@ class NotificationAudioThread(QThread):
 
         return QMediaContent(QUrl.fromLocalFile(resource_path))
 
-    def _handle_player_error(self, error: QMediaPlayer.Error) -> None:
-        """Handle media player errors.
+    def on_media_status_changed(self, status: QMediaPlayer.MediaStatus) -> None:
+        """Handle media status changes."""
+        self.media_status_changed.emit(status)
+        if status == QMediaPlayer.EndOfMedia:
+            self.is_running = False
 
-        Args:
-            error: Media player error code
-        """
-        error_msg = f"Media player error: {self.player.errorString()}"
-        logger.error(error_msg)
-        self.error_signal.emit(error_msg)
-        self.stop()
+    def _handle_player_error(self) -> None:
+        """Handle player errors."""
+        if self.player:
+            error_msg = self.player.errorString()
+            self.error_signal.emit(f"Player error: {error_msg}")
 
     def _cleanup(self) -> None:
         """Clean up resources."""

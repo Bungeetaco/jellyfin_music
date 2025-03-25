@@ -110,3 +110,11 @@ def validate_metadata(metadata: Dict[str, Any]) -> bool:
         return bool(artist and album)
     except MetadataError:
         return False
+
+
+def get_metadata_value(metadata: Any, key: str) -> str:
+    """Safely extract metadata value."""
+    value = metadata.get(key)
+    if isinstance(value, (list, ASFUnicodeAttribute)):
+        return str(value[0]) if value else ""
+    return str(value) if value is not None else ""

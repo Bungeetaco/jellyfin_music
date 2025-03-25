@@ -2,17 +2,18 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, TypeVar, Generator
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar('T')
 
 class ResourceManager:
     """Manage application resources and cleanup."""
 
     def __init__(self) -> None:
         self._resources: Dict[str, Any] = {}
-        self._cleanup_handlers: Dict[str, Callable] = {}
+        self._cleanup_handlers: Dict[str, Callable[[Any], None]] = {}
 
     def register(
         self, resource_id: str, resource: Any, cleanup_handler: Optional[Callable] = None
@@ -22,13 +23,10 @@ class ResourceManager:
         if cleanup_handler:
             self._cleanup_handlers[resource_id] = cleanup_handler
 
-    def cleanup(self, resource_id: Optional[str] = None) -> None:
-        """Clean up specific or all resources."""
-        if resource_id:
+    def cleanup(self) -> None:
+        """Clean up all registered resources."""
+        for resource_id in list(self._resources.keys()):
             self._cleanup_resource(resource_id)
-        else:
-            for rid in list(self._resources.keys()):
-                self._cleanup_resource(rid)
 
     def _cleanup_resource(self, resource_id: str) -> None:
         """Clean up a specific resource."""
@@ -49,8 +47,11 @@ class ResourceManager:
 
     @contextmanager
     def managed_resource(
-        self, resource_id: str, resource: Any, cleanup_handler: Optional[Callable] = None
-    ):
+        self,
+        resource_id: str,
+        resource: T,
+        cleanup_handler: Optional[Callable[[T], None]] = None
+    ) -> Generator[T, None, None]:
         """Context manager for temporary resources."""
         try:
             self.register(resource_id, resource, cleanup_handler)

@@ -1,7 +1,7 @@
 """Window management utilities."""
 
 import logging
-from typing import Dict, Optional, Type
+from typing import Dict, Optional, Type, TypeVar, cast, Any
 
 from PyQt5.QtWidgets import QWidget
 
@@ -9,6 +9,8 @@ from .config import ConfigManager
 from .platform_utils import PlatformUI
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar('T', bound=QWidget)
 
 
 class WindowManager:
@@ -19,21 +21,25 @@ class WindowManager:
         self.active_windows: Dict[str, QWidget] = {}
 
     def create_window(
-        self, window_class: Type[QWidget], window_id: str, *args, **kwargs
-    ) -> Optional[QWidget]:
+        self,
+        window_class: Type[T],
+        window_id: str,
+        *args: Any,
+        **kwargs: Any
+    ) -> Optional[T]:
         """Create and show a new window with proper setup."""
         try:
             if window_id in self.active_windows:
-                self.active_windows[window_id].raise_()
-                self.active_windows[window_id].activateWindow()
-                return self.active_windows[window_id]
+                return cast(T, self.active_windows[window_id])
 
             window = window_class(*args, **kwargs)
             PlatformUI.setup_window(window)
             self.active_windows[window_id] = window
 
             # Setup cleanup
-            window.destroyed.connect(lambda: self.active_windows.pop(window_id, None))
+            window.destroyed.connect(
+                lambda: self.active_windows.pop(window_id, None)
+            )
 
             return window
 

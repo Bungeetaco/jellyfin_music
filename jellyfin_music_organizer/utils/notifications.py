@@ -3,6 +3,7 @@
 import logging
 import platform
 from abc import ABC, abstractmethod
+from typing import Optional, Protocol
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -20,10 +21,12 @@ class NotificationStrategy(ABC):
     @abstractmethod
     def play_sound(self, sound_name: str) -> bool:
         """Play platform-specific notification sound."""
+        raise NotImplementedError
 
     @abstractmethod
     def is_available(self) -> bool:
         """Check if the notification system is available."""
+        raise NotImplementedError
 
 
 class WindowsNotificationStrategy(NotificationStrategy):
@@ -33,8 +36,7 @@ class WindowsNotificationStrategy(NotificationStrategy):
 
             winsound.PlaySound(sound_name, winsound.SND_ALIAS)
             return True
-        except Exception as e:
-            logger.debug(f"Windows sound failed: {e}")
+        except ImportError:
             return False
 
     def is_available(self) -> bool:
@@ -43,7 +45,7 @@ class WindowsNotificationStrategy(NotificationStrategy):
 
             winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"AppEvents\Schemes")
             return True
-        except Exception:
+        except ImportError:
             return False
 
 
@@ -82,8 +84,8 @@ class NotificationManager(QObject):
         super().__init__()
         self.config = ConfigManager()
         self.settings = self.config.load()
-        self._strategy = self._create_strategy()
-        self._fallback_player = None
+        self._strategy: NotificationStrategy = self._create_strategy()
+        self._fallback_player: Optional[QMediaPlayer] = None
 
     def _create_strategy(self) -> NotificationStrategy:
         """Create appropriate notification strategy for platform."""
