@@ -1,0 +1,13 @@
+{
+    "jellyfin_server": "",
+    "jellyfin_api_key": "",
+    "music_library_path": "",
+    "notification_sounds": {
+        "ding": "notification_audio/audio_ding.wav",
+        "complete": "notification_audio/audio_complete.wav"
+    },
+    "theme": "dark",
+    "auto_organize": false,
+    "backup_files": true,
+    "log_level": "INFO"
+} 
