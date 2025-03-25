@@ -1,8 +1,8 @@
 import json
-from logging import getLogger
-from typing import Dict
-from pathlib import Path
 import os
+from logging import getLogger
+from pathlib import Path
+from typing import Dict
 
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -254,10 +254,7 @@ class SettingsWindow(QWidget):
         """Handle music folder selection with validation."""
         try:
             music_folder_path = QFileDialog.getExistingDirectory(
-                self,
-                "Select Music Folder",
-                "",
-                QFileDialog.ShowDirsOnly
+                self, "Select Music Folder", "", QFileDialog.ShowDirsOnly
             )
             if not music_folder_path:
                 logger.debug("Music folder selection cancelled")
@@ -275,10 +272,10 @@ class SettingsWindow(QWidget):
 
     def _validate_folder_path(self, path: str) -> bool:
         """Validate folder path exists and is accessible.
-        
+
         Args:
             path: Folder path to validate
-            
+
         Returns:
             bool: True if valid, False otherwise
         """
@@ -302,20 +299,17 @@ class SettingsWindow(QWidget):
         """Handle destination folder selection with validation."""
         try:
             destination_folder_path = QFileDialog.getExistingDirectory(
-                self, 
-                "Select Destination Folder",
-                "",
-                QFileDialog.ShowDirsOnly
+                self, "Select Destination Folder", "", QFileDialog.ShowDirsOnly
             )
-            
+
             if not destination_folder_path:
                 logger.debug("Destination folder selection cancelled")
                 return
-            
+
             if not self._validate_folder_path(destination_folder_path):
                 logger.warning(f"Invalid destination folder path: {destination_folder_path}")
                 return
-            
+
             self.destination_folder_path = destination_folder_path
             self.destination_folder_label.setText(self.destination_folder_path)
             self._save_settings()
@@ -347,10 +341,8 @@ class SettingsWindow(QWidget):
             self.music_folder_label.setText(self.music_folder_path)
             self.destination_folder_label.setText(self.destination_folder_path)
             self.sound_checkbox.setChecked(settings.get("mute_sound", False))
-            self.illegal_chars_checkbox.setChecked(
-                settings.get("remove_illegal_chars", True)
-            )
-            
+            self.illegal_chars_checkbox.setChecked(settings.get("remove_illegal_chars", True))
+
         except json.JSONDecodeError as e:
             logger.error(f"Invalid settings file format: {e}")
         except Exception as e:
@@ -435,12 +427,12 @@ class SettingsWindow(QWidget):
                 "destination_folder_path": self.destination_folder_path,
                 "mute_sound": self.sound_checkbox.isChecked(),
                 "remove_illegal_chars": self.illegal_chars_checkbox.isChecked(),
-                "version": self.version
+                "version": self.version,
             }
-            
+
             with open("settings_jmo.json", "w", encoding="utf-8") as f:
                 json.dump(settings, f, indent=4)
-            
+
             logger.debug("Settings saved successfully")
         except Exception as e:
             logger.error(f"Failed to save settings: {e}")
