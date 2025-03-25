@@ -606,7 +606,9 @@ class MusicErrorWindow(QWidget):
 
     def update_error_list(
         self,
-        error_list: List[ErrorDict]
+        error_list: List[
+            Dict[str, Union[str, List[str], Dict[str, str]]]
+        ]
     ) -> None:
         """Update the error list widget with new errors."""
         self.error_list = error_list
