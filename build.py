@@ -81,8 +81,9 @@ def build_executable():
 
     # Run PyInstaller
     print("Starting PyInstaller build...")
-    icon_path = "resources/icons/Octopus.ico"
-    subprocess.run(["pyinstaller", "--onefile", "--windowed", f"--icon={icon_path}", "main.py"])
+    cmd = ["pyinstaller", "--onefile", "--windowed"]
+    cmd.extend(["--icon=resources/icons/Octopus.ico", "main.py"])
+    subprocess.run(cmd)
 
 
 def copy_additional_files():
