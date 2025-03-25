@@ -128,7 +128,7 @@ class ThreadManager:
 
         try:
             return self.message_queues[name].get(timeout=timeout)
-        except:
+        except Exception:
             return None
 
     def is_thread_running(self, name: str) -> bool:

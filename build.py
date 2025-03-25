@@ -4,6 +4,7 @@ Build script for creating the Jellyfin Music Organizer executable.
 
 import os
 import shutil
+from typing import List, Tuple
 
 import PyInstaller.__main__
 
@@ -89,6 +90,16 @@ def copy_additional_files():
     if os.path.exists("docs"):
         shutil.copytree("docs", os.path.join(BUILD_DIR, "docs"), dirs_exist_ok=True)
         print("Documentation copied successfully")
+
+
+def create_spec_file(
+    entry_point: str,
+    name: str,
+    icon_path: str,
+    additional_data: List[Tuple[str, str]]
+) -> None:
+    """Create a PyInstaller spec file with the given parameters."""
+    # ... rest of the function
 
 
 if __name__ == "__main__":
