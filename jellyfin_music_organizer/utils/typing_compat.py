@@ -1,12 +1,7 @@
 from typing import Any, List, TypeVar, Union
 
 from PyQt5.QtCore import Qt
-from typing_extensions import TypeAlias
-
-try:
-    from typing import ParamSpec
-except ImportError:
-    from typing_extensions import ParamSpec
+from typing_extensions import TypeAlias, ParamSpec
 
 # Qt-specific type aliases
 WindowFlags: TypeAlias = Union[Qt.WindowFlags, Qt.WindowType]

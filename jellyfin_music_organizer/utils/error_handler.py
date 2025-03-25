@@ -2,14 +2,12 @@
 
 import logging
 from functools import wraps
-from typing import Any, Callable, Dict, List, ParamSpec, TypeVar
-
-from typing_extensions import ParamSpec as P
+from typing import Any, Callable, Dict, List, TypeVar
+from .typing_compat import P  # Use shared ParamSpec
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
-P = ParamSpec("P")
+T = TypeVar("T")  # Local TypeVar is fine
 
 
 def handle_errors(func: Callable[P, T]) -> Callable[P, T]:
