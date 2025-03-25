@@ -1,10 +1,8 @@
 """Window state management utilities."""
 
-from typing import Any, Dict, Optional
-from pathlib import Path
-import json
 import logging
-from PyQt5.QtCore import QSettings, QByteArray
+
+from PyQt5.QtCore import QByteArray, QSettings
 from PyQt5.QtWidgets import QWidget
 
 logger = logging.getLogger(__name__)

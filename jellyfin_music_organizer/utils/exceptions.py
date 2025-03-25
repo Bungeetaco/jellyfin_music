@@ -9,7 +9,6 @@ class JellyfinMusicOrganizerError(Exception):
     """Base exception for all application errors."""
 
 
-
 class ConfigurationError(JellyfinMusicOrganizerError):
     """Raised when there's an error with configuration."""
 
@@ -63,4 +62,3 @@ class AudioPlaybackError(JellyfinMusicOrganizerError):
 class ResourceError(JellyfinMusicOrganizerError):
     """Exception raised for resource loading or management errors."""
 
-    pass

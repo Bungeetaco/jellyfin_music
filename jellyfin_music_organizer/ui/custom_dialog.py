@@ -10,14 +10,7 @@ from typing import Any, Dict
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
-from PyQt5.QtWidgets import (
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 # Other classes within files
 from ..utils.config_manager import ConfigManager
