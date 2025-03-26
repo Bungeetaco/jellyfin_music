@@ -141,16 +141,3 @@ class PlatformUI:
                 window.setStyle(QStyleFactory.create("Fusion"))
         except Exception as e:
             logger.error(f"Failed to apply style: {e}")
-
-
-class SettingsWindow(QWidget):
-    def _save_settings(self) -> None:
-        try:
-            settings_path = PlatformPaths.get_app_data_dir() / "settings.json"
-            settings_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(settings_path, "w", encoding="utf-8") as f:
-                json.dump(self.settings, f, indent=4)
-        except Exception as e:
-            logger.error(f"Failed to save settings: {e}")
-            raise

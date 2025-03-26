@@ -570,3 +570,17 @@ class MusicOrganizer(QWidget):
         # Apply platform-specific font settings
         font_settings = PlatformUI.get_font_settings()
         self.setFont(QFont(font_settings["family"], font_settings["size"]))
+
+    def get_current_settings(self) -> Dict[str, Any]:
+        """Get current settings for the settings window.
+
+        Returns:
+            Dictionary containing current settings and version
+        """
+        settings_data = self.settings.copy()
+        settings_data.update({
+            "music_folder_path": self.music_folder_path,
+            "destination_folder_path": self.destination_folder_path,
+            "version": self.version
+        })
+        return settings_data

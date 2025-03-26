@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Set, Union
 
 import openpyxl
-from PyQt5.QtCore import QSettings, Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import QSettings, Qt, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -43,6 +43,7 @@ class MusicErrorWindow(QWidget):
     windowClosed = pyqtSignal(bool)
     custom_dialog_signal = pyqtSignal(str)
     reset_copy_timer: QTimer
+    version = "1.0"  # Add version attribute
 
     def __init__(self, error_files: List[ErrorDict]) -> None:
         """Initialize the error window.
@@ -53,6 +54,8 @@ class MusicErrorWindow(QWidget):
         super().__init__()
         self.window_state = WindowStateManager("MusicErrorWindow")
         self.notification_manager = NotificationManager()
+        self.error_text = QTextEdit(self)  # Add error text widget
+        self.error_details = QTextEdit(self)  # Add error details widget
 
         if not self._validate_error_files(error_files):
             raise ValueError("Invalid error files format")
@@ -429,7 +432,7 @@ class MusicErrorWindow(QWidget):
                 self,
                 title,
                 file_filter,
-                str(Path(file_filter.split("*")[1].split(")")[0])),  # Convert Path to str
+                Path(file_filter.split("*")[1].split(")")[0])  # Convert str to Path
             )
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)
@@ -855,3 +858,16 @@ class MusicErrorWindow(QWidget):
             ]
         )
         return header
+
+    def _setup_platform_specific(self) -> None:
+        """Set up platform-specific window attributes."""
+        if platform.system() == "Darwin":
+            self.setAttribute(Qt.WA_MacShowFocusRect, False)
+
+    def saveState(self) -> QByteArray:
+        """Save window state."""
+        return QByteArray()  # Return empty state as we don't need to save additional state
+
+    def restoreState(self, state: QByteArray) -> bool:
+        """Restore window state."""
+        return True  # Always return True as we don't need to restore additional state

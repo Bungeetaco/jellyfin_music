@@ -2,13 +2,17 @@
 Performance optimization utilities for the Jellyfin Music Organizer application.
 """
 
+import json
 import logging
+import os
 from functools import lru_cache, wraps
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Callable, Dict, List, Optional
 
 from .logger import setup_logger
+
+logger = logging.getLogger(__name__)
 
 
 class CacheManager:
@@ -45,8 +49,6 @@ class CacheManager:
         cache_file = self.cache_dir / f"{key}.json"
         if cache_file.exists():
             try:
-                import json
-
                 with open(cache_file, "r") as f:
                     data = json.load(f)
                     if isinstance(data, dict):
@@ -67,8 +69,6 @@ class CacheManager:
         """
         cache_file = self.cache_dir / f"{key}.json"
         try:
-            import json
-
             with open(cache_file, "w") as f:
                 json.dump(data, f)
         except Exception as e:

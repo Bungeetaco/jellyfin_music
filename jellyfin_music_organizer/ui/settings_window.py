@@ -41,6 +41,15 @@ class SettingsWindow(QWidget):
         self.version = version
         self.drag_position: Optional[QPoint] = None
         self.reset_timer: Optional[QTimer] = None
+
+        # Initialize UI elements
+        self.destination_folder_label = QLabel()
+        self.sound_checkbox = QPushButton("Mute Sound")
+        self.sound_checkbox.setCheckable(True)
+        self.illegal_chars_checkbox = QPushButton("Remove Illegal Characters")
+        self.illegal_chars_checkbox.setCheckable(True)
+        self.reset_button = QPushButton("Reset && Save All Settings")
+
         self._setup_platform_specific()
         try:
             # Initialize attributes
@@ -48,7 +57,7 @@ class SettingsWindow(QWidget):
             self.destination_folder_path = ""
 
             # Setup and show user interface
-            self._setup_ui()
+            self.setup_ui()
 
             # Load settings from file if it exists
             self.load_settings()
@@ -56,13 +65,13 @@ class SettingsWindow(QWidget):
             logger.error(f"Failed to initialize settings window: {e}")
             raise
 
-    def showEvent(self, event: Optional[QShowEvent]) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Handle show event."""
         self.windowOpened.emit(False)
         super().showEvent(event)
         self.center_window()
 
-    def closeEvent(self, event: Optional[QCloseEvent]) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Handle window close with settings check."""
         try:
             if self._settings_changed():
@@ -108,27 +117,22 @@ class SettingsWindow(QWidget):
         self.close_button.clicked.connect(self.close)
         layout.addWidget(self.close_button)
 
-    # Mouse events allow the title bar to be dragged around
-    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Handle mouse press events for window dragging."""
         if event and event.button() == QtConstants.LeftButton:
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
             event.accept()
 
-    def mouseMoveEvent(self, event: Optional[QMouseEvent]) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """Handle mouse move events."""
-        if event is None:
-            return
-        if hasattr(self, "draggable") and self.draggable:
+        if event and self.drag_position is not None:
             if event.buttons() & QtConstants.LeftButton:
                 self.move(event.globalPos() - self.drag_position)
 
-    def mouseReleaseEvent(self, event: Optional[QMouseEvent]) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         """Handle mouse release events."""
-        if event is None:
-            return
         if event.button() == QtConstants.LeftButton:
-            self.draggable = False
+            self.drag_position = None
 
     def setup_ui(self) -> None:
         """Set up the settings window UI with platform-specific adjustments."""
@@ -369,6 +373,8 @@ class SettingsWindow(QWidget):
         # Implement error handling logic
         pass
 
-    def close(self) -> None:
+    def close(self) -> bool:
         """Override close to ensure proper cleanup."""
-        super().close()
+        result = super().close()
+        self.windowClosed.emit()
+        return result

@@ -41,14 +41,22 @@ class ReplaceSkipWindow(QWidget):
         # Setup and show user interface
         self.setup_ui()
 
-    def showEvent(self, event: Optional[QShowEvent]) -> None:
-        """Handle show event."""
+    def showEvent(self, event: QShowEvent) -> None:
+        """Handle show event.
+        
+        Args:
+            event: Show event from Qt
+        """
         self.windowOpened.emit(False)
         super().showEvent(event)
         self.center_window()
 
-    def closeEvent(self, event: Optional[QCloseEvent]) -> None:
-        """Handle close event."""
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Handle close event.
+        
+        Args:
+            event: Close event from Qt
+        """
         self.windowClosed.emit()
         super().closeEvent(event)
 

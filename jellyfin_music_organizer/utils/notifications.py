@@ -1,10 +1,12 @@
-"""Platform-independent notification handling."""
+"""Notification system for the application."""
 
 import logging
 import platform
-import sys
+import subprocess
+import winsound
 from abc import ABC, abstractmethod
-from typing import Optional
+from pathlib import Path
+from typing import Dict, Optional, Type
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -12,21 +14,24 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from .notification_config import NotificationConfig
 from .platform_utils import PlatformPaths
 from .qt_types import QtConstants
+from .resource_manager import ResourceManager
+from .threads import NotificationAudioThread
 
 logger = logging.getLogger(__name__)
 
 # Windows constants
-if sys.platform == "win32":
+if platform.system().lower() == "win32":
     try:
-        import winsound
-
-        MB_OK = winsound.MB_OK
-        MB_ICONHAND = winsound.MB_ICONHAND
-        MB_ICONASTERISK = winsound.MB_ICONASTERISK
+        from winsound import MB_OK, MB_ICONHAND, MB_ICONASTERISK
     except ImportError:
         MB_OK = 0x00000000
         MB_ICONHAND = 0x00000010
         MB_ICONASTERISK = 0x00000040
+else:
+    # Define constants for non-Windows platforms
+    MB_OK = 0x00000000
+    MB_ICONHAND = 0x00000010
+    MB_ICONASTERISK = 0x00000040
 
 SND_ALIAS = 0x00010000
 
@@ -51,7 +56,7 @@ class WindowsNotificationStrategy(NotificationStrategy):
     """Windows-specific notification implementation."""
 
     def __init__(self) -> None:
-        if sys.platform == "win32":
+        if platform.system().lower() == "win32":
             import winreg
             import winsound
 
@@ -213,8 +218,6 @@ class WindowsNotifier(SystemNotifier):
 
     def play_notification(self, sound_type: str) -> bool:
         try:
-            import winsound
-
             sound_map = {
                 "default": MB_OK,
                 "error": MB_ICONHAND,
