@@ -5,6 +5,7 @@ from typing import Dict
 
 from PyQt5.QtCore import Qt
 
+
 class ShortcutManager:
     """Manage platform-specific keyboard shortcuts."""
 
