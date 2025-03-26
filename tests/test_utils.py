@@ -9,7 +9,6 @@ This module provides comprehensive testing for core utilities including:
 """
 
 import contextlib
-import os
 import platform
 import shutil
 import tempfile
@@ -21,7 +20,6 @@ from typing import Any, Dict, Generator, Optional, Type, TypeVar
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt5.QtWidgets import QWidget
 
 from jellyfin_music_organizer.utils.config import ConfigManager
 from jellyfin_music_organizer.utils.exceptions import FileOperationError
