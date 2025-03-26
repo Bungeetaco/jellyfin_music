@@ -71,7 +71,9 @@ class TestUtils:
         return mock
 
     @staticmethod
-    def create_test_config(base_path: Path, settings: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def create_test_config(
+        base_path: Path, settings: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Create a test configuration.
 
         Args:
