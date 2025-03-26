@@ -6,7 +6,7 @@ import winreg  # Import winreg at module level
 import winsound
 from abc import ABC, abstractmethod
 from types import ModuleType
-from typing import Optional, Union
+from typing import Optional
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
