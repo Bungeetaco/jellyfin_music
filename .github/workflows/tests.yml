@@ -36,7 +36,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-        pip install no-implicit-optional
+        pip install no-implicit-optional PyQt5-stubs
         
     - name: Check for implicit optionals
       run: |

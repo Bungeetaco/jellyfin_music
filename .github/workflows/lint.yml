@@ -79,6 +79,8 @@ jobs:
         pip install black flake8 mypy isort no-implicit-optional
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        # Add PyQt5-stubs explicitly
+        pip install PyQt5-stubs
         
     - name: Check formatting with black
       run: black --check .

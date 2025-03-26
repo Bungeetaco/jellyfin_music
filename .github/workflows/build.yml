@@ -47,6 +47,7 @@ jobs:
         python -m pip install --upgrade pip || exit 1
         pip install -v -r requirements.txt || exit 1
         pip install -v -r requirements-dev.txt || exit 1
+        pip install -v PyQt5-stubs || exit 1
         pip install -v pyinstaller || exit 1
         
     - name: Build with PyInstaller
