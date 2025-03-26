@@ -2,11 +2,11 @@
 
 import logging
 import platform
+import winreg  # Import winreg at module level
 import winsound
 from abc import ABC, abstractmethod
-from typing import Optional, Union
-import winreg  # Import winreg at module level
 from types import ModuleType
+from typing import Optional, Union
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -46,10 +46,11 @@ class WindowsNotificationStrategy(NotificationStrategy):
     def __init__(self) -> None:
         self.winsound: Optional[ModuleType] = None
         self.winreg: Optional[ModuleType] = None
-        
+
         if platform.system().lower() == "win32":
             try:
                 import winsound as ws
+
                 self.winsound = ws
                 self.winreg = winreg
             except ImportError:
@@ -76,6 +77,7 @@ class WindowsNotificationStrategy(NotificationStrategy):
     def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
         try:
             from win32gui import MessageBeep
+
             MessageBeep(icon_type)
             return True
         except Exception:

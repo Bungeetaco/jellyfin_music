@@ -429,13 +429,7 @@ class MusicErrorWindow(QWidget):
         """Handle file saving with dialog manager."""
         try:
             extension = file_filter.split("*")[1].split(")")[0]
-            file_path = DialogManager.get_save_file(
-                self,
-                title,
-                file_filter,
-                None,
-                extension
-            )
+            file_path = DialogManager.get_save_file(self, title, file_filter, None, extension)
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)
         except Exception as e:
