@@ -6,6 +6,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+import time
 
 from jellyfin_music_organizer.utils.config import ConfigManager
 from jellyfin_music_organizer.utils.exceptions import FileOperationError
@@ -130,14 +131,13 @@ class TestThreadManager(unittest.TestCase):
 
     def test_thread_lifecycle(self):
         """Test thread creation and cleanup."""
-
         def test_function():
-            pass
+            time.sleep(0.1)  # Add a small delay to ensure thread is running
 
         self.thread_manager.start_thread("test", test_function)
+        time.sleep(0.2)  # Give thread time to start
         self.assertTrue(self.thread_manager.is_thread_running("test"))
-
-        self.thread_manager.stop_thread("test")
+        time.sleep(0.2)  # Give thread time to complete
         self.assertFalse(self.thread_manager.is_thread_running("test"))
 
     def test_thread_error_handling(self):

@@ -97,6 +97,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        autocrlf: input
       
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -107,33 +109,71 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-pyqt5 qtbase5-dev qt5-qmake qttools5-dev-tools xvfb
+        sudo apt-get install -y \
+          python3-pyqt5 \
+          qtbase5-dev \
+          qt5-qmake \
+          qttools5-dev-tools \
+          xvfb \
+          libpulse-mainloop-glib0 \
+          libqt5multimedia5 \
+          libqt5multimedia5-plugins \
+          qtmultimedia5-dev \
+          pulseaudio
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install qt@5
+        brew link qt@5 --force
         
+    - name: Set Git to use LF
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+      
     - name: Create README if missing
       run: |
         if [ ! -f "README.md" ]; then
           echo "# Jellyfin Music Organizer" > README.md
         fi
       shell: bash
+
+    - name: Set PYTHONIOENCODING (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        echo "PYTHONIOENCODING=utf-8" >> $GITHUB_ENV
+      shell: bash
         
     - name: Install Python dependencies
+      env:
+        PYTHONUTF8: 1
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-cov pytest-mock pytest-qt
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-        # Install in development mode with specific options
-        pip install -e . --config-settings editable_mode=compat
+        # Try different installation approaches based on OS
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          python setup.py develop
+        else
+          pip install -e . --config-settings editable_mode=compat
+        fi
+      shell: bash
         
     - name: Run tests with pytest
       env:
         QT_QPA_PLATFORM: offscreen
         DISPLAY: ":99.0"
+        PYTHONIOENCODING: utf-8
+        PYTHONUTF8: 1
+        PYTEST_ADDOPTS: "--tb=short"
       run: |
         if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
           Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         fi
         pytest tests/ -v --cov=jellyfin_music_organizer --cov-report=xml
+      shell: bash
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
