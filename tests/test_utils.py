@@ -7,6 +7,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+import threading
 
 from jellyfin_music_organizer.utils.config import ConfigManager
 from jellyfin_music_organizer.utils.exceptions import FileOperationError
@@ -95,6 +96,8 @@ class TestProgressTracker(unittest.TestCase):
     def setUp(self):
         """Set up test environment."""
         self.tracker = ProgressTracker(100)
+        # Initialize with non-zero values to avoid division by zero
+        self.tracker.update(1, "test_item", "Starting...")
 
     def test_initial_state(self):
         """Test initial progress state."""
@@ -116,7 +119,9 @@ class TestProgressTracker(unittest.TestCase):
 
     def test_time_estimation(self):
         """Test time estimation."""
-        self.tracker.update(50)
+        import time
+        time.sleep(0.1)  # Ensure some time passes
+        self.tracker.update(50)  # Update to trigger time calculation
         remaining = self.tracker.get_estimated_time_remaining()
         self.assertIsNotNone(remaining)
         self.assertGreater(remaining, 0)
@@ -131,15 +136,23 @@ class TestThreadManager(unittest.TestCase):
 
     def test_thread_lifecycle(self):
         """Test thread creation and cleanup."""
+        import time
+        event = threading.Event()
 
         def test_function():
-            time.sleep(0.1)  # Add a small delay to ensure thread is running
+            event.wait(1.0)  # Wait for up to 1 second
 
         self.thread_manager.start_thread("test", test_function)
-        time.sleep(0.2)  # Give thread time to start
-        self.assertTrue(self.thread_manager.is_thread_running("test"))
-        time.sleep(0.2)  # Give thread time to complete
-        self.assertFalse(self.thread_manager.is_thread_running("test"))
+        time.sleep(0.1)  # Give thread time to start
+        
+        try:
+            self.assertTrue(self.thread_manager.is_thread_running("test"))
+            event.set()  # Allow thread to complete
+            time.sleep(0.1)  # Give thread time to finish
+            self.assertFalse(self.thread_manager.is_thread_running("test"))
+        finally:
+            event.set()  # Ensure thread is released even if test fails
+            self.thread_manager.stop_thread("test")  # Clean up
 
     def test_thread_error_handling(self):
         """Test thread error handling."""
