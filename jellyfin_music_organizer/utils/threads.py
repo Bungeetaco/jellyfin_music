@@ -176,8 +176,7 @@ class BaseThread(QThread):
             if not values:
                 return None
 
-            # type: ignore[return-value] # tuple() returns Tuple[Any, ...] but mypy doesn't recognize it
-            return tuple(values)
+            return tuple(values)  # type: ignore[return-value]  # mypy incorrectly infers tuple() return type
 
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
