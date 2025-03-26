@@ -171,15 +171,15 @@ class BaseThread(QThread):
         try:
             if not self.kwargs:
                 return None
-            
+
             # Get values and check if empty
             values = list(self.kwargs.values())
             if not values:
                 return None
-            
+
             # Create tuple with explicit type annotation and return
             return tuple(values) if values else None
-        
+
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
             return None
