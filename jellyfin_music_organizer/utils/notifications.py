@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # Windows constants
 if platform.system().lower() == "win32":
     try:
-        from winsound import MB_OK, MB_ICONHAND, MB_ICONASTERISK
+        from winsound import MB_ICONASTERISK, MB_ICONHAND, MB_OK
     except ImportError:
         MB_OK = 0x00000000
         MB_ICONHAND = 0x00000010

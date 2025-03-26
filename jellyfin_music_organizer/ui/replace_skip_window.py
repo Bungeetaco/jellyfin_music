@@ -43,7 +43,7 @@ class ReplaceSkipWindow(QWidget):
 
     def showEvent(self, event: QShowEvent) -> None:
         """Handle show event.
-        
+
         Args:
             event: Show event from Qt
         """
@@ -53,7 +53,7 @@ class ReplaceSkipWindow(QWidget):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Handle close event.
-        
+
         Args:
             event: Close event from Qt
         """

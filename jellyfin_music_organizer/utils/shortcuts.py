@@ -43,7 +43,7 @@ class ShortcutManager:
 
 def get_platform_modifier() -> Qt.KeyboardModifier:
     """Get the platform-specific modifier key.
-    
+
     Returns:
         Qt modifier key constant
     """

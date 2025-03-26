@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Set, Union
 
 import openpyxl
-from PyQt5.QtCore import QSettings, Qt, QTimer, pyqtSignal, QByteArray
+from PyQt5.QtCore import QByteArray, QSettings, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
@@ -432,7 +432,7 @@ class MusicErrorWindow(QWidget):
                 self,
                 title,
                 file_filter,
-                Path(file_filter.split("*")[1].split(")")[0])  # Convert str to Path
+                Path(file_filter.split("*")[1].split(")")[0]),  # Convert str to Path
             )
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)

@@ -164,7 +164,7 @@ class BaseThread(QThread):
 
     def get_args(self) -> Optional[Tuple[Any, ...]]:
         """Get thread arguments safely.
-        
+
         Returns:
             Tuple of argument values if kwargs exist, None otherwise
         """

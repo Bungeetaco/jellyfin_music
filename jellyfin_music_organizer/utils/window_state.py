@@ -2,7 +2,7 @@
 
 import logging
 from functools import wraps
-from typing import Any, Dict, TypeVar, Callable
+from typing import Any, Callable, Dict, TypeVar
 
 from PyQt5.QtCore import QByteArray, QSettings
 from PyQt5.QtWidgets import QWidget
