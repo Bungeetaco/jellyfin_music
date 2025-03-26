@@ -1,6 +1,5 @@
 """Platform-specific utilities and abstractions."""
 
-import json
 import logging
 import os
 import platform

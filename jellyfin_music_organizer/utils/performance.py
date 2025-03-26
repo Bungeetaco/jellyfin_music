@@ -4,7 +4,6 @@ Performance optimization utilities for the Jellyfin Music Organizer application.
 
 import json
 import logging
-import os
 from functools import lru_cache, wraps
 from pathlib import Path
 from time import perf_counter

@@ -2,11 +2,9 @@
 
 import logging
 import platform
-import subprocess
 import winsound
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Dict, Optional, Type
+from typing import Optional
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -14,15 +12,13 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from .notification_config import NotificationConfig
 from .platform_utils import PlatformPaths
 from .qt_types import QtConstants
-from .resource_manager import ResourceManager
-from .threads import NotificationAudioThread
 
 logger = logging.getLogger(__name__)
 
 # Windows constants
 if platform.system().lower() == "win32":
     try:
-        from winsound import MB_ICONASTERISK, MB_ICONHAND, MB_OK
+        from winsound import MB_OK, MB_ICONHAND, MB_ICONASTERISK
     except ImportError:
         MB_OK = 0x00000000
         MB_ICONHAND = 0x00000010
@@ -237,11 +233,10 @@ class MacOSNotifier(SystemNotifier):
 
     def play_notification(self, sound_type: str) -> bool:
         try:
-            import subprocess
-
+            from subprocess import run
             sound_map = {"default": "Tink", "complete": "Glass", "error": "Basso"}
             sound = sound_map.get(sound_type, "Tink")
-            subprocess.run(["afplay", f"/System/Library/Sounds/{sound}.aiff"])
+            run(["afplay", f"/System/Library/Sounds/{sound}.aiff"])
             return True
         except Exception as e:
             logger.error(f"macOS notification failed: {e}")
@@ -253,11 +248,10 @@ class LinuxNotifier(SystemNotifier):
 
     def play_notification(self, sound_type: str) -> bool:
         try:
-            import subprocess
-
+            from subprocess import run
             sound_map = {"default": "bell", "complete": "complete", "error": "dialog-error"}
             sound = sound_map.get(sound_type, "bell")
-            subprocess.run(["paplay", f"/usr/share/sounds/freedesktop/stereo/{sound}.oga"])
+            run(["paplay", f"/usr/share/sounds/freedesktop/stereo/{sound}.oga"])
             return True
         except Exception as e:
             logger.error(f"Linux notification failed: {e}")
