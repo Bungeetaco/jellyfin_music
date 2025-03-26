@@ -145,7 +145,7 @@ class TestConfigManager(unittest.TestCase):
         system = platform.system().lower()
         self.config.load()
         platform_config = self.config.get("platform_specific", {})
-        
+
         if system == "windows":
             self.assertFalse(platform_config.get("use_native_dialogs"))
         elif system == "darwin":
@@ -178,10 +178,7 @@ class TestResourceManager(unittest.TestCase):
     def test_register_resource(self) -> None:
         """Test resource registration."""
         self.resource_manager.register_resource("test", "resources/test.txt")
-        self.assertEqual(
-            self.resource_manager.get_resource_path("test"),
-            self.test_file
-        )
+        self.assertEqual(self.resource_manager.get_resource_path("test"), self.test_file)
 
     def test_get_resource_content(self) -> None:
         """Test getting resource content."""
@@ -204,7 +201,7 @@ class TestResourceManager(unittest.TestCase):
         """Test resource validation."""
         self.resource_manager.register_resource("test", "resources/test.txt")
         self.assertTrue(self.resource_manager.validate_resources())
-        
+
         # Test with missing resource
         self.test_file.unlink()
         self.assertFalse(self.resource_manager.validate_resources())
@@ -321,6 +318,7 @@ class TestThreadManager(unittest.TestCase):
 
     def test_thread_error_handling(self) -> None:
         """Test thread error handling."""
+
         def error_function() -> None:
             raise ValueError("Test error")
 
@@ -341,17 +339,11 @@ class TestThreadManager(unittest.TestCase):
 
         # Start multiple threads
         for i, event in enumerate(events):
-            self.thread_manager.start_thread(
-                f"thread_{i}",
-                thread_function,
-                args=(event, i)
-            )
+            self.thread_manager.start_thread(f"thread_{i}", thread_function, args=(event, i))
 
         # Verify all threads are running
         for i in range(3):
-            self.assertTrue(
-                self.thread_manager.is_thread_running(f"thread_{i}")
-            )
+            self.assertTrue(self.thread_manager.is_thread_running(f"thread_{i}"))
 
         # Allow threads to complete
         for event in events:
@@ -361,19 +353,14 @@ class TestThreadManager(unittest.TestCase):
 
         # Verify all threads completed
         for i in range(3):
-            self.assertFalse(
-                self.thread_manager.is_thread_running(f"thread_{i}")
-            )
+            self.assertFalse(self.thread_manager.is_thread_running(f"thread_{i}"))
 
         # Verify results
         self.assertEqual(sorted(results), [0, 1, 2])
 
     def test_thread_cleanup(self) -> None:
         """Test proper thread cleanup."""
-        self.thread_manager.start_thread(
-            "test",
-            lambda: time.sleep(0.1)
-        )
+        self.thread_manager.start_thread("test", lambda: time.sleep(0.1))
         time.sleep(0.2)  # Let thread complete naturally
         self.assertFalse(self.thread_manager.is_thread_running("test"))
         self.assertNotIn("test", self.thread_manager.active_threads)
@@ -381,6 +368,7 @@ class TestThreadManager(unittest.TestCase):
     @patch("logging.Logger.error")
     def test_thread_exception_logging(self, mock_error: MagicMock) -> None:
         """Test exception logging in threads."""
+
         def raising_function() -> None:
             raise RuntimeError("Test exception")
 
