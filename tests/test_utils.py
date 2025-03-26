@@ -72,7 +72,8 @@ class TestUtils:
 
     @staticmethod
     def create_test_config(
-        base_path: Path, settings: Optional[Dict[str, Any]] = None
+        base_path: Path,
+        settings: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Create a test configuration.
 
@@ -177,7 +178,10 @@ class TestResourceManager(unittest.TestCase):
     def test_register_resource(self) -> None:
         """Test resource registration."""
         self.resource_manager.register_resource("test", "resources/test.txt")
-        self.assertEqual(self.resource_manager.get_resource_path("test"), self.test_file)
+        self.assertEqual(
+            self.resource_manager.get_resource_path("test"),
+            self.test_file,
+        )
 
     def test_get_resource_content(self) -> None:
         """Test getting resource content."""
@@ -334,7 +338,11 @@ class TestThreadManager(unittest.TestCase):
 
         # Start multiple threads
         for i, event in enumerate(events):
-            self.thread_manager.start_thread(f"thread_{i}", thread_function, args=(event, i))
+            self.thread_manager.start_thread(
+                f"thread_{i}",
+                thread_function,
+                args=(event, i),
+            )
 
         # Verify all threads are running
         for i in range(3):
