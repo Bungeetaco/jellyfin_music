@@ -78,6 +78,7 @@ class WindowsNotificationStrategy(NotificationStrategy):
         try:
             # Move import inside try block and add type ignore for missing module
             from win32gui import MessageBeep  # type: ignore[import]
+
             MessageBeep(icon_type)
             return True
         except ImportError:
