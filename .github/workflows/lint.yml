@@ -76,8 +76,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black flake8 mypy isort
+        pip install black flake8 mypy isort no-implicit-optional
         pip install -r requirements.txt
+        pip install -r requirements-dev.txt
         
     - name: Check formatting with black
       run: black --check .
@@ -121,7 +122,12 @@ jobs:
           --warn-redundant-casts \
           --warn-unused-ignores \
           --warn-return-any \
-          --no-warn-unused-ignores
+          --no-warn-unused-ignores \
+          --no-implicit-optional
 
     - name: Check import sorting
       run: isort --check-only --diff .
+
+    - name: Check for implicit optionals
+      run: |
+        no_implicit_optional jellyfin_music_organizer
