@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 if sys.platform == "win32":
     try:
         import winsound
+
         MB_OK = winsound.MB_OK
         MB_ICONHAND = winsound.MB_ICONHAND
         MB_ICONASTERISK = winsound.MB_ICONASTERISK
@@ -28,6 +29,7 @@ if sys.platform == "win32":
         MB_ICONASTERISK = 0x00000040
 
 SND_ALIAS = 0x00010000
+
 
 class NotificationStrategy(ABC):
     """Abstract base class for platform-specific notifications."""

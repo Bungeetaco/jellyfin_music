@@ -3,8 +3,8 @@ from logging import getLogger
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import QEvent, pyqtSignal, Qt
-from PyQt5.QtGui import QIcon, QMouseEvent, QShowEvent, QCloseEvent
+from PyQt5.QtCore import QEvent, Qt, pyqtSignal
+from PyQt5.QtGui import QCloseEvent, QIcon, QMouseEvent, QShowEvent
 from PyQt5.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -165,8 +165,7 @@ class ReplaceSkipWindow(QWidget):
         self.bottom_right_grip = QSizeGrip(self)
         self.bottom_right_grip.setToolTip("Resize window")
         hbox_progress_grip_layout.addWidget(
-            self.bottom_right_grip, 0, 
-            Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight
+            self.bottom_right_grip, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight
         )
 
         # Populate QListWidget

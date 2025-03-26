@@ -4,8 +4,8 @@ Main entry point for the Jellyfin Music Organizer application.
 
 import sys
 from logging import Logger
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
