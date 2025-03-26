@@ -166,13 +166,14 @@ class BaseThread(QThread):
         """Get thread arguments safely.
 
         Returns:
-            Tuple of argument values if kwargs exist, None otherwise
+            Optional[Tuple[Any, ...]]: Tuple of argument values if kwargs exist, None otherwise
         """
         try:
             if not self.kwargs:
                 return None
-            values = tuple(self.kwargs.values())
-            return values if values else None
+            # Create tuple explicitly to ensure proper type
+            args_tuple: Tuple[Any, ...] = tuple(self.kwargs.values())
+            return args_tuple if args_tuple else None
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
             return None

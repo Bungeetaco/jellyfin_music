@@ -2,9 +2,10 @@
 
 import logging
 import platform
-import winreg  # Import winreg at module level
+import winreg
 import winsound
 from abc import ABC, abstractmethod
+from subprocess import run  # Move run import to top level
 from types import ModuleType
 from typing import Optional
 
@@ -49,9 +50,7 @@ class WindowsNotificationStrategy(NotificationStrategy):
 
         if platform.system().lower() == "win32":
             try:
-                import winsound as ws
-
-                self.winsound = ws
+                self.winsound = winsound  # Use top-level import
                 self.winreg = winreg
             except ImportError:
                 logger.warning("Failed to import Windows sound modules")
@@ -227,8 +226,6 @@ class MacOSNotifier(SystemNotifier):
 
     def play_notification(self, sound_type: str) -> bool:
         try:
-            from subprocess import run
-
             sound_map = {"default": "Tink", "complete": "Glass", "error": "Basso"}
             sound = sound_map.get(sound_type, "Tink")
             run(["afplay", f"/System/Library/Sounds/{sound}.aiff"])
@@ -243,8 +240,6 @@ class LinuxNotifier(SystemNotifier):
 
     def play_notification(self, sound_type: str) -> bool:
         try:
-            from subprocess import run
-
             sound_map = {"default": "bell", "complete": "complete", "error": "dialog-error"}
             sound = sound_map.get(sound_type, "bell")
             run(["paplay", f"/usr/share/sounds/freedesktop/stereo/{sound}.oga"])
