@@ -23,6 +23,6 @@ sphinx-autodoc-typehints>=1.18.0
 sphinx-copybutton>=0.5.0
 
 # Development tools
-pre-commit==3.6.0
+pre-commit>=1.15.2
 tox==4.15.0
 coverage==7.4.1 

@@ -33,7 +33,10 @@ repos:
     rev: v1.8.0
     hooks:
     -   id: mypy
-        additional_dependencies: [types-PyQt5, types-mutagen]
+        additional_dependencies: 
+            - PyQt5-stubs
+            - types-mutagen
+            - types-requests>=2.31.0
 
 -   repo: https://github.com/PyCQA/pylint
     rev: v3.0.3
