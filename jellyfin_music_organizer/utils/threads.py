@@ -176,10 +176,8 @@ class BaseThread(QThread):
             if not values:
                 return None
 
-            # Use explicit cast to ensure proper type inference
-            from typing import cast
-
-            return cast(Tuple[Any, ...], tuple(values))
+            # Create tuple directly - tuple() already returns Tuple[Any, ...]
+            return tuple(values)
 
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
