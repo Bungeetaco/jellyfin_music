@@ -143,14 +143,12 @@ class TestProgressTracker(unittest.TestCase):
     def setUp(self) -> None:
         """Set up test environment."""
         self.tracker = ProgressTracker(100)
-        # Initialize with non-zero values to avoid division by zero
-        self.tracker.update(1, "test_item", "Starting...")
 
     def test_initial_state(self):
         """Test initial progress state."""
         self.assertEqual(self.tracker.current, 0)
         self.assertEqual(self.tracker.total, 100)
-        self.assertEqual(self.tracker.status, "Starting...")
+        self.assertEqual(self.tracker.status, "")
 
     def test_progress_update(self):
         """Test progress updates."""
@@ -166,6 +164,8 @@ class TestProgressTracker(unittest.TestCase):
 
     def test_time_estimation(self) -> None:
         """Test time estimation."""
+        # Initialize with non-zero value for time estimation
+        self.tracker.update(1, "test_item", "Starting...")
         time.sleep(0.1)  # Ensure some time passes
         self.tracker.update(50)  # Update to trigger time calculation
         remaining = self.tracker.get_estimated_time_remaining()
