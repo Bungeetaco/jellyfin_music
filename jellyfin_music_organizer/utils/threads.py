@@ -178,6 +178,7 @@ class BaseThread(QThread):
 
             # Use explicit cast to ensure proper type inference
             from typing import cast
+
             return cast(Tuple[Any, ...], tuple(values))
 
         except Exception as e:
