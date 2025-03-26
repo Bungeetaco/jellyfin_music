@@ -32,6 +32,7 @@ jobs:
         
     - name: Format with black and isort
       run: |
+        # Format all Python files
         black .
         isort .
         
@@ -42,6 +43,9 @@ jobs:
         
         # Fix organize_thread.py
         sed -i 's/metadata_dict = self.metadata_handler.extract_metadata(file_path)/return self.metadata_handler.extract_metadata(file_path)/' jellyfin_music_organizer/core/organize_thread.py
+        
+        # Ensure test_utils.py is properly formatted
+        black tests/test_utils.py
         
     - name: Configure Git
       run: |
