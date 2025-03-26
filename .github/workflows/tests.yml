@@ -22,7 +22,9 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Run basic tests
-        run: pytest -v tests/basic
+        run: |
+          # Run all tests instead of just basic tests since there's no basic directory
+          pytest -v tests/
 
   test:
     needs: basic-test  # Now depends on basic-test instead of lint
