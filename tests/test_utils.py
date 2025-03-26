@@ -4,9 +4,9 @@ Unit tests for the Jellyfin Music Organizer utility modules.
 
 import os
 import tempfile
+import time
 import unittest
 from pathlib import Path
-import time
 
 from jellyfin_music_organizer.utils.config import ConfigManager
 from jellyfin_music_organizer.utils.exceptions import FileOperationError
@@ -131,6 +131,7 @@ class TestThreadManager(unittest.TestCase):
 
     def test_thread_lifecycle(self):
         """Test thread creation and cleanup."""
+
         def test_function():
             time.sleep(0.1)  # Add a small delay to ensure thread is running
 
