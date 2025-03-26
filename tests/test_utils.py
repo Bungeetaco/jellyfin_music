@@ -2,18 +2,67 @@
 Unit tests for the Jellyfin Music Organizer utility modules.
 """
 
+import contextlib
 import os
+import shutil
 import tempfile
 import threading
 import time
 import unittest
 from pathlib import Path
+from typing import Any, Dict, Generator, Optional, Type, TypeVar
+from unittest.mock import MagicMock
 
 from jellyfin_music_organizer.utils.config import ConfigManager
 from jellyfin_music_organizer.utils.exceptions import FileOperationError
 from jellyfin_music_organizer.utils.progress import ProgressTracker
 from jellyfin_music_organizer.utils.resources import ResourceManager
 from jellyfin_music_organizer.utils.threads import ThreadManager
+
+T = TypeVar("T")
+
+
+class TestUtils:
+    """Utilities for testing with proper type safety."""
+
+    @staticmethod
+    @contextlib.contextmanager
+    def temp_directory() -> Generator[Path, None, None]:
+        """Create a temporary directory for testing.
+
+        Yields:
+            Path: A temporary directory path that will be cleaned up after use
+        """
+        temp_dir = Path(tempfile.mkdtemp())
+        try:
+            yield temp_dir
+        finally:
+            shutil.rmtree(temp_dir)
+
+    @staticmethod
+    def create_mock_widget(widget_class: Type[T]) -> MagicMock:
+        """Create a mock widget with common attributes."""
+        mock = MagicMock(spec=widget_class)
+        mock.windowTitle.return_value = "Test Window"
+        mock.isVisible.return_value = True
+        return mock
+
+    @staticmethod
+    def create_test_config(
+        base_path: Path, settings: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Create a test configuration."""
+        config = {
+            "music_folder_path": str(base_path / "music"),
+            "destination_folder_path": str(base_path / "organized"),
+            "mute_sound": True,
+            "version": "test",
+            "window_state": {},
+            "platform_specific": {"use_native_dialogs": False},
+        }
+        if settings:
+            config.update(settings)
+        return config
 
 
 class TestConfigManager(unittest.TestCase):
@@ -69,8 +118,6 @@ class TestResourceManager(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test environment."""
-        import shutil
-
         shutil.rmtree(self.temp_dir)
 
     def test_register_resource(self):
@@ -93,7 +140,7 @@ class TestResourceManager(unittest.TestCase):
 class TestProgressTracker(unittest.TestCase):
     """Test cases for ProgressTracker."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.tracker = ProgressTracker(100)
         # Initialize with non-zero values to avoid division by zero
@@ -117,10 +164,8 @@ class TestProgressTracker(unittest.TestCase):
         self.tracker.update(75)
         self.assertEqual(self.tracker.get_percentage(), 75.0)
 
-    def test_time_estimation(self):
+    def test_time_estimation(self) -> None:
         """Test time estimation."""
-        import time
-
         time.sleep(0.1)  # Ensure some time passes
         self.tracker.update(50)  # Update to trigger time calculation
         remaining = self.tracker.get_estimated_time_remaining()
@@ -131,17 +176,15 @@ class TestProgressTracker(unittest.TestCase):
 class TestThreadManager(unittest.TestCase):
     """Test cases for ThreadManager."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.thread_manager = ThreadManager()
 
-    def test_thread_lifecycle(self):
+    def test_thread_lifecycle(self) -> None:
         """Test thread creation and cleanup."""
-        import time
-
         event = threading.Event()
 
-        def test_function():
+        def test_function() -> None:
             event.wait(1.0)  # Wait for up to 1 second
 
         self.thread_manager.start_thread("test", test_function)
