@@ -1,8 +1,8 @@
 """Window state management utilities."""
 
 import logging
-from typing import Any, Dict, TypeVar, Callable
 from functools import wraps
+from typing import Any, Callable, Dict, TypeVar
 
 from PyQt5.QtCore import QByteArray, QSettings
 from PyQt5.QtWidgets import QWidget
@@ -36,6 +36,7 @@ class WindowStateManager:
         Returns:
             bool: True if state was saved successfully
         """
+
         @handle_errors(logger=logger)
         def _save() -> bool:
             geometry = window.saveGeometry()
@@ -50,7 +51,7 @@ class WindowStateManager:
             # Cache current settings
             self._state_cache = self._get_current_state()
             return True
-        
+
         return _save()
 
     def restore_state(self, window: T) -> bool:
@@ -62,6 +63,7 @@ class WindowStateManager:
         Returns:
             bool: True if state was restored successfully
         """
+
         @handle_errors(logger=logger)
         def _restore() -> bool:
             restored = False
@@ -76,7 +78,7 @@ class WindowStateManager:
                     restored = window.restoreState(state) and restored
 
             return restored
-        
+
         return _restore()
 
     def _get_current_state(self) -> Dict[str, Any]:

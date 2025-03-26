@@ -15,7 +15,7 @@ class TestUtils:
     @contextlib.contextmanager
     def temp_directory() -> Generator[Path, None, None]:
         """Create a temporary directory for testing.
-        
+
         Yields:
             Path: A temporary directory path that will be cleaned up after use
         """

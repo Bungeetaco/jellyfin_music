@@ -228,8 +228,9 @@ class MusicErrorWindow(QWidget):
             self.bottom_right_grip = QSizeGrip(self)
             self.bottom_right_grip.setToolTip("Resize window")
             hbox_buttons_grip_layout.addWidget(
-                self.bottom_right_grip, 0, 
-                Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight
+                self.bottom_right_grip,
+                0,
+                Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight,
             )
 
             # Populate QListWidget
@@ -425,10 +426,10 @@ class MusicErrorWindow(QWidget):
         """Handle file saving with dialog manager."""
         try:
             file_path = DialogManager.get_save_file(
-                self, 
-                title, 
-                file_filter, 
-                str(Path(file_filter.split("*")[1].split(")")[0]))  # Convert Path to str
+                self,
+                title,
+                file_filter,
+                str(Path(file_filter.split("*")[1].split(")")[0])),  # Convert Path to str
             )
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)

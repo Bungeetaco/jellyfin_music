@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from PyQt5.QtCore import QPoint, QTimer, pyqtSignal
-from PyQt5.QtGui import QIcon, QMouseEvent, QShowEvent, QCloseEvent
+from PyQt5.QtGui import QCloseEvent, QIcon, QMouseEvent, QShowEvent
 from PyQt5.QtWidgets import (
     QApplication,
     QFileDialog,
