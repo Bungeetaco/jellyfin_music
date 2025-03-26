@@ -4,7 +4,9 @@ import logging
 import platform
 import winsound
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Union
+import winreg  # Import winreg at module level
+from types import ModuleType
 
 from PyQt5.QtCore import QObject, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -16,19 +18,9 @@ from .qt_types import QtConstants
 logger = logging.getLogger(__name__)
 
 # Windows constants
-if platform.system().lower() == "win32":
-    try:
-        from winsound import MB_ICONASTERISK, MB_ICONHAND, MB_OK
-    except ImportError:
-        MB_OK = 0x00000000
-        MB_ICONHAND = 0x00000010
-        MB_ICONASTERISK = 0x00000040
-else:
-    # Define constants for non-Windows platforms
-    MB_OK = 0x00000000
-    MB_ICONHAND = 0x00000010
-    MB_ICONASTERISK = 0x00000040
-
+MB_OK = 0x00000000
+MB_ICONHAND = 0x00000010
+MB_ICONASTERISK = 0x00000040
 SND_ALIAS = 0x00010000
 
 
@@ -52,21 +44,22 @@ class WindowsNotificationStrategy(NotificationStrategy):
     """Windows-specific notification implementation."""
 
     def __init__(self) -> None:
+        self.winsound: Optional[ModuleType] = None
+        self.winreg: Optional[ModuleType] = None
+        
         if platform.system().lower() == "win32":
-            import winreg
-            import winsound
-
-            self.winsound = winsound
-            self.winreg = winreg
-        else:
-            self.winsound = None
-            self.winreg = None
+            try:
+                import winsound as ws
+                self.winsound = ws
+                self.winreg = winreg
+            except ImportError:
+                logger.warning("Failed to import Windows sound modules")
 
     def play_sound(self, sound_name: str) -> bool:
         if not self.winsound:
             return False
         try:
-            self.winsound.PlaySound(sound_name, self.winsound.SND_ALIAS)
+            self.winsound.PlaySound(sound_name, SND_ALIAS)
             return True
         except Exception:
             return False
@@ -83,7 +76,6 @@ class WindowsNotificationStrategy(NotificationStrategy):
     def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
         try:
             from win32gui import MessageBeep
-
             MessageBeep(icon_type)
             return True
         except Exception:

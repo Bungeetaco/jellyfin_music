@@ -428,11 +428,13 @@ class MusicErrorWindow(QWidget):
     ) -> None:
         """Handle file saving with dialog manager."""
         try:
+            extension = file_filter.split("*")[1].split(")")[0]
             file_path = DialogManager.get_save_file(
                 self,
                 title,
                 file_filter,
-                Path(file_filter.split("*")[1].split(")")[0]),  # Convert str to Path
+                None,
+                extension
             )
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)
@@ -608,7 +610,7 @@ class MusicErrorWindow(QWidget):
         """Update the current error display."""
         if self.current_error_index < len(self.error_list):
             error = self.error_list[self.current_error_index]
-            self.error_text.setText(error["error"])
+            self.error_text.setText(str(error["error"]))
             self.current_error_index += 1
         else:
             self.error_text.setText("No more errors.")

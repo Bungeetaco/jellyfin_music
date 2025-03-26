@@ -171,7 +171,8 @@ class BaseThread(QThread):
         try:
             if not self.kwargs:
                 return None
-            return tuple(self.kwargs.values())
+            values = tuple(self.kwargs.values())
+            return values if values else None
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
             return None
