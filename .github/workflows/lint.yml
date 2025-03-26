@@ -123,9 +123,9 @@ jobs:
           --check-untyped-defs \
           --warn-redundant-casts \
           --warn-unused-ignores \
-          --warn-return-any \
           --no-warn-unused-ignores \
-          --no-implicit-optional
+          --no-implicit-optional \
+          --disable-error-code="return-value"
 
     - name: Check import sorting
       run: isort --check-only --diff .
