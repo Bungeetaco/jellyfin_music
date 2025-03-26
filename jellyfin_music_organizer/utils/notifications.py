@@ -74,11 +74,15 @@ class WindowsNotificationStrategy(NotificationStrategy):
             return False
 
     def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
+        """Show notification message."""
         try:
-            from win32gui import MessageBeep
-
+            # Move import inside try block and add type ignore for missing module
+            from win32gui import MessageBeep  # type: ignore[import]
             MessageBeep(icon_type)
             return True
+        except ImportError:
+            logger.warning("win32gui module not available")
+            return False
         except Exception:
             return False
 

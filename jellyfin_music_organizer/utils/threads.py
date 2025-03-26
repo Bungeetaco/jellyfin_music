@@ -176,7 +176,7 @@ class BaseThread(QThread):
             if not values:
                 return None
 
-            # Create tuple directly - tuple() already returns Tuple[Any, ...]
+            # type: ignore[return-value] # tuple() returns Tuple[Any, ...] but mypy doesn't recognize it
             return tuple(values)
 
         except Exception as e:
