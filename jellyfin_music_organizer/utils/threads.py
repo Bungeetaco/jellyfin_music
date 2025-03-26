@@ -172,10 +172,13 @@ class BaseThread(QThread):
             if not self.kwargs:
                 return None
 
-            # Convert values to tuple with explicit type annotation
-            args_tuple: Tuple[Any, ...] = tuple(self.kwargs.values())
-            # Return None for empty tuple, otherwise return the tuple
-            return None if not args_tuple else args_tuple
+            values = list(self.kwargs.values())
+            if not values:
+                return None
+
+            # Use explicit cast to ensure proper type inference
+            from typing import cast
+            return cast(Tuple[Any, ...], tuple(values))
 
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
