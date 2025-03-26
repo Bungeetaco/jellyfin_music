@@ -1,8 +1,7 @@
 """Window state management utilities."""
 
 import logging
-from functools import wraps
-from typing import Any, Callable, Dict, TypeVar
+from typing import Any, Dict, TypeVar
 
 from PyQt5.QtCore import QByteArray, QSettings
 from PyQt5.QtWidgets import QWidget

@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Tuple
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QDesktopWidget, QStyleFactory, QWidget
 
-from .qt_types import QtConstants
+from .qt_types import QtConstants, WindowFlags
 
 logger = logging.getLogger(__name__)
 

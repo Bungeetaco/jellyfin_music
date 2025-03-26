@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
-from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar
+from typing import Callable, Dict, Generic, List, Optional, TypeVar
 
 T = TypeVar("T")
 

@@ -6,17 +6,16 @@ import json
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional
 
 from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QIcon, QMouseEvent
 from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
-# Other classes within files
 from ..utils.config_manager import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
-from ..utils.qt_types import QtConstants, WindowFlags, WindowType
+from ..utils.qt_types import QtConstants, WindowFlags
 from ..utils.resource_manager import ResourceManager
 
 logger = getLogger(__name__)

@@ -6,7 +6,7 @@ import threading
 from logging import getLogger
 from pathlib import Path
 from queue import Queue
-from typing import Any, Callable, Dict, Optional, Tuple, cast
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer

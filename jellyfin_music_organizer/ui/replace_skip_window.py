@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import QEvent, Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QCloseEvent, QIcon, QMouseEvent, QShowEvent
 from PyQt5.QtWidgets import (
     QApplication,
@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from ..utils.qt_types import AlignmentFlag, MouseButton, QtConstants
+from ..utils.qt_types import QtConstants
 
 logger = getLogger(__name__)
 
