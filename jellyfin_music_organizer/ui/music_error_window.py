@@ -430,15 +430,12 @@ class MusicErrorWindow(QWidget):
         try:
             # Get default directory
             default_dir = self._get_default_save_directory()
-            
+
             # Call get_save_file with correct parameter names
             file_path = DialogManager.get_save_file(
-                parent=self,
-                caption=title,
-                initial_dir=default_dir,
-                filter_str=file_filter
+                parent=self, caption=title, initial_dir=default_dir, filter_str=file_filter
             )
-            
+
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)
         except Exception as e:
