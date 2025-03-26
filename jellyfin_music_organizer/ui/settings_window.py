@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from PyQt5.QtCore import QPoint, QTimer, pyqtSignal
-from PyQt5.QtGui import QIcon, QMouseEvent
+from PyQt5.QtGui import QIcon, QMouseEvent, QShowEvent, QCloseEvent
 from PyQt5.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -56,13 +56,13 @@ class SettingsWindow(QWidget):
             logger.error(f"Failed to initialize settings window: {e}")
             raise
 
-    def showEvent(self, event: QMouseEvent) -> None:
+    def showEvent(self, event: Optional[QShowEvent]) -> None:
         """Handle show event."""
         self.windowOpened.emit(False)
         super().showEvent(event)
         self.center_window()
 
-    def closeEvent(self, event: Any) -> None:
+    def closeEvent(self, event: Optional[QCloseEvent]) -> None:
         """Handle window close with settings check."""
         try:
             if self._settings_changed():
@@ -115,14 +115,18 @@ class SettingsWindow(QWidget):
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
             event.accept()
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+    def mouseMoveEvent(self, event: Optional[QMouseEvent]) -> None:
         """Handle mouse move events."""
+        if event is None:
+            return
         if hasattr(self, "draggable") and self.draggable:
             if event.buttons() & QtConstants.LeftButton:
                 self.move(event.globalPos() - self.drag_position)
 
-    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+    def mouseReleaseEvent(self, event: Optional[QMouseEvent]) -> None:
         """Handle mouse release events."""
+        if event is None:
+            return
         if event.button() == QtConstants.LeftButton:
             self.draggable = False
 
@@ -158,7 +162,7 @@ class SettingsWindow(QWidget):
 
             # Apply platform-specific window flags
             if is_mac:
-                flags: Union[WindowFlags, WindowType] = QtConstants.Window
+                flags: WindowFlags = QtConstants.Window
             else:
                 flags = QtConstants.Window | QtConstants.FramelessWindowHint
             self.setWindowFlags(flags)
@@ -364,3 +368,7 @@ class SettingsWindow(QWidget):
         """Show error message to user."""
         # Implement error handling logic
         pass
+
+    def close(self) -> None:
+        """Override close to ensure proper cleanup."""
+        super().close()

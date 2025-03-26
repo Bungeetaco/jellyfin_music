@@ -4,7 +4,7 @@ import os
 import platform
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Set, Union
 
 import openpyxl
 from PyQt5.QtCore import QSettings, Qt, QTimer, pyqtSignal
@@ -72,6 +72,7 @@ class MusicErrorWindow(QWidget):
             self.center_window()
         except Exception as e:
             logger.error(f"Show event error: {e}")
+            return None  # Explicit return for error case
 
     def closeEvent(self, event: Any) -> None:
         """Handle window close with state saving."""
@@ -81,6 +82,7 @@ class MusicErrorWindow(QWidget):
         except Exception as e:
             logger.error(f"Close event error: {e}")
             event.accept()
+            return None  # Explicit return for error case
 
     def setup_titlebar(self) -> None:
         """Set up the custom titlebar."""
@@ -115,24 +117,24 @@ class MusicErrorWindow(QWidget):
         hbox_title_layout.addWidget(self.close_button)
         self.close_button.clicked.connect(self.close)
 
-        hbox_title_layout.setAlignment(Qt.AlignRight)
+        hbox_title_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     # Mouse events allow the title bar to be dragged around
     def mousePressEvent(self, event: Any) -> None:
         """Handle mouse press event for window dragging."""
-        if event.button() == Qt.LeftButton and event.y() <= self.title_bar.height():
+        if event.button() == Qt.MouseButton.LeftButton and event.y() <= self.title_bar.height():
             self.draggable = True
             self.offset = event.globalPos() - self.pos()
 
     def mouseMoveEvent(self, event: Any) -> None:
         """Handle mouse move event for window dragging."""
         if hasattr(self, "draggable") and self.draggable:
-            if event.buttons() & Qt.LeftButton:
+            if event.buttons() & Qt.MouseButton.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
     def mouseReleaseEvent(self, event: Any) -> None:
         """Handle mouse release event for window dragging."""
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.draggable = False
 
     def setup_ui(self) -> None:
@@ -226,7 +228,8 @@ class MusicErrorWindow(QWidget):
             self.bottom_right_grip = QSizeGrip(self)
             self.bottom_right_grip.setToolTip("Resize window")
             hbox_buttons_grip_layout.addWidget(
-                self.bottom_right_grip, 0, Qt.AlignBottom | Qt.AlignRight
+                self.bottom_right_grip, 0, 
+                Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight
             )
 
             # Populate QListWidget
@@ -422,7 +425,10 @@ class MusicErrorWindow(QWidget):
         """Handle file saving with dialog manager."""
         try:
             file_path = DialogManager.get_save_file(
-                self, title, file_filter, Path(file_filter.split("*")[1].split(")")[0])
+                self, 
+                title, 
+                file_filter, 
+                str(Path(file_filter.split("*")[1].split(")")[0]))  # Convert Path to str
             )
             if file_path:
                 self._save_file(str(file_path), save_function, error_message, success_button)
@@ -594,7 +600,7 @@ class MusicErrorWindow(QWidget):
         self.current_error_index = 0
         self.update_current_error()
 
-    def update_current_error(self):
+    def update_current_error(self) -> None:
         """Update the current error display."""
         if self.current_error_index < len(self.error_list):
             error = self.error_list[self.current_error_index]
@@ -603,14 +609,14 @@ class MusicErrorWindow(QWidget):
         else:
             self.error_text.setText("No more errors.")
 
-    def show_error_message(self, title, message):
-        # Implement the logic to show an error message to the user
+    def show_error_message(self, title: str, message: str) -> None:
+        """Show error message to the user."""
         print(f"{title}: {message}")
 
-    def process_selected_action(self):
+    def process_selected_action(self) -> None:
+        """Process the selected action."""
         try:
-            # Implement the logic to process the selected action
-            pass
+            pass  # Implement the logic
         except Exception:
             self.show_error_message("Error", "Failed to process the selected action.")
 
@@ -694,9 +700,11 @@ class MusicErrorWindow(QWidget):
 
     def _get_unique_metadata_keys(self) -> List[str]:
         """Get a list of unique metadata keys from all error files."""
-        keys = set()
+        keys: Set[str] = set()
         for info in self.error_files:
-            keys.update(info["metadata_dict"].keys())
+            metadata = info.get("metadata_dict", {})
+            if isinstance(metadata, dict):
+                keys.update(metadata.keys())
         return sorted(list(keys))
 
     def _format_excel_row(self, info: Dict[str, Any]) -> List[str]:
@@ -815,7 +823,7 @@ class MusicErrorWindow(QWidget):
     def _save_file(
         self,
         file_path: str,
-        save_function: callable,
+        save_function: Callable[[str], None],
         error_message: str,
         success_button: QPushButton,
     ) -> None:

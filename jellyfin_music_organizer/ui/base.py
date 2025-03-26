@@ -65,11 +65,9 @@ class BaseDialog(QDialog):
 
     def _setup_window_flags(self) -> None:
         """Set up window flags based on platform."""
-        flags: Union[WindowFlags, WindowType] = (
-            QtConstants.Dialog | QtConstants.WindowStaysOnTopHint
-        )
+        flags: WindowFlags = QtConstants.Dialog | QtConstants.WindowStaysOnTopHint
         if platform.system() == "Windows":
-            flags |= QtConstants.FramelessWindowHint
+            flags = flags | QtConstants.FramelessWindowHint
         self.setWindowFlags(flags)
 
 
@@ -87,6 +85,7 @@ class StatefulWidget(QWidget):
             self.state_manager.save_state(self)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
+            return None  # Explicitly return None for error case
 
     def restore_state(self) -> None:
         """Restore widget state."""
@@ -94,6 +93,7 @@ class StatefulWidget(QWidget):
             self.state_manager.restore_state(self)
         except Exception as e:
             logger.error(f"Failed to restore state: {e}")
+            return None  # Explicitly return None for error case
 
     def closeEvent(self, event: Any) -> None:
         """Handle widget closure."""

@@ -6,13 +6,13 @@ import threading
 from logging import getLogger
 from pathlib import Path
 from queue import Queue
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple, cast
 
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 from .logger import setup_logger
-from .qt_types import QtMediaConstants
+from .qt_types import QtConstants
 
 logger = getLogger(__name__)
 
@@ -34,7 +34,7 @@ class ThreadManager:
         self.logger = setup_logger()
 
     def start_thread(
-        self, name: str, target: Callable, args: tuple = (), kwargs: Dict[str, Any] = None
+        self, name: str, target: Callable, args: tuple = (), kwargs: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Start a new thread.
@@ -157,15 +157,15 @@ class BaseThread(QThread):
 
     error_signal = pyqtSignal(str)
 
-    def __init__(self, **kwargs: Dict[str, Any]) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__()
-        self.kwargs: Dict[str, Any] = kwargs or {}
+        self.kwargs: Dict[str, Any] = kwargs
         self.is_running: bool = True
 
     def get_args(self) -> Optional[Tuple[Any, ...]]:
         """Get thread arguments safely."""
         try:
-            return tuple(self.kwargs.values())
+            return tuple(self.kwargs.values()) if self.kwargs else None
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
             return None
@@ -183,7 +183,7 @@ class NotificationAudioThread(BaseThread):
     def on_media_status_changed(self, status: int) -> None:
         """Handle media status changes."""
         self.media_status_changed.emit(status)
-        if status == QtMediaConstants.EndOfMedia:
+        if status == QtConstants.EndOfMedia:
             self.is_running = False
 
     def run(self) -> None:
@@ -197,7 +197,7 @@ class NotificationAudioThread(BaseThread):
             self._player.play()
 
             # Wait for playback to complete
-            while self._player.state() == QMediaPlayer.PlayingState:
+            while self._player and self._player.state() == QMediaPlayer.State.PlayingState:
                 self.msleep(100)
 
         except Exception as e:

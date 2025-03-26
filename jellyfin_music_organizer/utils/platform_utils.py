@@ -77,7 +77,7 @@ class PlatformUI:
 
         if system == "darwin":
             # macOS specific adjustments
-            widget.setAttribute(Qt.WA_MacShowFocusRect, False)
+            widget.setAttribute(Qt.WidgetAttribute.WA_MacShowFocusRect, False)
         elif system == "windows":
             # Windows specific adjustments
             pass
@@ -103,11 +103,12 @@ class PlatformUI:
         try:
             system = platform.system()
             if system == "Windows":
-                window.setWindowFlags(QtConstants.Window | QtConstants.FramelessWindowHint)
-                window.setAttribute(QtConstants.WA_TranslucentBackground)
+                flags: WindowFlags = QtConstants.Window | QtConstants.FramelessWindowHint
+                window.setWindowFlags(flags)
+                window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
             elif system == "Darwin":
                 window.setWindowFlags(QtConstants.Window)
-                window.setAttribute(QtConstants.WA_MacShowFocusRect, False)
+                window.setAttribute(Qt.WidgetAttribute.WA_MacShowFocusRect, False)
             else:  # Linux
                 window.setWindowFlags(QtConstants.Window)
         except Exception as e:

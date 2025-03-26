@@ -5,6 +5,7 @@ Main entry point for the Jellyfin Music Organizer application.
 import sys
 from logging import Logger
 from typing import Optional
+from pathlib import Path
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
@@ -23,7 +24,7 @@ def main() -> None:
         # Set up logging with platform-specific paths
         log_path = PlatformPaths.get_app_data_dir() / "logs" / "app.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        logger = setup_logger(log_file=str(log_path))
+        logger = setup_logger(log_file=log_path)
         logger.info("Starting Jellyfin Music Organizer")
 
         # Initialize configuration with platform-specific paths

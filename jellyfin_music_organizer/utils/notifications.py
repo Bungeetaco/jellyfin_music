@@ -11,19 +11,23 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 from .notification_config import NotificationConfig
 from .platform_utils import PlatformPaths
-from .qt_types import QtMediaConstants
+from .qt_types import QtConstants
 
 logger = logging.getLogger(__name__)
 
+# Windows constants
 if sys.platform == "win32":
-    pass
+    try:
+        import winsound
+        MB_OK = winsound.MB_OK
+        MB_ICONHAND = winsound.MB_ICONHAND
+        MB_ICONASTERISK = winsound.MB_ICONASTERISK
+    except ImportError:
+        MB_OK = 0x00000000
+        MB_ICONHAND = 0x00000010
+        MB_ICONASTERISK = 0x00000040
 
-    # Windows constants
-    MB_OK = 0x00000000
-    MB_ICONHAND = 0x00000010
-    MB_ICONASTERISK = 0x00000040
-    SND_ALIAS = 0x00010000
-
+SND_ALIAS = 0x00010000
 
 class NotificationStrategy(ABC):
     """Abstract base class for platform-specific notifications."""
@@ -87,39 +91,39 @@ class MacNotificationStrategy(NotificationStrategy):
     """macOS notification implementation."""
 
     def play_sound(self, sound_name: str) -> bool:
-        # Implementation
-        pass
+        return False  # Placeholder implementation
 
     def is_available(self) -> bool:
-        # Implementation
-        pass
+        return False  # Placeholder implementation
 
     def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
-        # Implementation
-        pass
+        return False  # Placeholder implementation
 
 
 class LinuxNotificationStrategy(NotificationStrategy):
     """Linux notification implementation."""
 
     def play_sound(self, sound_name: str) -> bool:
-        # Implementation
-        pass
+        return False  # Placeholder implementation
 
     def is_available(self) -> bool:
-        # Implementation
-        pass
+        return False  # Placeholder implementation
 
     def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
-        # Implementation
-        pass
+        return False  # Placeholder implementation
 
 
 class DummyNotificationStrategy(NotificationStrategy):
     """Dummy notification strategy for unsupported platforms."""
 
-    def notify(self, title: str, message: str) -> None:
-        """Do nothing."""
+    def play_sound(self, sound_name: str) -> bool:
+        return False
+
+    def is_available(self) -> bool:
+        return False
+
+    def show_message(self, title: str, message: str, icon_type: int = 0) -> bool:
+        return False
 
 
 class NotificationManager(QObject):
@@ -132,6 +136,7 @@ class NotificationManager(QObject):
         super().__init__()
         self._strategy = self._create_strategy()
         self._player: Optional[QMediaPlayer] = None
+        self.settings: dict = {}  # Initialize settings
         self._setup_player()
 
     def _create_strategy(self) -> NotificationStrategy:
@@ -149,7 +154,7 @@ class NotificationManager(QObject):
 
     def _on_media_status_changed(self, status: int) -> None:
         """Handle media status changes."""
-        if status == QtMediaConstants.EndOfMedia:
+        if status == QtConstants.EndOfMedia and self._player is not None:
             self._player.stop()
 
     def play_notification(self, sound_type: str) -> None:
@@ -175,7 +180,7 @@ class NotificationManager(QObject):
             if not self._player:
                 self._player = QMediaPlayer()
 
-            sound_file = PlatformPaths.get_resource_path() / f"{sound_type}.wav"
+            sound_file = PlatformPaths.get_resource_path("sounds") / f"{sound_type}.wav"
             if not sound_file.exists():
                 raise FileNotFoundError(f"Fallback sound not found: {sound_file}")
 
@@ -209,12 +214,14 @@ class WindowsNotifier(SystemNotifier):
             import winsound
 
             sound_map = {
-                "default": winsound.MB_OK,
-                "error": winsound.MB_ICONHAND,
-                "complete": winsound.MB_ICONASTERISK,
+                "default": MB_OK,
+                "error": MB_ICONHAND,
+                "complete": MB_ICONASTERISK,
             }
-            winsound.MessageBeep(sound_map.get(sound_type, winsound.MB_OK))
-            return True
+            if hasattr(winsound, "MessageBeep"):
+                winsound.MessageBeep(sound_map.get(sound_type, MB_OK))
+                return True
+            return False
         except Exception as e:
             logger.error(f"Windows notification failed: {e}")
             return False
@@ -257,5 +264,4 @@ def get_notification_strategy() -> NotificationStrategy:
     system = platform.system()
     if system == "Windows":
         return WindowsNotificationStrategy()
-    else:
-        return DummyNotificationStrategy()
+    return DummyNotificationStrategy()

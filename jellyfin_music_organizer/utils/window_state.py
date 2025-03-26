@@ -1,7 +1,8 @@
 """Window state management utilities."""
 
 import logging
-from typing import Any, Dict, TypeVar
+from typing import Any, Dict, TypeVar, Callable
+from functools import wraps
 
 from PyQt5.QtCore import QByteArray, QSettings
 from PyQt5.QtWidgets import QWidget
@@ -26,7 +27,6 @@ class WindowStateManager:
         self.settings = QSettings()
         self._state_cache: Dict[str, Any] = {}
 
-    @handle_errors(logger=logger)
     def save_state(self, window: T) -> bool:
         """Save window geometry and state.
 
@@ -36,20 +36,23 @@ class WindowStateManager:
         Returns:
             bool: True if state was saved successfully
         """
-        geometry = window.saveGeometry()
-        if isinstance(geometry, QByteArray):
-            self.settings.setValue(f"{self.window_name}/geometry", geometry)
+        @handle_errors(logger=logger)
+        def _save() -> bool:
+            geometry = window.saveGeometry()
+            if isinstance(geometry, QByteArray):
+                self.settings.setValue(f"{self.window_name}/geometry", geometry)
 
-        if hasattr(window, "saveState"):
-            state = window.saveState()
-            if isinstance(state, QByteArray):
-                self.settings.setValue(f"{self.window_name}/windowState", state)
+            if hasattr(window, "saveState"):
+                state = window.saveState()
+                if isinstance(state, QByteArray):
+                    self.settings.setValue(f"{self.window_name}/windowState", state)
 
-        # Cache current settings
-        self._state_cache = self._get_current_state()
-        return True
+            # Cache current settings
+            self._state_cache = self._get_current_state()
+            return True
+        
+        return _save()
 
-    @handle_errors(logger=logger)
     def restore_state(self, window: T) -> bool:
         """Restore window geometry and state.
 
@@ -59,18 +62,22 @@ class WindowStateManager:
         Returns:
             bool: True if state was restored successfully
         """
-        restored = False
+        @handle_errors(logger=logger)
+        def _restore() -> bool:
+            restored = False
 
-        geometry = self.settings.value(f"{self.window_name}/geometry")
-        if isinstance(geometry, QByteArray):
-            restored = window.restoreGeometry(geometry)
+            geometry = self.settings.value(f"{self.window_name}/geometry")
+            if isinstance(geometry, QByteArray):
+                restored = window.restoreGeometry(geometry)
 
-        if hasattr(window, "restoreState"):
-            state = self.settings.value(f"{self.window_name}/windowState")
-            if isinstance(state, QByteArray):
-                restored = window.restoreState(state) and restored
+            if hasattr(window, "restoreState"):
+                state = self.settings.value(f"{self.window_name}/windowState")
+                if isinstance(state, QByteArray):
+                    restored = window.restoreState(state) and restored
 
-        return restored
+            return restored
+        
+        return _restore()
 
     def _get_current_state(self) -> Dict[str, Any]:
         """Get current window state as dictionary."""

@@ -7,8 +7,8 @@ import platform
 from logging import getLogger
 from typing import Any, Dict, List, Union
 
-from PyQt5.QtCore import QFont
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -30,7 +30,7 @@ from ..utils.config import ConfigManager
 from ..utils.notifications import NotificationManager
 from ..utils.platform_utils import PlatformUI
 from ..utils.qt_compat import QtCompat
-from ..utils.qt_types import AlignmentFlag, MouseButton, QtConstants, WindowFlags, WindowType
+from ..utils.qt_types import QtConstants, WindowFlags, WindowType
 from ..utils.window_manager import WindowManager
 from .custom_dialog import CustomDialog
 from .music_error_window import MusicErrorWindow
@@ -145,7 +145,7 @@ class MusicOrganizer(QWidget):
         hbox_title_layout.addWidget(self.close_button)
         self.close_button.clicked.connect(self.close)
 
-        hbox_title_layout.setAlignment(AlignmentFlag.AlignRight)
+        hbox_title_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     def mousePressEvent(self, event: Any) -> None:
         """
@@ -153,7 +153,7 @@ class MusicOrganizer(QWidget):
 
         This method enables window dragging when clicking the title bar.
         """
-        if event.button() == MouseButton.LeftButton and event.y() <= self.title_bar.height():
+        if event.button() == Qt.MouseButton.LeftButton and event.y() <= self.title_bar.height():
             self.draggable = True
             self.offset = event.globalPos() - self.pos()
 
@@ -164,7 +164,7 @@ class MusicOrganizer(QWidget):
         This method moves the window when dragging.
         """
         if hasattr(self, "draggable") and self.draggable:
-            if event.buttons() & MouseButton.LeftButton:
+            if event.buttons() & Qt.MouseButton.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
     def mouseReleaseEvent(self, event: Any) -> None:
@@ -173,7 +173,7 @@ class MusicOrganizer(QWidget):
 
         This method disables window dragging.
         """
-        if event.button() == MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.draggable = False
 
     def setup_ui(self) -> None:
@@ -257,7 +257,7 @@ class MusicOrganizer(QWidget):
         self.bottom_right_grip: QSizeGrip = QSizeGrip(self)
         self.bottom_right_grip.setToolTip("Resize window")
         hbox_progress_grip_layout.addWidget(
-            self.bottom_right_grip, 0, AlignmentFlag.AlignBottom | AlignmentFlag.AlignRight
+            self.bottom_right_grip, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight
         )
 
     def center_window(self) -> None:
@@ -550,9 +550,7 @@ class MusicOrganizer(QWidget):
         try:
             system = platform.system()
             if system == "Windows":
-                flags: Union[WindowFlags, WindowType] = (
-                    QtConstants.Window | QtConstants.FramelessWindowHint
-                )
+                flags: WindowFlags = QtConstants.Window | QtConstants.FramelessWindowHint
                 self.setWindowFlags(flags)
 
                 app = QApplication.instance()

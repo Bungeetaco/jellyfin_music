@@ -164,13 +164,13 @@ class SecurityUtils:
     def is_safe_path(path: str, base_path: Optional[str] = None) -> bool:
         """Check if a path is safe to use."""
         try:
-            path = Path(path).resolve()
+            resolved_path = Path(path).resolve()
             if base_path:
-                base_path = Path(base_path).resolve()
-                return str(path).startswith(str(base_path))
+                resolved_base = Path(base_path).resolve()
+                return str(resolved_path).startswith(str(resolved_base))
 
             # Check for unsafe patterns
-            path_str = str(path)
+            path_str = str(resolved_path)
             return not any(
                 re.search(pattern, path_str) for pattern in SecurityUtils.UNSAFE_PATTERNS
             )

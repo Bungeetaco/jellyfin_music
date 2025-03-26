@@ -55,16 +55,17 @@ class CustomDialog(QDialog):
         """Configure platform-specific window behavior."""
         system = platform.system()
         try:
-            flags: Union[WindowFlags, WindowType] = (
-                QtConstants.Dialog | QtConstants.WindowStaysOnTopHint
-            )
+            # Initialize base flags with proper type
+            flags: WindowFlags = QtConstants.Dialog | QtConstants.WindowStaysOnTopHint
+
             if system == "Darwin":
                 # Use native window decorations on macOS
                 self.setWindowFlags(flags)
                 self.setAttribute(QtConstants.WA_MacAlwaysShowToolWindow)
             elif system == "Windows":
                 # Custom window frame on Windows
-                self.setWindowFlags(flags | QtConstants.FramelessWindowHint)
+                flags = flags | QtConstants.FramelessWindowHint
+                self.setWindowFlags(flags)
             else:
                 # Default behavior for Linux
                 self.setWindowFlags(flags)
@@ -78,7 +79,7 @@ class CustomDialog(QDialog):
 
         except Exception as e:
             logger.error(f"Failed to setup platform-specific settings: {e}")
-            self.setWindowFlags(cast(WindowFlags, QtConstants.Dialog))
+            self.setWindowFlags(QtConstants.Dialog)  # Use simple dialog flags as fallback
 
     def center_window(self) -> None:
         """Center the dialog window on the screen."""

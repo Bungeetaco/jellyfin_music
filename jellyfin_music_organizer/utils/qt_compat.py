@@ -17,9 +17,9 @@ class QtCompat:
     @staticmethod
     def get_window_flags(frameless: bool = False) -> WindowFlags:
         """Get appropriate window flags."""
-        flags = QtConstants.Window
+        flags: WindowFlags = QtConstants.Window
         if frameless:
-            flags |= QtConstants.FramelessWindowHint
+            flags = flags | QtConstants.FramelessWindowHint
         return flags
 
     @staticmethod

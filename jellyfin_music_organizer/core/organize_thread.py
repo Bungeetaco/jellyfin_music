@@ -354,7 +354,7 @@ class OrganizeThread(QThread):
         try:
             from ..utils.metadata import extract_metadata  # Import the function directly
 
-            metadata = extract_metadata(file_path)
+            metadata = extract_metadata(str(file_path))  # Convert Path to str
             if not metadata:
                 raise MetadataError("No metadata found")
 

@@ -2,7 +2,7 @@ import contextlib
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Generator, Optional, Type, TypeVar
 from unittest.mock import MagicMock
 
 T = TypeVar("T")
@@ -13,8 +13,12 @@ class TestUtils:
 
     @staticmethod
     @contextlib.contextmanager
-    def temp_directory() -> Path:
-        """Create a temporary directory for testing."""
+    def temp_directory() -> Generator[Path, None, None]:
+        """Create a temporary directory for testing.
+        
+        Yields:
+            Path: A temporary directory path that will be cleaned up after use
+        """
         temp_dir = Path(tempfile.mkdtemp())
         try:
             yield temp_dir

@@ -14,7 +14,7 @@ class StateChange(Generic[T]):
 
     key: str
     old_value: Optional[T]
-    new_value: T
+    new_value: Optional[T]
 
 
 class StateManager(Generic[T]):
@@ -24,9 +24,9 @@ class StateManager(Generic[T]):
         self.logger = logging.getLogger(__name__)
         self._state: Dict[str, T] = {}
         self._lock = RLock()
-        self._observers: Dict[str, List[Callable[[T], None]]] = {}
+        self._observers: Dict[str, List[Callable[[StateChange[T]], None]]] = {}
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: T) -> None:
         """Set a state value."""
         with self._lock:
             old_value = self._state.get(key)

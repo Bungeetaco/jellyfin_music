@@ -1,10 +1,10 @@
 import shutil
 from logging import getLogger
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from PyQt5.QtCore import QEvent, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QEvent, pyqtSignal, Qt
+from PyQt5.QtGui import QIcon, QMouseEvent, QShowEvent, QCloseEvent
 from PyQt5.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -41,13 +41,13 @@ class ReplaceSkipWindow(QWidget):
         # Setup and show user interface
         self.setup_ui()
 
-    def showEvent(self, event: QEvent) -> None:
+    def showEvent(self, event: Optional[QShowEvent]) -> None:
         """Handle show event."""
         self.windowOpened.emit(False)
         super().showEvent(event)
         self.center_window()
 
-    def closeEvent(self, event: QEvent) -> None:
+    def closeEvent(self, event: Optional[QCloseEvent]) -> None:
         """Handle close event."""
         self.windowClosed.emit()
         super().closeEvent(event)
@@ -76,21 +76,27 @@ class ReplaceSkipWindow(QWidget):
         hbox_title_layout.addStretch()
 
     # Mouse events allow the title bar to be dragged around
-    def mousePressEvent(self, event: QEvent) -> None:
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
         """Handle mouse press event."""
-        if event.button() == MouseButton.LeftButton and event.y() <= self.title_bar.height():
+        if event is None:
+            return
+        if event.button() == Qt.MouseButton.LeftButton and event.y() <= self.title_bar.height():
             self.draggable = True
             self.offset = event.globalPos() - self.pos()
 
-    def mouseMoveEvent(self, event: QEvent) -> None:
+    def mouseMoveEvent(self, event: Optional[QMouseEvent]) -> None:
         """Handle mouse move event."""
+        if event is None:
+            return
         if hasattr(self, "draggable") and self.draggable:
-            if event.buttons() & MouseButton.LeftButton:
+            if event.buttons() & Qt.MouseButton.LeftButton:
                 self.move(event.globalPos() - self.offset)
 
-    def mouseReleaseEvent(self, event: QEvent) -> None:
+    def mouseReleaseEvent(self, event: Optional[QMouseEvent]) -> None:
         """Handle mouse release event."""
-        if event.button() == MouseButton.LeftButton:
+        if event is None:
+            return
+        if event.button() == Qt.MouseButton.LeftButton:
             self.draggable = False
 
     def setup_ui(self) -> None:
@@ -159,7 +165,8 @@ class ReplaceSkipWindow(QWidget):
         self.bottom_right_grip = QSizeGrip(self)
         self.bottom_right_grip.setToolTip("Resize window")
         hbox_progress_grip_layout.addWidget(
-            self.bottom_right_grip, 0, AlignmentFlag.AlignBottom | AlignmentFlag.AlignRight
+            self.bottom_right_grip, 0, 
+            Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight
         )
 
         # Populate QListWidget

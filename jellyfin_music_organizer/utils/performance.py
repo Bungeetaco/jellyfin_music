@@ -48,7 +48,11 @@ class CacheManager:
                 import json
 
                 with open(cache_file, "r") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        return data
+                    self.logger.error("Cached data is not a dictionary")
+                    return None
             except Exception as e:
                 self.logger.error(f"Error reading cache: {e}")
         return None

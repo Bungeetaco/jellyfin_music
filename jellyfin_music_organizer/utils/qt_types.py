@@ -50,6 +50,5 @@ class QtConstants:
     EndOfMedia = QMediaPlayer.MediaStatus.EndOfMedia
 
 
-# Global instances for easy access
-Qt = QtConstants()
-QMediaPlayerConst = QtConstants()
+# Create a single instance of QtConstants for use throughout the application
+qt_constants = QtConstants()

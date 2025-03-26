@@ -3,7 +3,7 @@
 import platform
 from typing import Dict
 
-from .qt_types import KeyboardModifier, QtConst
+from .qt_types import KeyboardModifier, QtConstants
 
 
 class ShortcutManager:
@@ -34,11 +34,13 @@ class ShortcutManager:
         Returns:
             Qt modifier key constant
         """
-        return QtConst.MetaModifier if platform.system() == "Darwin" else QtConst.ControlModifier
+        if platform.system() == "Darwin":
+            return KeyboardModifier(QtConstants.MetaModifier)
+        return KeyboardModifier(QtConstants.ControlModifier)
 
 
 def get_platform_modifier() -> KeyboardModifier:
     """Get the platform-specific modifier key."""
     if platform.system() == "Darwin":
-        return QtConst.MetaModifier
-    return QtConst.ControlModifier
+        return KeyboardModifier(QtConstants.MetaModifier)
+    return KeyboardModifier(QtConstants.ControlModifier)

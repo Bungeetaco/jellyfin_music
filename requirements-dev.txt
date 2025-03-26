@@ -15,6 +15,7 @@ isort>=5.13.2
 # Type stubs
 types-PyQt5
 types-setuptools
+types-requests>=2.31.0
 
 # Documentation
 sphinx==7.2.6
