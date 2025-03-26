@@ -4,10 +4,10 @@ Unit tests for the Jellyfin Music Organizer utility modules.
 
 import os
 import tempfile
+import threading
 import time
 import unittest
 from pathlib import Path
-import threading
 
 from jellyfin_music_organizer.utils.config import ConfigManager
 from jellyfin_music_organizer.utils.exceptions import FileOperationError
@@ -120,6 +120,7 @@ class TestProgressTracker(unittest.TestCase):
     def test_time_estimation(self):
         """Test time estimation."""
         import time
+
         time.sleep(0.1)  # Ensure some time passes
         self.tracker.update(50)  # Update to trigger time calculation
         remaining = self.tracker.get_estimated_time_remaining()
@@ -137,6 +138,7 @@ class TestThreadManager(unittest.TestCase):
     def test_thread_lifecycle(self):
         """Test thread creation and cleanup."""
         import time
+
         event = threading.Event()
 
         def test_function():
@@ -144,7 +146,7 @@ class TestThreadManager(unittest.TestCase):
 
         self.thread_manager.start_thread("test", test_function)
         time.sleep(0.1)  # Give thread time to start
-        
+
         try:
             self.assertTrue(self.thread_manager.is_thread_running("test"))
             event.set()  # Allow thread to complete
