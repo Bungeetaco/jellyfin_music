@@ -171,9 +171,16 @@ class BaseThread(QThread):
         try:
             if not self.kwargs:
                 return None
-            # Create tuple explicitly to ensure proper type
-            args_tuple: Tuple[Any, ...] = tuple(self.kwargs.values())
-            return args_tuple if args_tuple else None
+            
+            # Convert values to tuple with explicit type annotation
+            values = list(self.kwargs.values())
+            if not values:
+                return None
+            
+            # Create explicitly typed tuple
+            result: Tuple[Any, ...] = tuple(values)
+            return result
+        
         except Exception as e:
             self.error_signal.emit(f"Failed to get arguments: {e}")
             return None
