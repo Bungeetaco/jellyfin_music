@@ -1,0 +1,205 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.head_ref }}
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.8"
+        
+    - name: Install formatting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort autoflake
+        
+    - name: Format with black and isort
+      run: |
+        black .
+        isort .
+        
+    - name: Apply manual fixes
+      run: |
+        # Fix error_handler.py
+        sed -i 's/from typing import.*ParamSpec.*/from typing import Any, Callable, Dict, List, TypeVar\nfrom typing_extensions import ParamSpec  # Single import/' jellyfin_music_organizer/utils/error_handler.py
+        
+        # Fix organize_thread.py
+        sed -i 's/metadata_dict = self.metadata_handler.extract_metadata(file_path)/return self.metadata_handler.extract_metadata(file_path)/' jellyfin_music_organizer/core/organize_thread.py
+        
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        
+    - name: Commit changes
+      id: commit
+      continue-on-error: true
+      run: |
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "style: format code and fix linting issues" && git push)
+        echo "changes_made=$?" >> $GITHUB_OUTPUT
+
+  lint:
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.head_ref }}
+        fetch-depth: 0
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.8"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black flake8 mypy isort no-implicit-optional
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install PyQt5-stubs
+        
+    - name: Run linting checks
+      run: |
+        black --check .
+        flake8 . --count --max-line-length=120 --statistics --exclude=.git,__pycache__,build,dist,*.egg-info --extend-ignore=E203,W503 --per-file-ignores="__init__.py:F401 build.py:E501"
+        isort --check-only --diff .
+        mypy jellyfin_music_organizer --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --no-warn-unused-ignores --no-implicit-optional --disable-error-code="return-value"
+        no_implicit_optional jellyfin_music_organizer
+
+  test:
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10']
+
+    steps:
+    - uses: actions/checkout@v3
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pyqt5 qtbase5-dev qt5-qmake qttools5-dev-tools xvfb
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-mock pytest-qt
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install -e .
+        
+    - name: Run tests with pytest
+      env:
+        QT_QPA_PLATFORM: offscreen
+        DISPLAY: ":99.0"
+      run: |
+        if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        fi
+        pytest tests/ -v --cov=jellyfin_music_organizer --cov-report=xml
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: true
+
+  build:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            qt-deps: python3-qt5 qt5-qmake qttools5-dev-tools
+          - os: macos-latest
+            qt-deps: qt@5
+          - os: windows-latest
+            qt-deps: ""
+        
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.8"
+        
+    - name: Install Qt dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.qt-deps }}
+        
+    - name: Install Qt dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install ${{ matrix.qt-deps }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install PyQt5-stubs pyinstaller
+        
+    - name: Build with PyInstaller
+      run: python build.py
+        
+    - name: Generate SHA256 checksums
+      run: |
+        cd dist
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          Get-FileHash -Algorithm SHA256 * | ForEach-Object { $_.Hash + " " + $_.Path } > SHA256SUMS
+        else
+          shasum -a 256 * > SHA256SUMS
+        fi
+      shell: pwsh
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/*
+          dist/SHA256SUMS
+        body: |
+          Release ${{ github.ref_name }}
+          
+          SHA256 Checksums:
+          ```
+          ${{ runner.os }}:
+          $(cat dist/SHA256SUMS)
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
