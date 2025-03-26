@@ -30,28 +30,31 @@ repos:
         additional_dependencies: [flake8-docstrings]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+    rev: v1.3.0
     hooks:
     -   id: mypy
         additional_dependencies: 
             - PyQt5-stubs
             - types-mutagen
             - types-requests>=2.31.0
+            - types-setuptools
+            - sphinx~=5.3.0
+            - sphinx-rtd-theme~=1.1.1
 
 -   repo: https://github.com/PyCQA/pylint
-    rev: v3.0.3
+    rev: v2.17.0
     hooks:
     -   id: pylint
         args: ["--disable=C0111"]  # Disable missing-docstring warning
 
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+    rev: v3.3.1
     hooks:
     -   id: pyupgrade
         args: [--py38-plus]
 
 -   repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.10.0
+    rev: v2.42.1
     hooks:
     -   id: commitizen
         stages: [commit-msg] 
