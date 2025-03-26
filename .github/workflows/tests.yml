@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    needs: lint  # Add dependency on lint job
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,6 +19,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.head_ref }}  # Ensure we get the latest linted code
+        fetch-depth: 0
+    
+    - name: Wait for lint changes
+      run: |
+        sleep 10  # Give time for any lint commits to be pushed
+        git pull origin ${{ github.head_ref || 'main' }} --rebase
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
