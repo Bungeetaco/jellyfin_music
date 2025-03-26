@@ -1,5 +1,4 @@
-"""
-Unit tests for the Jellyfin Music Organizer utility modules.
+"""Unit tests for the Jellyfin Music Organizer utility modules.
 
 This module provides comprehensive testing for core utilities including:
 - Configuration management
@@ -72,9 +71,7 @@ class TestUtils:
         return mock
 
     @staticmethod
-    def create_test_config(
-        base_path: Path, settings: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    def create_test_config(base_path: Path, settings: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Create a test configuration.
 
         Args:
@@ -230,11 +227,7 @@ class TestProgressTracker(unittest.TestCase):
 
     def test_percentage_calculation(self) -> None:
         """Test percentage calculation."""
-        test_cases = [
-            (0, 0.0),
-            (50, 50.0),
-            (100, 100.0),
-        ]
+        test_cases = [(0, 0.0), (50, 50.0), (100, 100.0)]
         for progress, expected in test_cases:
             with self.subTest(progress=progress):
                 self.tracker.update(progress)
